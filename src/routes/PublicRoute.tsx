@@ -13,7 +13,7 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
   );
 
   if (isAuthenticated) {
-    return <Navigate to="/params" replace />;
+    return <Navigate to="/parametre" replace />;
   }
 
   return children;

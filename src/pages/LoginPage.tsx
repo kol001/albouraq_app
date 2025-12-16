@@ -19,7 +19,7 @@ function LoginPage() {
         }
     };
     login(tokenData);
-    navigate('/dashboard');
+    navigate('/parametre');
     };
 
   return (

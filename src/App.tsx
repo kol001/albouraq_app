@@ -1,10 +1,13 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import type { RootState } from './app/store';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "./app/store";
 
-import LoginPage from './pages/LoginPage';
-import ListeParametre from './pages/ListeParametre';
-import ProtectedRoute from './pages/ProtectedRoute';
+import LoginPage from "./pages/LoginPage";
+import ListeParametre from "./pages/ListeParametre";
+import ProtectedRoute from "./pages/ProtectedRoute";
+import ParametreLayout from "./layouts/ListeParametreLayout";
+
+import { parametresRoutes } from "./routes/parametres.routes";
 
 export function App() {
   const isAuthenticated = useSelector(
@@ -14,29 +17,41 @@ export function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Page publique */}
+
+        {/* LOGIN */}
         <Route
           path="/login"
           element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
+            isAuthenticated ? <Navigate to="/parametre" replace /> : <LoginPage />
           }
         />
 
-        {/* Page protégée */}
+        {/* parametre PROTÉGÉ */}
         <Route
-          path="/dashboard"
+          path="/parametre"
           element={
             <ProtectedRoute>
-              <ListeParametre />
+              <ParametreLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<ListeParametre />} />
 
-        {/* Fallback */}
+          {/* ROUTES PARAMÈTRES */}
+          {parametresRoutes()}
+        </Route>
+
+        {/* FALLBACK */}
         <Route
           path="*"
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
+          element={
+            <Navigate
+              to={isAuthenticated ? "/parametre" : "/login"}
+              replace
+            />
+          }
         />
+        <Route path="/test" element={<div>TEST OK</div>} />
       </Routes>
     </BrowserRouter>
   );
