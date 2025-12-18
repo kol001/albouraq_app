@@ -1,12 +1,16 @@
 import { Outlet } from 'react-router-dom';  // ← CRUCIAL : Importe Outlet
+import AppBar from '../components/AppBar';
 
 function ParametreLayout() {
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex flex-col h-screen bg-gray-100">
       
-      {/* Contenu principal : REND LES ENFANTS ! */}
+      {/* AppBar globale */}
+      <AppBar />
+
+      {/* Contenu des pages */}
       <main className="flex-1 p-6 overflow-auto">
-        <Outlet />  {/* ← ÇA : Injecte ListeParametre ou la page paramètre */}
+        <Outlet />
       </main>
     </div>
   );

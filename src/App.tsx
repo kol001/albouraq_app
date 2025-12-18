@@ -7,7 +7,7 @@ import ListeParametre from "./pages/ListeParametre";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import ParametreLayout from "./layouts/ListeParametreLayout";
 
-import { parametresRoutes } from "./routes/parametres.routes";
+import { parametresRoutes } from "./routes/Parametres.routes";
 
 export function App() {
   const isAuthenticated = useSelector(

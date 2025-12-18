@@ -1,8 +1,15 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './authSlice';  // On va le créer ci-dessous
+import { configureStore} from '@reduxjs/toolkit'; // Ajout de ThunkDispatch et Action
+import type { ThunkDispatch, Action }from '@reduxjs/toolkit'; 
+import authReducer from './authSlice';
+import privilegesReducer from './privilegesSlice';
 import { combineReducers } from 'redux';
 import { persistStore, persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage'; 
+import storage from 'redux-persist/lib/storage';
+import profilesReducer from './profilesSlice';
+import autorisationsReducer from './autorisationsSlice';
+import usersReducer from './usersSlice';
+import transactionTypesReducer from './transactionTypesSlice';
+
 import {
   FLUSH,
   REHYDRATE,
@@ -14,6 +21,11 @@ import {
 
 const appReducer = combineReducers({
   auth: authReducer,
+  privileges: privilegesReducer,
+  profiles: profilesReducer,
+  autorisations: autorisationsReducer,
+  users: usersReducer,
+  transactionTypes: transactionTypesReducer,
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,4 +57,6 @@ export const persistor = persistStore(store);
 
 // Types pour TypeScript (infère l'état global)
 export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+
+// Étendu pour supporter les thunks (fix l'erreur dispatch)
+export type AppDispatch = ThunkDispatch<RootState, unknown, Action> & typeof store.dispatch;
