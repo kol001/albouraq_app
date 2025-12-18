@@ -61,7 +61,7 @@ export const createPrivilege = createAsyncThunk<
   { state: { auth: { token: string } } }
 >(
   'privileges/createPrivilege',
-  async (payload, { getState, rejectWithValue, dispatch }) => {
+  async (payload, { getState, rejectWithValue }) => {
     try {
       const { auth } = getState();
       if (!auth.token) {
