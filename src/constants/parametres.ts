@@ -4,14 +4,14 @@ import {
   FiShield,
   FiSettings,
   FiFileText,
-  FiDollarSign,
-  FiHash,
+  // FiDollarSign,
+  // FiHash,
   FiLayers,
   FiRepeat,
-  FiTag,
-  FiBox,
-  FiCreditCard,
-  FiBriefcase,
+  // FiTag,
+  // FiBox,
+  // FiCreditCard,
+  // FiBriefcase,
 } from "react-icons/fi";
 
 import type { IconType } from "react-icons";
