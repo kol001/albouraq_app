@@ -11,7 +11,7 @@ export default defineConfig({
         // target: 'http://192.168.1.124:6060',  // Ton serveur
         target : 'https://ecozipo.tailbf0d81.ts.net',
         changeOrigin: true,  // Change l'Origin pour matcher
-        secure: false,  // HTTP local, pas HTTPS
+        secure: true,  // HTTP local, pas HTTPS
         rewrite: (path) => path.replace(/^\/api/, ''),  // Optionnel : enlève /api si besoin
       },
     },
