@@ -9,6 +9,9 @@ import profilesReducer from './profilesSlice';
 import autorisationsReducer from './autorisationsSlice';
 import usersReducer from './usersSlice';
 import transactionTypesReducer from './transactionTypesSlice';
+import transactionsReducer from './transactionsSlice';
+import modulesReducer from './modulesSlice';
+
 
 import {
   FLUSH,
@@ -26,6 +29,8 @@ const appReducer = combineReducers({
   autorisations: autorisationsReducer,
   users: usersReducer,
   transactionTypes: transactionTypesReducer,
+  transactions: transactionsReducer,
+  modules: modulesReducer,
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -30,9 +30,10 @@ export const PARAMETRES: ParametreItem[] = [
 
   { label: "Paramétrage Type Transaction", path: "type-transaction", icon: FiRepeat },
   { label: "Paramétrage Transaction", path: "transaction", icon: FiFileText },
+  // { label: "Paramétrage Commission", path: "commission", icon: FiDollarSign },
 
   // { label: "Paramétrage Commission", path: "commission", icon: FiDollarSign },
-  // { label: "Paramétrage Modèle", path: "modele", icon: FiLayers },
+  { label: "Paramétrage Module", path: "module", icon: FiLayers },
   // { label: "Paramétrage Numérotation", path: "numerotation", icon: FiHash },
 
   // { label: "Paramétrage Miles", path: "miles", icon: FiTag },

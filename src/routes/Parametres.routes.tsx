@@ -6,7 +6,7 @@ import Autorisation from "../pages/parametres/Autorisation";
 import TypeTransaction from "../pages/parametres/Type_transaction";
 import Transaction from "../pages/parametres/Transaction";
 import Privilege from "../pages/parametres/Privilege";
-
+import Module from "../pages/parametres/Module";
 
 export function parametresRoutes() {
   return [
@@ -16,5 +16,6 @@ export function parametresRoutes() {
     <Route key="autorisation" path="autorisation" element={<Autorisation />} />,
     <Route key="type-transaction" path="type-transaction" element={<TypeTransaction />} />,
     <Route key="transaction" path="transaction" element={<Transaction />} />,
+    <Route key="module" path="module" element={<Module />} />,
   ];
 }

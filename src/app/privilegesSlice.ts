@@ -56,12 +56,12 @@ export const fetchPrivileges = createAsyncThunk<
 
 // Nouveau thunk pour créer un privilège
 export const createPrivilege = createAsyncThunk<
-  { success: boolean; data: Privilege }, // Return type
-  { privilege: string; fonctionnalite: string }, // Args (body du POST)
-  { state: { auth: { token: string } } } // Extra pour token
+  { success: boolean; data: Privilege },
+  { privilege: string; fonctionnalite: string },
+  { state: { auth: { token: string } } }
 >(
   'privileges/createPrivilege',
-  async (payload, { getState, rejectWithValue }) => {
+  async (payload, { getState, rejectWithValue, dispatch }) => {
     try {
       const { auth } = getState();
       if (!auth.token) {
@@ -71,15 +71,19 @@ export const createPrivilege = createAsyncThunk<
       const response = await axiosInstance.post('/privileges', payload, {
         headers: {
           Authorization: `Bearer ${auth.token}`,
+          'Content-Type': 'application/json',
         },
       });
 
-      // La réponse est nested : response.data.data.success et response.data.data.data
-      if (response.data.success && response.data.data.success) {
-        return { success: true, data: response.data.data.data };
-      } else {
-        return rejectWithValue('Échec de la création du privilège');
+      // CORRECTION ICI : la réponse est { success: true, data: { privilège } }
+      if (response.data.success) {
+        // Optionnel : re-fetch pour cohérence (comme dans les autres slices)
+        // dispatch(fetchPrivileges());
+
+        return { success: true, data: response.data.data };
       }
+
+      return rejectWithValue('Échec de la création du privilège');
     } catch (error: any) {
       console.error('Erreur create privilege:', error);
       return rejectWithValue(error.response?.data?.message || 'Erreur réseau');

@@ -6,23 +6,40 @@ import axiosInstance from '../service/Axios'; // Assure-toi que baseURL est '/ap
 export interface ProfileRef {
   id: string;
   profil: string;
+  dateCreation: string;
+  dateActivation: string | null;
+  dateDesactivation: string | null;
+  status: string;
 }
 
 export interface PrivilegeRef {
   id: string;
   privilege: string;
   fonctionnalite: string;
+  status: string;
+}
+
+export interface ModuleRef {
+  id: string;
+  code: string;
+  nom: string;
+  description: string;
+  status: string;
 }
 
 export interface Autorisation {
   id: string;
   nom: string;
   status: string;
-  profileId: string | null;
+  dateActivation: string | null;
+  dateDesactivation: string | null;
+
   moduleId: string | null;
   privilegeId: string | null;
-  profile: ProfileRef | null;
+
+  module: ModuleRef | null;
   privilege: PrivilegeRef | null;
+  profiles: ProfileRef[];
 }
 
 export interface AutorisationsState {
@@ -259,6 +276,34 @@ export const deleteAutorisation = createAsyncThunk<
   }
 );
 
+// Nouveau thunk : Assigner un module à une autorisation
+export const assignModuleToAutorisation = createAsyncThunk<
+  { success: boolean; data: Autorisation },
+  { authId: string; moduleId: string },
+  { state: { auth: { token: string } } }
+>('autorisations/assignModuleToAutorisation', async (payload, { getState, rejectWithValue, dispatch }) => {
+  try {
+    const { auth } = getState();
+    if (!auth.token) return rejectWithValue('Token manquant');
+
+    const response = await axiosInstance.post(`/autorisations/${payload.authId}/assign-module/${payload.moduleId}`, {}, {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.data.success) {
+      // Re-fetch pour mettre à jour les données nested
+      dispatch(fetchAutorisations());
+      return { success: true, data: response.data.data };
+    }
+    return rejectWithValue('Échec assignation module');
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+  }
+});
+
 const initialState: AutorisationsState = {
   data: [],
   loading: false,
@@ -369,7 +414,13 @@ const autorisationsSlice = createSlice({
       .addCase(deleteAutorisation.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
+      })
+      .addCase(assignModuleToAutorisation.pending, (state) => { state.loading = true; })
+      .addCase(assignModuleToAutorisation.fulfilled, (state) => { state.loading = false; })
+      .addCase(assignModuleToAutorisation.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
   },
 });
 

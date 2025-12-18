@@ -1,331 +1,270 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { createProfile, fetchProfiles, activateProfile, deactivateProfile, deleteProfile, addAutorisationToProfile } from '../../app/profilesSlice'; // Ajouts
-// import { fetchAutorisations } from '../../app/autorisationsSlice'; // Pour autorisations
+import { createProfile, fetchProfiles, activateProfile, deactivateProfile, deleteProfile, addAutorisationToProfile } from '../../app/profilesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Profile } from '../../app/profilesSlice';
-import type { Autorisation } from '../../app/autorisationsSlice'; // Pour select
+// import type { Autorisation } from '../../app/autorisationsSlice';
 
-// Custom hook pour dispatch typé
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
-const Profile = () => {
+const ProfileComponent = () => {
   const dispatch = useAppDispatch();
   const { data: profiles, loading, error: globalError } = useSelector((state: RootState) => state.profiles);
   const { data: autorisations } = useSelector((state: RootState) => state.autorisations);
-  const { token } = useSelector((state: RootState) => state.auth);
+  // const { token } = useSelector((state: RootState) => state.auth);
 
-  // États pour form création
+  // Gestion des modals
+  const [activeModal, setActiveModal] = useState<'none' | 'create' | 'auth'>('none');
+
+  // États formulaires
   const [profil, setProfil] = useState('');
   const [status, setStatus] = useState('ACTIF');
-  const [submitError, setSubmitError] = useState('');
-  const [submitSuccess, setSubmitSuccess] = useState('');
-
-  // États pour form add autorisation
   const [selectedProfileIdAdd, setSelectedProfileIdAdd] = useState('');
   const [selectedAutorisationIdAdd, setSelectedAutorisationIdAdd] = useState('');
-  const [addAuthError, setAddAuthError] = useState('');
-  const [addAuthSuccess, setAddAuthSuccess] = useState('');
+  
+  const [message, setMessage] = useState({ text: '', isError: false });
 
-  // États pour messages actions (globaux)
-  const [actionMessage, setActionMessage] = useState('');
-  const [isActionSuccess, setIsActionSuccess] = useState(false);
+  const closeModals = () => {
+    setActiveModal('none');
+    setMessage({ text: '', isError: false });
+  };
 
   const handleSubmitCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profil) {
-      setSubmitError('Le champ "Profil" est requis');
-      return;
-    }
-    if (!token) {
-      setSubmitError('Token manquant – reconnectez-vous');
-      return;
-    }
-    setSubmitError('');
-    setSubmitSuccess('');
     const result = await dispatch(createProfile({ profil, status }));
     if (createProfile.fulfilled.match(result)) {
-      setSubmitSuccess('Profil créé avec succès !');
-      setProfil(''); // Reset form
-      setStatus('ACTIF');
-      // Re-fetch pour cohérence
-      dispatch(fetchProfiles());
+      setMessage({ text: 'Profil créé avec succès !', isError: false });
+      setTimeout(() => {
+        setProfil(''); setStatus('ACTIF');
+        dispatch(fetchProfiles());
+        closeModals();
+      }, 1500);
     } else {
-      setSubmitError('Erreur lors de la création');
+      setMessage({ text: 'Erreur lors de la création', isError: true });
     }
   };
 
   const handleSubmitAddAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProfileIdAdd || !selectedAutorisationIdAdd) {
-      setAddAuthError('Sélectionnez un profil et une autorisation');
-      return;
-    }
-    if (!token) {
-      setAddAuthError('Token manquant');
-      return;
-    }
-    setAddAuthError('');
-    setAddAuthSuccess('');
     const result = await dispatch(addAutorisationToProfile({ profileId: selectedProfileIdAdd, autorisationId: selectedAutorisationIdAdd }));
     if (addAutorisationToProfile.fulfilled.match(result)) {
-      setAddAuthSuccess('Autorisation ajoutée au profil !');
-      setSelectedProfileIdAdd('');
-      setSelectedAutorisationIdAdd('');
+      setMessage({ text: 'Autorisation ajoutée !', isError: false });
+      setTimeout(() => {
+        setSelectedProfileIdAdd(''); setSelectedAutorisationIdAdd('');
+        closeModals();
+      }, 1500);
     } else {
-      setAddAuthError('Erreur lors de l\'ajout');
+      setMessage({ text: 'Erreur lors de l\'ajout', isError: true });
     }
   };
-
-  // Handlers pour actions
-  const handleActivate = async (profileId: string) => {
-    if (!token) {
-      setActionMessage('Token manquant');
-      setIsActionSuccess(false);
-      return;
-    }
-
-    // On lance l'activation
-    const result = await dispatch(activateProfile({ profileId }));
-
-    if (activateProfile.fulfilled.match(result)) {
-      setActionMessage('Profil activé !');
-      setIsActionSuccess(true);
-    } else {
-      setActionMessage('Erreur lors de l\'activation');
-      setIsActionSuccess(false);
-    }
-  };
-
-  const handleDeactivate = async (profileId: string) => {
-    if (!token) {
-      setActionMessage('Token manquant');
-      setIsActionSuccess(false);
-      return;
-    }
-
-    const result = await dispatch(deactivateProfile({ profileId }));
-
-    if (deactivateProfile.fulfilled.match(result)) {
-      setActionMessage('Profil désactivé !');
-      setIsActionSuccess(true);
-    } else {
-      setActionMessage('Erreur lors de la désactivation');
-      setIsActionSuccess(false);
-    }
-  };
-
-  const handleDelete = async (profileId: string) => {
-    if (!window.confirm('Confirmer la suppression de ce profil ?')) return;
-    if (!token) {
-      setActionMessage('Token manquant');
-      setIsActionSuccess(false);
-      return;
-    }
-    const result = await dispatch(deleteProfile({ profileId }));
-    if (deleteProfile.fulfilled.match(result)) {
-      setActionMessage('Profil supprimé !');
-      setIsActionSuccess(true);
-    } else {
-      setActionMessage('Erreur lors de la suppression');
-      setIsActionSuccess(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="p-6">
-        <h2 className="text-xl font-bold mb-4">Paramétrage Profil</h2>
-        <p>Chargement des profils...</p>
-      </div>
-    );
-  }
-
-  if (globalError) {
-    return (
-      <div className="p-6">
-        <h2 className="text-xl font-bold mb-4">Paramétrage Profil</h2>
-        <p className="text-red-500">Erreur globale: {globalError}</p>
-      </div>
-    );
-  }
-
-  if (profiles.length === 0) {
-    return (
-      <div className="p-6">
-        <h2 className="text-xl font-bold mb-4">Paramétrage Profil</h2>
-        <p>Aucun profil trouvé.</p>
-      </div>
-    );
-  }
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Paramétrage Profil</h2>
-
-      {/* Formulaire de création */}
-      <form onSubmit={handleSubmitCreate} className="mb-6 p-4 bg-gray-50 rounded shadow">
-        <h3 className="text-lg font-semibold mb-3">Ajouter un nouveau profil</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            type="text"
-            placeholder="Profil (ex: ADMIN)"
-            value={profil}
-            onChange={(e) => setProfil(e.target.value)}
-            className="p-2 border rounded"
-            required
-          />
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="p-2 border rounded"
-          >
-            <option value="ACTIF">ACTIF</option>
-            <option value="INACTIF">INACTIF</option>
-          </select>
+    <div className="p-8 max-w-[1600px] mx-auto">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Paramétrage Profils</h2>
+          <p className="text-sm text-gray-500">Gérez les rôles et les permissions associées.</p>
         </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
-        >
-          {loading ? 'Création...' : 'Créer'}
-        </button>
-        {submitError && <p className="text-red-500 mt-2">{submitError}</p>}
-        {submitSuccess && <p className="text-green-500 mt-2">{submitSuccess}</p>}
-      </form>
-
-      {/* Form ajouter autorisation */}
-      <form onSubmit={handleSubmitAddAuth} className="mb-6 p-4 bg-green-50 rounded shadow">
-        <h3 className="text-lg font-semibold mb-3">Ajouter une autorisation à un profil</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <select
-            value={selectedProfileIdAdd}
-            onChange={(e) => setSelectedProfileIdAdd(e.target.value)}
-            className="p-2 border rounded"
-            required
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setActiveModal('auth')}
+            className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-sm flex items-center gap-2"
           >
-            <option value="">Sélectionner un profil</option>
-            {profiles.map((p: Profile) => (
-              <option key={p.id} value={p.id}>{p.profil}</option>
-            ))}
-          </select>
-          <select
-            value={selectedAutorisationIdAdd}
-            onChange={(e) => setSelectedAutorisationIdAdd(e.target.value)}
-            className="p-2 border rounded"
-            required
+            🛡️ Gérer Autorisations
+          </button>
+          <button 
+            onClick={() => setActiveModal('create')}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-sm"
           >
-            <option value="">Sélectionner une autorisation</option>
-            {autorisations.map((a: Autorisation) => (
-              <option key={a.id} value={a.id}>{a.nom}</option>
-            ))}
-          </select>
+            + Nouveau Profil
+          </button>
         </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
-        >
-          {loading ? 'Ajout...' : 'Ajouter'}
-        </button>
-        {addAuthError && <p className="text-red-500 mt-2">{addAuthError}</p>}
-        {addAuthSuccess && <p className="text-green-500 mt-2">{addAuthSuccess}</p>}
-      </form>
+      </div>
 
-      {/* Message d'action global */}
-      {actionMessage && (
-        <div className={`mb-4 p-4 rounded ${isActionSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-          {actionMessage}
-          <button onClick={() => setActionMessage('')} className="ml-2 text-sm underline">Fermer</button>
+      {globalError && <div className="p-4 mb-6 bg-red-50 text-red-600 rounded-xl border border-red-100">{globalError}</div>}
+
+      {/* TABLEAU DES PROFILS */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Profil</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Autorisations</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Utilisateurs</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {profiles.map((profile: Profile) => (
+                <tr key={profile.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="font-bold text-gray-900 uppercase tracking-tight">{profile.profil}</div>
+                    <div className="text-[10px] text-gray-400">Créé le {new Date(profile.dateCreation).toLocaleDateString()}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                      profile.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {profile.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1 max-w-xs">
+                      {(profile.autorisations || []).slice(0, 3).map(aut => (
+                        <span key={aut.id} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded border border-gray-200">
+                          {aut.nom}
+                        </span>
+                      ))}
+                      {(profile.autorisations || []).length > 3 && (
+                        <span className="text-[10px] text-gray-400">+{profile.autorisations.length - 3} plus</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-600">
+                      <span className="font-bold">{(profile.users || []).length}</span> membre(s)
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right space-x-3">
+                    {profile.status !== 'ACTIF' ? (
+                      <button onClick={() => dispatch(activateProfile({ profileId: profile.id }))} className="text-green-600 hover:text-green-800 text-xs font-bold uppercase">Activer</button>
+                    ) : (
+                      <button onClick={() => dispatch(deactivateProfile({ profileId: profile.id }))} className="text-amber-600 hover:text-amber-800 text-xs font-bold uppercase">Désactiver</button>
+                    )}
+                    <button onClick={() => window.confirm('Supprimer ?') && dispatch(deleteProfile({ profileId: profile.id }))} className="text-red-500 hover:text-red-700 text-xs font-bold uppercase">Supprimer</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* --- DEUXIÈME TABLEAU : RÉCAPITULATIF PROFILS / UTILISATEURS --- */}
+      <div className="mt-12 mb-10">
+        <div className="mb-4">
+          <h3 className="text-xl font-bold text-gray-800 tracking-tight">Répartition des Utilisateurs par Profil</h3>
+          <p className="text-sm text-gray-500">Liste exhaustive des membres rattachés à chaque rôle système.</p>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">Profil</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Membres rattachés</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {profiles.map((profile: Profile) => (
+                <tr key={`row-user-${profile.id}`} className="hover:bg-gray-50/30 transition-colors">
+                  <td className="px-6 py-4 align-top">
+                    <div className="flex flex-col gap-1">
+                      <span className="inline-flex items-center px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-md text-xs font-bold uppercase w-fit border border-indigo-100">
+                        {profile.profil}
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-medium pl-1">
+                        {(profile.users || []).length} Utilisateur(s)
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {profile.users && profile.users.length > 0 ? (
+                      <div className="max-h-48 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-200">
+                        {profile.users.map((user) => (
+                          <div 
+                            key={user.id} 
+                            className="flex items-center gap-3 group"
+                          >
+                            {/* Petite pastille avec initiale ou icône discrète */}
+                            <div className="h-7 w-7 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                              {user.prenom.charAt(0)}{user.nom.charAt(0)}
+                            </div>
+                            <div className="flex flex-col leading-tight">
+                              <span className="text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">
+                                {user.prenom} {user.nom}
+                              </span>
+                              <span className="text-[11px] text-gray-400 font-mono italic">
+                                {user.email}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-gray-400 italic text-sm py-2">
+                        <span className="text-lg">∅</span> Aucun utilisateur rattaché
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* --- MODAL CRÉATION PROFIL --- */}
+      {activeModal === 'create' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
+            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="text-xl font-bold text-gray-800">Nouveau Profil</h3>
+              <button onClick={closeModals} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <form onSubmit={handleSubmitCreate} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nom du profil</label>
+                <input type="text" placeholder="ex: ADMINISTRATEUR" value={profil} onChange={(e) => setProfil(e.target.value)} className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status initial</label>
+                <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full p-3 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="ACTIF">ACTIF</option>
+                  <option value="INACTIF">INACTIF</option>
+                </select>
+              </div>
+              {message.text && <p className={`text-center text-sm font-bold ${message.isError ? 'text-red-500' : 'text-green-500'}`}>{message.text}</p>}
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={closeModals} className="flex-1 py-3 border border-gray-300 rounded-xl font-semibold">Annuler</button>
+                <button type="submit" disabled={loading} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-semibold shadow-lg">Créer</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
-      {/* Tableau existant avec colonne Actions */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200 rounded shadow">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profil</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Création</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Activation</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Désactivation</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Autorisations</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilisateurs</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {profiles.map((profile: Profile) => (
-              <tr key={profile.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{profile.profil}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {new Date(profile.dateCreation).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {profile.dateActivation ? new Date(profile.dateActivation).toLocaleDateString() : 'N/A'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {profile.dateDesactivation ? new Date(profile.dateDesactivation).toLocaleDateString() : 'N/A'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <span className={`px-2 py-1 rounded text-xs ${profile.status === 'ACTIF' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {profile.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <ul className="list-disc list-inside space-y-1 max-h-20 overflow-y-auto">
-                    {(profile.autorisations || []).map((aut) => (
-                      <li key={aut.id} className="text-sm text-gray-700">
-                        {aut.nom} {aut.privilege ? `(${aut.privilege.privilege}: ${aut.privilege.fonctionnalite})` : '(N/A)'}
-                      </li>
-                    ))}
-                  </ul>
-                </td>
-                <td className="px-6 py-4">
-                  <ul className="list-disc list-inside space-y-1 max-h-20 overflow-y-auto">
-                    {(profile.users || []).map((user) => (
-                      <li key={user.id} className="text-sm text-gray-700">
-                        {user.prenom} {user.nom} {user.email ? `(${user.email})` : '(N/A)'}
-                      </li>
-                    ))}
-                  </ul>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 space-x-2">
-                  {profile.status != 'ACTIF' && (
-                    <button
-                      onClick={() => handleActivate(profile.id)}
-                      disabled={loading}
-                      className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 disabled:opacity-50"
-                    >
-                      Activer
-                    </button>
-                  )}
-                  {profile.status != 'INACTIF' && (
-                    <button
-                      onClick={() => handleDeactivate(profile.id)}
-                      disabled={loading}
-                      className="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600 disabled:opacity-50"
-                    >
-                      Désactiver
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleDelete(profile.id)}
-                    disabled={loading}
-                    className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 disabled:opacity-50"
-                  >
-                    Supprimer
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* --- MODAL AJOUT AUTORISATION --- */}
+      {activeModal === 'auth' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
+            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="text-xl font-bold text-gray-800">Ajouter une Autorisation</h3>
+              <button onClick={closeModals} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <form onSubmit={handleSubmitAddAuth} className="p-6 space-y-4">
+              <select value={selectedProfileIdAdd} onChange={(e) => setSelectedProfileIdAdd(e.target.value)} className="w-full p-3 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-amber-500" required>
+                <option value="">Sélectionner un profil</option>
+                {profiles.map(p => <option key={p.id} value={p.id}>{p.profil}</option>)}
+              </select>
+              <select value={selectedAutorisationIdAdd} onChange={(e) => setSelectedAutorisationIdAdd(e.target.value)} className="w-full p-3 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-amber-500" required>
+                <option value="">Sélectionner une autorisation</option>
+                {autorisations.map(a => <option key={a.id} value={a.id}>{a.nom}</option>)}
+              </select>
+              {message.text && <p className={`text-center text-sm font-bold ${message.isError ? 'text-red-500' : 'text-green-500'}`}>{message.text}</p>}
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={closeModals} className="flex-1 py-3 border border-gray-300 rounded-xl font-semibold">Annuler</button>
+                <button type="submit" disabled={loading} className="flex-1 py-3 bg-amber-600 text-white rounded-xl font-semibold shadow-lg">Confirmer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default Profile;
+export default ProfileComponent;

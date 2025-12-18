@@ -1,328 +1,196 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { createUser, fetchUsers, assignProfileToUser, activateUser, deactivateUser, deleteUser } from '../../app/usersSlice'; // Ajout assignProfileToUser
+import { createUser, fetchUsers, assignProfileToUser, activateUser, deactivateUser, deleteUser } from '../../app/usersSlice';
 import type { RootState, AppDispatch } from '../../app/store';
 import type { User } from '../../app/usersSlice';
-import type { Profile } from '../../app/profilesSlice'; // Pour select
+// import type { Profile } from '../../app/profilesSlice';
 
-// Custom hook pour dispatch typé
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const Utilisateur = () => {
   const dispatch = useAppDispatch();
   const { data: users, loading, error: globalError } = useSelector((state: RootState) => state.users);
   const { data: profiles } = useSelector((state: RootState) => state.profiles);
-  const { token } = useSelector((state: RootState) => state.auth);
+  // const { token } = useSelector((state: RootState) => state.auth);
 
-  // États pour form création
+  // État pour gérer quelle modal est ouverte
+  const [activeModal, setActiveModal] = useState<'none' | 'create' | 'assign'>('none');
+
+  // États formulaires
   const [email, setEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
   const [pseudo, setPseudo] = useState('');
   const [departement, setDepartement] = useState('');
-  const [submitError, setSubmitError] = useState('');
-  const [submitSuccess, setSubmitSuccess] = useState('');
-
-  // États pour form assignation
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedProfileId, setSelectedProfileId] = useState('');
-  const [assignError, setAssignError] = useState('');
-  const [assignSuccess, setAssignSuccess] = useState('');
+  
+  const [message, setMessage] = useState({ text: '', isError: false });
 
-  // Nouveaux états pour messages actions (globaux)
-  const [actionMessage, setActionMessage] = useState('');
-  const [isActionSuccess, setIsActionSuccess] = useState(false);
+  const closeModals = () => {
+    setActiveModal('none');
+    setMessage({ text: '', isError: false });
+  };
 
   const handleSubmitCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !motDePasse || !nom || !prenom || !pseudo || !departement) {
-      setSubmitError('Tous les champs sont requis');
-      return;
-    }
-    if (!token) {
-      setSubmitError('Token manquant – reconnectez-vous');
-      return;
-    }
-    setSubmitError('');
-    setSubmitSuccess('');
     const result = await dispatch(createUser({ email, motDePasse, nom, prenom, pseudo, departement }));
     if (createUser.fulfilled.match(result)) {
-      setSubmitSuccess('Utilisateur créé avec succès !');
-      setEmail(''); setMotDePasse(''); setNom(''); setPrenom(''); setPseudo(''); setDepartement('');
-      // Re-fetch pour rafraîchir la liste depuis le serveur
-      dispatch(fetchUsers());
+      setMessage({ text: 'Utilisateur créé !', isError: false });
+      setTimeout(() => {
+        setEmail(''); setMotDePasse(''); setNom(''); setPrenom(''); setPseudo(''); setDepartement('');
+        dispatch(fetchUsers());
+        closeModals();
+      }, 1500);
     } else {
-      setSubmitError('Erreur lors de la création');
+      setMessage({ text: 'Erreur de création', isError: true });
     }
   };
 
   const handleSubmitAssign = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedUserId || !selectedProfileId) {
-      setAssignError('Sélectionnez un utilisateur et un profil');
-      return;
-    }
-    if (!token) {
-      setAssignError('Token manquant – reconnectez-vous');
-      return;
-    }
-    setAssignError('');
-    setAssignSuccess('');
     const result = await dispatch(assignProfileToUser({ userId: selectedUserId, profileId: selectedProfileId }));
     if (assignProfileToUser.fulfilled.match(result)) {
-      setAssignSuccess('Profil assigné avec succès !');
-      setSelectedUserId('');
-      setSelectedProfileId('');
-      // Re-fetch auto géré dans le thunk, mais on peut en ajouter un si besoin
+      setMessage({ text: 'Profil assigné !', isError: false });
+      setTimeout(() => {
+        setSelectedUserId(''); setSelectedProfileId('');
+        closeModals();
+      }, 1500);
     } else {
-      setAssignError('Erreur lors de l\'assignation');
+      setMessage({ text: 'Erreur d\'assignation', isError: true });
     }
   };
-
-  // Nouvelles handlers pour actions
-  const handleActivate = async (userId: string) => {
-    if (!token) {
-      setActionMessage('Token manquant');
-      setIsActionSuccess(false);
-      return;
-    }
-    const result = await dispatch(activateUser({ userId }));
-    if (activateUser.fulfilled.match(result)) {
-      setActionMessage('Utilisateur activé !');
-      setIsActionSuccess(true);
-    } else {
-      setActionMessage('Erreur lors de l\'activation');
-      setIsActionSuccess(false);
-    }
-  };
-
-  const handleDeactivate = async (userId: string) => {
-    if (!token) {
-      setActionMessage('Token manquant');
-      setIsActionSuccess(false);
-      return;
-    }
-    const result = await dispatch(deactivateUser({ userId }));
-    if (deactivateUser.fulfilled.match(result)) {
-      setActionMessage('Utilisateur désactivé !');
-      setIsActionSuccess(true);
-    } else {
-      setActionMessage('Erreur lors de la désactivation');
-      setIsActionSuccess(false);
-    }
-  };
-
-  const handleDelete = async (userId: string) => {
-    if (!window.confirm('Confirmer la suppression de cet utilisateur ?')) return;
-    if (!token) {
-      setActionMessage('Token manquant');
-      setIsActionSuccess(false);
-      return;
-    }
-    const result = await dispatch(deleteUser({ userId }));
-    if (deleteUser.fulfilled.match(result)) {
-      setActionMessage('Utilisateur supprimé !');
-      setIsActionSuccess(true);
-    } else {
-      setActionMessage('Erreur lors de la suppression');
-      setIsActionSuccess(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="p-6">
-        <h2 className="text-xl font-bold mb-4">Paramétrage Utilisateur</h2>
-        <p>Chargement des utilisateurs...</p>
-      </div>
-    );
-  }
-
-  if (globalError) {
-    return (
-      <div className="p-6">
-        <h2 className="text-xl font-bold mb-4">Paramétrage Utilisateur</h2>
-        <p className="text-red-500">Erreur: {globalError}</p>
-      </div>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <div className="p-6">
-        <h2 className="text-xl font-bold mb-4">Paramétrage Utilisateur</h2>
-        <p>Aucun utilisateur trouvé.</p>
-      </div>
-    );
-  }
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Paramétrage Utilisateur</h2>
-
-      {/* Formulaire de création */}
-      <form onSubmit={handleSubmitCreate} className="mb-6 p-4 bg-gray-50 rounded shadow">
-        <h3 className="text-lg font-semibold mb-3">Ajouter un nouvel utilisateur</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="p-2 border rounded" required />
-          <input type="password" placeholder="Mot de passe" value={motDePasse} onChange={(e) => setMotDePasse(e.target.value)} className="p-2 border rounded" required />
-          <input type="text" placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} className="p-2 border rounded" required />
-          <input type="text" placeholder="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} className="p-2 border rounded" required />
-          <input type="text" placeholder="Pseudo" value={pseudo} onChange={(e) => setPseudo(e.target.value)} className="p-2 border rounded" required />
-          <input type="text" placeholder="Département (ex: IT)" value={departement} onChange={(e) => setDepartement(e.target.value)} className="p-2 border rounded" required />
-        </div>
-        <button type="submit" disabled={loading} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50">
-          {loading ? 'Création...' : 'Créer'}
-        </button>
-        {submitError && <p className="text-red-500 mt-2">{submitError}</p>}
-        {submitSuccess && <p className="text-green-500 mt-2">{submitSuccess}</p>}
-      </form>
-
-      {/* Nouveau formulaire d'assignation de profil */}
-      <form onSubmit={handleSubmitAssign} className="mb-6 p-4 bg-blue-50 rounded shadow">
-        <h3 className="text-lg font-semibold mb-3">Assigner un profil à un utilisateur</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <select
-            value={selectedUserId}
-            onChange={(e) => setSelectedUserId(e.target.value)}
-            className="p-2 border rounded"
-            required
+    <div className="p-8 max-w-[1600px] mx-auto">
+      {/* HEADER AVEC BOUTONS À DROITE */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <h2 className="text-2xl font-bold text-gray-800">Paramétrage Utilisateur</h2>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setActiveModal('assign')}
+            className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
           >
-            <option value="">Sélectionner un utilisateur</option>
-            {users.map((u: User) => (
-              <option key={u.id} value={u.id}>{u.prenom} {u.nom} ({u.email})</option>
-            ))}
-          </select>
-          <select
-            value={selectedProfileId}
-            onChange={(e) => setSelectedProfileId(e.target.value)}
-            className="p-2 border rounded"
-            required
+            🔑 Assigner Profil
+          </button>
+          <button 
+            onClick={() => setActiveModal('create')}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
           >
-            <option value="">Sélectionner un profil</option>
-            {profiles.map((p: Profile) => (
-              <option key={p.id} value={p.id}>{p.profil} ({p.status})</option>
-            ))}
-          </select>
+            + Nouvel Utilisateur
+          </button>
         </div>
-        <button type="submit" disabled={loading} className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50">
-          {loading ? 'Assignation...' : 'Assigner'}
-        </button>
-        {assignError && <p className="text-red-500 mt-2">{assignError}</p>}
-        {assignSuccess && <p className="text-green-500 mt-2">{assignSuccess}</p>}
-      </form>
+      </div>
 
-      {/* Liste des profils (référence) */}
-      <section className="mb-6">
-        <h3 className="text-lg font-semibold mb-2">Profils disponibles</h3>
-        {profiles.length === 0 ? (
-          <p>Aucun profil.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border rounded shadow">
-              <thead className="bg-gray-50">
-                <tr>
-                  {/* <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">ID</th> */}
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Profil</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Status</th>
+      {globalError && <div className="p-4 mb-4 bg-red-50 text-red-600 rounded-lg">{globalError}</div>}
+
+      {/* TABLEAU DES UTILISATEURS */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Identité / Email</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Département</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Profil</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {users.map((user: User) => (
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-bold text-gray-900">{user.prenom} {user.nom}</div>
+                    <div className="text-xs text-gray-500">{user.email} ({user.pseudo})</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{user.departement}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                      user.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm">
+                    {user.profile ? (
+                      <span className="text-indigo-600 font-medium">{user.profile.profil}</span>
+                    ) : (
+                      <span className="text-gray-400 italic">Non assigné</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 space-x-2">
+                    {user.status !== 'ACTIF' && (
+                      <button onClick={() => dispatch(activateUser({ userId: user.id }))} className="text-green-600 hover:underline text-xs font-bold">Activer</button>
+                    )}
+                    {user.status !== 'INACTIF' && (
+                      <button onClick={() => dispatch(deactivateUser({ userId: user.id }))} className="text-yellow-600 hover:underline text-xs font-bold">Désactiver</button>
+                    )}
+                    <button onClick={() => window.confirm('Supprimer ?') && dispatch(deleteUser({ userId: user.id }))} className="text-red-500 hover:underline text-xs font-bold pl-2 border-l border-gray-200">Supprimer</button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {profiles.map((p: Profile) => (
-                  <tr key={p.id} className="border-t">
-                    {/* <td className="px-4 py-2 text-sm">{p.id}</td> */}
-                    <td className="px-4 py-2 text-sm">{p.profil}</td>
-                    <td className="px-4 py-2 text-sm">{p.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      {/* Message d'action global (nouveau) */}
-      {actionMessage && (
-        <div className={`mb-4 p-4 rounded ${isActionSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-          {actionMessage}
-          <button onClick={() => setActionMessage('')} className="ml-2 text-sm underline">Fermer</button>
+      {/* --- MODAL DE CRÉATION --- */}
+      {activeModal === 'create' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-200">
+            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="text-xl font-bold text-gray-800">Ajouter un utilisateur</h3>
+              <button onClick={closeModals} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <form onSubmit={handleSubmitCreate} className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" placeholder="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} className="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" required />
+                <input type="text" placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} className="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" required />
+                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" required />
+                <input type="password" placeholder="Mot de passe" value={motDePasse} onChange={(e) => setMotDePasse(e.target.value)} className="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" required />
+                <input type="text" placeholder="Pseudo" value={pseudo} onChange={(e) => setPseudo(e.target.value)} className="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" required />
+                <input type="text" placeholder="Département" value={departement} onChange={(e) => setDepartement(e.target.value)} className="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" required />
+              </div>
+              {message.text && <p className={`mt-4 text-center text-sm font-bold ${message.isError ? 'text-red-500' : 'text-green-500'}`}>{message.text}</p>}
+              <div className="flex gap-3 mt-8">
+                <button type="button" onClick={closeModals} className="flex-1 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 font-semibold transition-colors">Annuler</button>
+                <button type="submit" disabled={loading} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold transition-colors shadow-lg disabled:opacity-50">
+                  {loading ? 'Création...' : 'Créer utilisateur'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
-      {/* Tableau avec colonne Actions (nouveau) */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200 rounded shadow">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prénom</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pseudo</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Département</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profil</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Création</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Activation</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Désactivation</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th> {/* Nouveau */}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user: User) => (
-              <tr key={user.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.nom}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.prenom}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.pseudo}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.departement}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <span className={`px-2 py-1 rounded text-xs ${user.status === 'ACTIF' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {user.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900">{user.profile ? user.profile.profil : 'N/A'}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {new Date(user.dateCreation).toLocaleDateString()}
-                </td>
-                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {user.dateActivation ? new Date(user.dateActivation).toLocaleDateString() : 'N/A'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {user.dateDesactivation ? new Date(user.dateDesactivation).toLocaleDateString() : 'N/A'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 space-x-2">
-                  {user.status != 'ACTIF' && (
-                    <button
-                      onClick={() => handleActivate(user.id)}
-                      disabled={loading}
-                      className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 disabled:opacity-50"
-                    >
-                      Activer
-                    </button>
-                  )}
-                  {user.status != 'INACTIF' && (
-                    <button
-                      onClick={() => handleDeactivate(user.id)}
-                      disabled={loading}
-                      className="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600 disabled:opacity-50"
-                    >
-                      Désactiver
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    disabled={loading}
-                    className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 disabled:opacity-50"
-                  >
-                    Supprimer
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* --- MODAL D'ASSIGNATION --- */}
+      {activeModal === 'assign' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
+            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="text-xl font-bold text-gray-800">Assigner un Profil</h3>
+              <button onClick={closeModals} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <form onSubmit={handleSubmitAssign} className="p-6 space-y-5">
+              <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} className="w-full p-3 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-emerald-500" required>
+                <option value="">Sélectionner un utilisateur</option>
+                {users.map(u => <option key={u.id} value={u.id}>{u.prenom} {u.nom} ({u.email})</option>)}
+              </select>
+              <select value={selectedProfileId} onChange={(e) => setSelectedProfileId(e.target.value)} className="w-full p-3 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-emerald-500" required>
+                <option value="">Sélectionner un profil</option>
+                {profiles.map(p => <option key={p.id} value={p.id}>{p.profil}</option>)}
+              </select>
+              {message.text && <p className={`text-center text-sm font-bold ${message.isError ? 'text-red-500' : 'text-green-500'}`}>{message.text}</p>}
+              <div className="flex gap-3 mt-4">
+                <button type="button" onClick={closeModals} className="flex-1 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 font-semibold">Annuler</button>
+                <button type="submit" disabled={loading} className="flex-1 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-semibold shadow-lg">Confirmer l'assignation</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
