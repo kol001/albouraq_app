@@ -7,17 +7,33 @@ export interface TransactionType {
   event: string;
   executionMode: string;
   status: string;
+  dateActivation: string;
+  dateDesactivation: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Module {
+  id: string;
+  code: string;
+  nom: string;
+  description: string;
+  status: string;
+  dateActivation: string | null;
+  dateDesactivation: string;
 }
 
 export interface Transaction {
   id: string;
-  transactionId: string; // l'ID du type de transaction
+  moduleId: string;
+  transactionId: string;
   dateApplication: string;
   status: string;
   dateActivation: string;
   dateDesactivation: string | null;
   createdAt: string;
   updatedAt: string;
+  module: Module;
   transactiontype: TransactionType;
 }
 
@@ -42,11 +58,9 @@ export const fetchTransactions = createAsyncThunk<
   try {
     const { auth } = getState();
     if (!auth.token) return rejectWithValue('Token manquant');
-
     const response = await axiosInstance.get('/transactions', {
       headers: { Authorization: `Bearer ${auth.token}` },
     });
-
     if (response.data.success) {
       return { success: true, data: response.data.data };
     }
@@ -59,20 +73,18 @@ export const fetchTransactions = createAsyncThunk<
 // Créer une transaction
 export const createTransaction = createAsyncThunk<
   { success: boolean; data: Transaction },
-  { transactionId: string; dateApplication: string; status?: string },
+  { moduleId: string; transactionId: string; dateApplication: string; status?: string },
   { state: { auth: { token: string } } }
 >('transactions/createTransaction', async (payload, { getState, rejectWithValue, dispatch }) => {
   try {
     const { auth } = getState();
     if (!auth.token) return rejectWithValue('Token manquant');
-
     const response = await axiosInstance.post('/transactions', payload, {
       headers: {
         Authorization: `Bearer ${auth.token}`,
         'Content-Type': 'application/json',
       },
     });
-
     if (response.data.success) {
       dispatch(fetchTransactions()); // Re-fetch pour cohérence
       return { success: true, data: response.data.data };
@@ -86,14 +98,15 @@ export const createTransaction = createAsyncThunk<
 // Update (modification)
 export const updateTransaction = createAsyncThunk<
   { success: boolean; data: Transaction },
-  { id: string; dateApplication: string; status?: string },
+  { id: string; moduleId: string; transactionId: string; dateApplication: string; status?: string },
   { state: { auth: { token: string } } }
 >('transactions/updateTransaction', async (payload, { getState, rejectWithValue, dispatch }) => {
   try {
     const { auth } = getState();
     if (!auth.token) return rejectWithValue('Token manquant');
-
     const response = await axiosInstance.put(`/transactions/${payload.id}`, {
+      moduleId: payload.moduleId,
+      transactionId: payload.transactionId,
       dateApplication: payload.dateApplication,
       status: payload.status,
     }, {
@@ -102,7 +115,6 @@ export const updateTransaction = createAsyncThunk<
         'Content-Type': 'application/json',
       },
     });
-
     if (response.data.success) {
       dispatch(fetchTransactions());
       return { success: true, data: response.data.data };
@@ -122,11 +134,9 @@ export const activateTransaction = createAsyncThunk<
   try {
     const { auth } = getState();
     if (!auth.token) return rejectWithValue('Token manquant');
-
     const response = await axiosInstance.patch(`/transactions/${payload.id}/activate`, {}, {
       headers: { Authorization: `Bearer ${auth.token}` },
     });
-
     if (response.data.success) {
       dispatch(fetchTransactions());
       return { success: true, data: response.data.data };
@@ -146,11 +156,9 @@ export const deactivateTransaction = createAsyncThunk<
   try {
     const { auth } = getState();
     if (!auth.token) return rejectWithValue('Token manquant');
-
     const response = await axiosInstance.patch(`/transactions/${payload.id}/deactivate`, {}, {
       headers: { Authorization: `Bearer ${auth.token}` },
     });
-
     if (response.data.success) {
       dispatch(fetchTransactions());
       return { success: true, data: response.data.data };
@@ -170,11 +178,9 @@ export const deleteTransaction = createAsyncThunk<
   try {
     const { auth } = getState();
     if (!auth.token) return rejectWithValue('Token manquant');
-
     const response = await axiosInstance.delete(`/transactions/${payload.id}`, {
       headers: { Authorization: `Bearer ${auth.token}` },
     });
-
     if (response.data.success) {
       dispatch(fetchTransactions());
       return { success: true, data: payload.id };
@@ -215,26 +221,23 @@ const transactionsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-            // Update
+      // Update
       .addCase(updateTransaction.pending, (state) => { state.loading = true; })
       .addCase(updateTransaction.fulfilled, (state) => { state.loading = false; })
       .addCase(updateTransaction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
-
-      // Activate / Deactivate / Delete (similaire aux autres)
+      // Activate / Deactivate / Delete
       .addCase(activateTransaction.pending, (state) => { state.loading = true; })
       .addCase(activateTransaction.fulfilled, (state) => { state.loading = false; })
       .addCase(activateTransaction.rejected, (state, action) => { state.loading = false; state.error = action.payload as string; })
-
       .addCase(deactivateTransaction.pending, (state) => { state.loading = true; })
       .addCase(deactivateTransaction.fulfilled, (state) => { state.loading = false; })
       .addCase(deactivateTransaction.rejected, (state, action) => { state.loading = false; state.error = action.payload as string; })
-
       .addCase(deleteTransaction.pending, (state) => { state.loading = true; })
       .addCase(deleteTransaction.fulfilled, (state) => { state.loading = false; })
-      .addCase(deleteTransaction.rejected, (state, action) => { state.loading = false; state.error = action.payload as string; })
+      .addCase(deleteTransaction.rejected, (state, action) => { state.loading = false; state.error = action.payload as string; });
   },
 });
 

@@ -11,7 +11,9 @@ import usersReducer from './usersSlice';
 import transactionTypesReducer from './transactionTypesSlice';
 import transactionsReducer from './transactionsSlice';
 import modulesReducer from './modulesSlice';
-
+import modelesReducer from './modelesSlice';
+import commissionsReducer from './commissionsSlice';
+import numerotationReducer from './numerotationSlice';
 
 import {
   FLUSH,
@@ -31,6 +33,9 @@ const appReducer = combineReducers({
   transactionTypes: transactionTypesReducer,
   transactions: transactionsReducer,
   modules: modulesReducer,
+  modeles: modelesReducer,
+  commissions: commissionsReducer,
+  numerotation: numerotationReducer,
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

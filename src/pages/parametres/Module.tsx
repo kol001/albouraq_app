@@ -10,6 +10,7 @@ import {
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Module } from '../../app/modulesSlice';
 import { FiPackage, FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLayers } from 'react-icons/fi';
+import AuditModal from '../../components/AuditModal';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
@@ -21,6 +22,10 @@ const ModulePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [message, setMessage] = useState({ text: '', isError: false });
+
+  // État pour la modale d'audit
+  const [auditEntityId, setAuditEntityId] = useState<string | null>(null);
+  const [auditEntityName, setAuditEntityName] = useState('');
 
   // Form States
   const [code, setCode] = useState('');
@@ -67,6 +72,16 @@ const ModulePage = () => {
 
   const showFeedback = (txt: string, isErr = false) => {
     setMessage({ text: txt, isError: isErr });
+  };
+
+  const openAudit = (module: Module) => {
+    setAuditEntityId(module.id);
+    setAuditEntityName(module.nom);
+  };
+
+  const closeAudit = () => {
+    setAuditEntityId(null);
+    setAuditEntityName('');
   };
 
   return (
@@ -133,18 +148,24 @@ const ModulePage = () => {
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-1">
-                    <button onClick={() => openEdit(mod)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                    <button onClick={() => openEdit(mod)} className=" text-xs p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
                       {/* <FiEdit3 size={16} /> */}
                       Modifier
                     </button>
                     <button 
                       onClick={() => mod.status === 'ACTIF' ? dispatch(deactivateModule({id: mod.id})) : dispatch(activateModule({id: mod.id}))}
-                      className={` rounded-lg transition-all ${mod.status === 'ACTIF' ? 'text-amber-400 hover:bg-amber-50 hover:text-amber-600' : 'text-green-400 hover:bg-green-50 hover:text-green-600'}`}
+                      className={` rounded-lg transition-all ${mod.status === 'ACTIF' ? 'text-amber-400 text-xs hover:bg-amber-50 hover:text-amber-600' : 'text-green-400 text-xs hover:bg-green-50 hover:text-green-600'}`}
                     >
                       {/* <FiPower size={16} /> */}
                       {mod.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
                     </button>
-                    <button onClick={() => window.confirm('Supprimer ce module ?') && dispatch(deleteModule({id: mod.id}))} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                    <button
+                      onClick={() => openAudit(mod)}
+                      className="text-purple-600 hover:text-purple-800 text-xs font-bold"
+                    >
+                      Historique
+                    </button>
+                    <button onClick={() => window.confirm('Supprimer ce module ?') && dispatch(deleteModule({id: mod.id}))} className="p-2 text-gray-400 text-xs hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
                       Supprimer
                     </button>
                   </div>
@@ -222,6 +243,14 @@ const ModulePage = () => {
           </div>
         </div>
       )}
+
+      <AuditModal
+        entity="MODULE"
+        entityId={auditEntityId}
+        entityName={auditEntityName}
+        isOpen={!!auditEntityId}
+        onClose={closeAudit}
+      />
     </div>
   );
 };

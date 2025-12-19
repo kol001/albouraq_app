@@ -88,20 +88,57 @@ export const createProfile = createAsyncThunk<
         return rejectWithValue('Token manquant');
       }
 
-      const response = await axiosInstance.post('/profiles', payload, {
+      const response = await axiosInstance.post('/profiles', {
+        ...payload,
+        autorisationIds: [],
+      }, {
         headers: {
           Authorization: `Bearer ${auth.token}`,
         },
       });
 
       // La réponse est nested : response.data.data.success et response.data.data.data
-      if (response.data.success && response.data.data.success) {
-        return { success: true, data: response.data.data.data };
+      if (response.data.success ) {
+        return { success: true, data: response.data.data };
       } else {
         return rejectWithValue('Échec de la création du profil');
       }
     } catch (error: any) {
       console.error('Erreur create profile:', error);
+      return rejectWithValue(error.response?.message || 'Erreur réseau');
+    }
+  }
+);
+
+// Async thunk pour modifier un profil (seulement le nom)
+export const updateProfile = createAsyncThunk<
+  { success: boolean; data: Profile },
+  { id: string; profil: string },
+  { state: { auth: { token: string } } }
+>(
+  'profiles/updateProfile',
+  async (payload, { getState, rejectWithValue, dispatch }) => {
+    try {
+      const { auth } = getState();
+      if (!auth.token) {
+        return rejectWithValue('Token manquant');
+      }
+      const response = await axiosInstance.patch(`/profiles/${payload.id}`, {
+        profil: payload.profil,
+      }, {
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.data.success) {
+        dispatch(fetchProfiles()); // Re-fetch pour cohérence
+        return { success: true, data: response.data.data };
+      } else {
+        return rejectWithValue('Échec de la modification');
+      }
+    } catch (error: any) {
+      console.error('Erreur update profile:', error);
       return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
     }
   }
@@ -129,8 +166,8 @@ export const activateProfile = createAsyncThunk<
       });
 
       let updatedProfile: Profile;
-      if (response.data.data && response.data.data.success) {
-        updatedProfile = response.data.data.data;
+      if (response.data.data ) {
+        updatedProfile = response.data.data;
       } else if (response.data.success) {
         updatedProfile = response.data.data;
       } else {
@@ -143,7 +180,7 @@ export const activateProfile = createAsyncThunk<
       return { success: true, data: updatedProfile };
     } catch (error: any) {
       console.error('Erreur activate profile:', error);
-      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+      return rejectWithValue(error.response?.message || 'Erreur réseau');
     }
   }
 );
@@ -170,8 +207,8 @@ export const deactivateProfile = createAsyncThunk<
       });
 
       let updatedProfile: Profile;
-      if (response.data.data && response.data.data.success) {
-        updatedProfile = response.data.data.data;
+      if (response.data.data) {
+        updatedProfile = response.data.data;
       } else if (response.data.success) {
         updatedProfile = response.data.data;
       } else {
@@ -184,7 +221,7 @@ export const deactivateProfile = createAsyncThunk<
       return { success: true, data: updatedProfile };
     } catch (error: any) {
       console.error('Erreur deactivate profile:', error);
-      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+      return rejectWithValue(error.response?.message || 'Erreur réseau');
     }
   }
 );
@@ -218,7 +255,7 @@ export const deleteProfile = createAsyncThunk<
       }
     } catch (error: any) {
       console.error('Erreur delete profile:', error);
-      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+      return rejectWithValue(error.response?.message || 'Erreur réseau');
     }
   }
 );
@@ -245,8 +282,8 @@ export const addAutorisationToProfile = createAsyncThunk<
       });
 
       let updatedProfile: Profile;
-      if (response.data.data && response.data.data.success) {
-        updatedProfile = response.data.data.data;
+      if (response.data.data ) {
+        updatedProfile = response.data.data;
       } else if (response.data.success) {
         updatedProfile = response.data.data;
       } else {
@@ -259,7 +296,7 @@ export const addAutorisationToProfile = createAsyncThunk<
       return { success: true, data: updatedProfile };
     } catch (error: any) {
       console.error('Erreur add autorisation to profile:', error);
-      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+      return rejectWithValue(error.response?.message || 'Erreur réseau');
     }
   }
 );
@@ -286,8 +323,8 @@ export const removeAutorisationFromProfile = createAsyncThunk<
       });
 
       let updatedProfile: Profile;
-      if (response.data.data && response.data.data.success) {
-        updatedProfile = response.data.data.data;
+      if (response.data.data ) {
+        updatedProfile = response.data.data;
       } else if (response.data.success) {
         updatedProfile = response.data.data;
       } else {
@@ -300,7 +337,7 @@ export const removeAutorisationFromProfile = createAsyncThunk<
       return { success: true, data: updatedProfile };
     } catch (error: any) {
       console.error('Erreur remove autorisation from profile:', error);
-      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+      return rejectWithValue(error.response?.message || 'Erreur réseau');
     }
   }
 );
@@ -429,6 +466,23 @@ const profilesSlice = createSlice({
         }
       })
       .addCase(removeAutorisationFromProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(updateProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action: PayloadAction<{ success: boolean; data: Profile }>) => {
+        state.loading = false;
+        if (action.payload.success) {
+          const index = state.data.findIndex(p => p.id === action.payload.data.id);
+          if (index !== -1) {
+            state.data[index] = action.payload.data;
+          }
+        }
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

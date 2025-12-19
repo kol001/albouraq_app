@@ -4,11 +4,11 @@ import {
   FiShield,
   FiSettings,
   FiFileText,
-  // FiDollarSign,
-  // FiHash,
+  FiDollarSign,
+  FiHash,
   FiLayers,
   FiRepeat,
-  // FiTag,
+  FiTag,
   // FiBox,
   // FiCreditCard,
   // FiBriefcase,
@@ -30,13 +30,12 @@ export const PARAMETRES: ParametreItem[] = [
 
   { label: "Paramétrage Type Transaction", path: "type-transaction", icon: FiRepeat },
   { label: "Paramétrage Transaction", path: "transaction", icon: FiFileText },
-  // { label: "Paramétrage Commission", path: "commission", icon: FiDollarSign },
-
-  // { label: "Paramétrage Commission", path: "commission", icon: FiDollarSign },
+  
   { label: "Paramétrage Module", path: "module", icon: FiLayers },
-  // { label: "Paramétrage Numérotation", path: "numerotation", icon: FiHash },
-
-  // { label: "Paramétrage Miles", path: "miles", icon: FiTag },
+  { label: "Paramétrage Commission", path: "commission", icon: FiDollarSign },
+  { label: "Paramétrage Numérotation", path: "numerotation", icon: FiHash },
+  { label: "Paramétrage Modele", path: "modele", icon: FiLayers },
+  { label: "Paramétrage Miles", path: "miles", icon: FiTag },
   // { label: "Paramétrage Pièces", path: "pieces", icon: FiBox },
 
   // { label: "Paramétrage Devise Transaction", path: "devise-transaction", icon: FiCreditCard },

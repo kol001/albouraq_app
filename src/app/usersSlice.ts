@@ -107,6 +107,44 @@ export const createUser = createAsyncThunk<
   }
 );
 
+export const updateUser = createAsyncThunk<
+  { success: boolean; data: User },
+  { id: string; email: string; nom: string; prenom: string; pseudo: string; departement: string; status: string },
+  { state: { auth: { token: string } } }
+>(
+  'users/updateUser',
+  async (payload, { getState, rejectWithValue, dispatch }) => {
+    try {
+      const { auth } = getState();
+      if (!auth.token) {
+        return rejectWithValue('Token manquant');
+      }
+      const response = await axiosInstance.patch(`/users/${payload.id}`, {
+        email: payload.email,
+        nom: payload.nom,
+        prenom: payload.prenom,
+        pseudo: payload.pseudo,
+        departement: payload.departement,
+        status: payload.status,
+      }, {
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.data.success) {
+        dispatch(fetchUsers()); // Re-fetch pour cohérence
+        return { success: true, data: response.data.data };
+      } else {
+        return rejectWithValue('Échec de la modification');
+      }
+    } catch (error: any) {
+      console.error('Erreur update user:', error);
+      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+    }
+  }
+);
+
 // Async thunk pour assigner un profil à un utilisateur
 export const assignProfileToUser = createAsyncThunk<
   { success: boolean; data: User }, // Return type (updated user)
@@ -372,6 +410,23 @@ const usersSlice = createSlice({
         }
       })
       .addCase(deleteUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(updateUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateUser.fulfilled, (state, action: PayloadAction<{ success: boolean; data: User }>) => {
+        state.loading = false;
+        if (action.payload.success) {
+          const index = state.data.findIndex(u => u.id === action.payload.data.id);
+          if (index !== -1) {
+            state.data[index] = action.payload.data;
+          }
+        }
+      })
+      .addCase(updateUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

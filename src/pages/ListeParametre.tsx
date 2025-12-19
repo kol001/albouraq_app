@@ -8,6 +8,9 @@ import { fetchUsers } from '../app/usersSlice';
 import { fetchTransactionTypes } from '../app/transactionTypesSlice';
 import { fetchTransactions } from '../app/transactionsSlice';
 import { fetchModules } from '../app/modulesSlice';
+import { fetchModeles} from '../app/modelesSlice';
+import { fetchCommissions } from '../app/commissionsSlice';
+import { fetchDossiers } from '../app/numerotationSlice';
 import { PARAMETRES } from '../constants/parametres';
 import type { RootState, AppDispatch } from '../app/store';
 import { FiRefreshCw, FiChevronRight, FiActivity } from 'react-icons/fi';
@@ -26,6 +29,9 @@ function ListeParametre() {
   const { data: transactionTypes, loading: transactionTypesLoading } = useSelector((state: RootState) => state.transactionTypes);
   const { data: transactions, loading: transactionsLoading } = useSelector((state: RootState) => state.transactions);
   const { data: modules, loading: modulesLoading } = useSelector((state: RootState) => state.modules);
+  const { data: modeles, loading: modelesLoading } = useSelector((state: RootState) => state.modeles);
+  const { data: commission, loading: commissionLoading } = useSelector((state: RootState) => state.commissions);
+  const { data: numerotation, loading: numerotationLoading } = useSelector((state: RootState) => state.numerotation);
   const { token } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
@@ -39,6 +45,9 @@ function ListeParametre() {
       if (transactionTypes.length === 0 && !transactionTypesLoading) dispatch(fetchTransactionTypes());
       if (transactions.length === 0 && !transactionsLoading) dispatch(fetchTransactions());
       if (modules.length === 0 && !modulesLoading) dispatch(fetchModules());
+      if (modeles.length === 0 && !modelesLoading) dispatch(fetchModeles());
+      if (commission.length === 0 && !commissionLoading)dispatch(fetchCommissions());
+      if (numerotation.length === 0 && !numerotationLoading)dispatch(fetchDossiers());
     };
     loadData();
   }, [dispatch, token, navigate]);
@@ -51,24 +60,13 @@ function ListeParametre() {
     dispatch(fetchTransactionTypes());
     dispatch(fetchTransactions());
     dispatch(fetchModules());
-  };
-
-  // Helper pour obtenir le nombre d'éléments selon le path
-  const getCountForPath = (path: string) => {
-    switch (path) {
-      case 'privilege': return privileges.length;
-      case 'profile': return profiles.length;
-      case 'autorisation': return autorisations.length;
-      case 'user': return users.length;
-      case 'type_transaction': return transactionTypes.length;
-      case 'transaction': return transactions.length;
-      case 'module': return modules.length;
-      default: return 0;
-    }
+    dispatch(fetchModeles());
+    dispatch(fetchCommissions());
+    dispatch(fetchDossiers());
   };
 
   const anyLoading = privilegesLoading || profilesLoading || autorisationsLoading || usersLoading || 
-                     transactionTypesLoading || transactionsLoading || modulesLoading;
+                     transactionTypesLoading || transactionsLoading || modulesLoading || modelesLoading || commissionLoading;
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
@@ -96,7 +94,7 @@ function ListeParametre() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {PARAMETRES.map((item) => {
           const Icon = item.icon;
-          const count = getCountForPath(item.path);
+          // const count = getCountForPath(item.path);
           
           return (
             <Link
@@ -108,12 +106,12 @@ function ListeParametre() {
                 <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
                   <Icon size={28} />
                 </div>
-                <div className="text-right font-mono">
+                {/* <div className="text-right font-mono">
                   <span className="block text-2xl font-black text-gray-800 group-hover:text-indigo-600 transition-colors">
                     {count}
                   </span>
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Éléments</span>
-                </div>
+                </div> */}
               </div>
 
               <div className="mt-6">

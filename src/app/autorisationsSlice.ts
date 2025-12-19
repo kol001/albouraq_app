@@ -75,7 +75,7 @@ export const fetchAutorisations = createAsyncThunk<
       }
     } catch (error: any) {
       console.error('Erreur fetch autorisations:', error);
-      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+      return rejectWithValue(error.response?.message || 'Erreur réseau');
     }
   }
 );
@@ -84,7 +84,7 @@ export const fetchAutorisations = createAsyncThunk<
 // Nouveau thunk pour créer une autorisation (réel POST)
 export const createAutorisation = createAsyncThunk<
   { success: boolean; data: Autorisation }, // Return type
-  { nom: string; profileId: string; privilegeId: string }, // Args (moduleId ajouté en dur dans le thunk)
+  { nom: string; moduleId: string; privilegeId: string }, // Args (moduleId ajouté en dur dans le thunk)
   { state: { auth: { token: string } } } // Extra pour token
 >(
   'autorisations/createAutorisation',
@@ -97,7 +97,7 @@ export const createAutorisation = createAsyncThunk<
 
       const response = await axiosInstance.post('/autorisations', {
         ...payload,
-        moduleId: '', // Vide pour l'instant, comme spécifié
+        // moduleId: '', // Vide pour l'instant, comme spécifié
       }, {
         headers: {
           Authorization: `Bearer ${auth.token}`,
@@ -105,15 +105,17 @@ export const createAutorisation = createAsyncThunk<
         },
       });
 
+      console.log('Response:', response.data);
+
       // Gestion réponse nested
-      if (response.data.success && response.data.data.success) {
-        return { success: true, data: response.data.data.data };
+      if (response.data.success) {
+        return { success: true, data: response.data.data};
       } else {
         return rejectWithValue('Échec de la création de l\'autorisation');
       }
     } catch (error: any) {
       console.error('Erreur create autorisation:', error);
-      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+      return rejectWithValue(error.response?.message || 'Erreur réseau');
     }
   }
 );
@@ -141,8 +143,8 @@ export const assignProfileToAutorisation = createAsyncThunk<
 
       // Gestion réponse nested (comme avant)
       let updatedAuth: Autorisation;
-      if (response.data.data && response.data.data.success) {
-        updatedAuth = response.data.data.data;
+      if (response.data.data) {
+        updatedAuth = response.data.data;
       } else if (response.data.success) {
         updatedAuth = response.data.data;
       } else {
@@ -155,6 +157,41 @@ export const assignProfileToAutorisation = createAsyncThunk<
       return { success: true, data: updatedAuth };
     } catch (error: any) {
       console.error('Erreur assign profile to autorisation:', error);
+      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+    }
+  }
+);
+
+export const updateAutorisation = createAsyncThunk<
+  { success: boolean; data: Autorisation },
+  { id: string; nom: string; moduleId: string | null; privilegeId: string | null },
+  { state: { auth: { token: string } } }
+>(
+  'autorisations/updateAutorisation',
+  async (payload, { getState, rejectWithValue, dispatch }) => {
+    try {
+      const { auth } = getState();
+      if (!auth.token) {
+        return rejectWithValue('Token manquant');
+      }
+      const response = await axiosInstance.patch(`/autorisations/${payload.id}`, {
+        nom: payload.nom,
+        moduleId: payload.moduleId,
+        privilegeId: payload.privilegeId,
+      }, {
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.data.success) {
+        dispatch(fetchAutorisations()); // Re-fetch pour cohérence
+        return { success: true, data: response.data.data };
+      } else {
+        return rejectWithValue('Échec de la modification');
+      }
+    } catch (error: any) {
+      console.error('Erreur update autorisation:', error);
       return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
     }
   }
@@ -182,10 +219,10 @@ export const activateAutorisation = createAsyncThunk<
       });
 
       let updatedAuth: Autorisation;
-      if (response.data.data && response.data.data.success) {
-        updatedAuth = response.data.data.data;
-      } else if (response.data.success) {
+      if (response.data.success) {
         updatedAuth = response.data.data;
+      // } else if (response.data.success) {
+      //   updatedAuth = response.data.data;
       } else {
         return rejectWithValue('Échec de l\'activation');
       }
@@ -421,6 +458,23 @@ const autorisationsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+      .addCase(updateAutorisation.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateAutorisation.fulfilled, (state, action: PayloadAction<{ success: boolean; data: Autorisation }>) => {
+        state.loading = false;
+        if (action.payload.success) {
+          const index = state.data.findIndex(a => a.id === action.payload.data.id);
+          if (index !== -1) {
+            state.data[index] = action.payload.data;
+          }
+        }
+      })
+      .addCase(updateAutorisation.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
