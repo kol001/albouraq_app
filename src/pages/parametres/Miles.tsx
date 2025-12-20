@@ -11,13 +11,13 @@ import {
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Mile } from '../../app/milesSlice';
 import { 
-  FiPlus, FiEdit3, FiTrash2, FiPower, 
+  FiPlus,
   FiCheckCircle, FiAlertCircle, FiLoader, FiX, FiLayers 
 } from 'react-icons/fi';
 
 const Miles = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { data: miles, loading, error: globalError } = useSelector((state: RootState) => state.miles);
+  const { data: miles,  error: globalError } = useSelector((state: RootState) => state.miles);
   const { data: modules } = useSelector((state: RootState) => state.modules);
 
   // UI State
