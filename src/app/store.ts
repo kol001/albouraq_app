@@ -14,6 +14,7 @@ import modulesReducer from './modulesSlice';
 import modelesReducer from './modelesSlice';
 import commissionsReducer from './commissionsSlice';
 import numerotationReducer from './numerotationSlice';
+import milesReducer from './milesSlice';
 
 import {
   FLUSH,
@@ -36,6 +37,7 @@ const appReducer = combineReducers({
   modeles: modelesReducer,
   commissions: commissionsReducer,
   numerotation: numerotationReducer,
+  miles: milesReducer,
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

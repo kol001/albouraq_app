@@ -9,339 +9,259 @@ import {
 } from '../../app/commissionsSlice';
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Commission, ModuleRef } from '../../app/commissionsSlice';
+import { FiPlus, FiX, FiLoader, FiPercent, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
-const Commission = () => {
+const CommissionPage = () => {
   const dispatch = useAppDispatch();
   const { data: commissions, loading: commissionsLoading } = useSelector((state: RootState) => state.commissions);
   const { data: modules } = useSelector((state: RootState) => state.modules);
 
-  // Création
-  const [selectedModuleId, setSelectedModuleId] = useState('');
-  const [dateApplication, setDateApplication] = useState(new Date().toISOString().slice(0, 10)); // Date du jour par défaut
-  const [status, setStatus] = useState('ACTIF');
-  const [provenantOdoo, setProvenantOdoo] = useState('OUI');
-  const [librePrixModule, setLibrePrixModule] = useState('NON');
-  const [forfaitUnite, setForfaitUnite] = useState('OUI');
-  const [difPrixClientPrixModule, setDifPrixClientPrixModule] = useState('NON');
-  const [libre, setLibre] = useState('NON');
+  // States UI
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingCommission, setEditingCommission] = useState<Commission | null>(null);
+  const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
-  // Édition
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editModuleId, setEditModuleId] = useState('');
-  const [editDateApplication, setEditDateApplication] = useState('');
-  const [editStatus, setEditStatus] = useState('');
-  const [editProvenantOdoo, setEditProvenantOdoo] = useState('');
-  const [editLibrePrixModule, setEditLibrePrixModule] = useState('');
-  const [editForfaitUnite, setEditForfaitUnite] = useState('');
-  const [editDifPrixClientPrixModule, setEditDifPrixClientPrixModule] = useState('');
-  const [editLibre, setEditLibre] = useState('');
+  // Form State initial
+  const initialState = {
+    moduleId: '',
+    status: 'ACTIF',
+    provenantOdoo: 'OUI',
+    librePrixModule: 'NON',
+    forfaitUnite: 'OUI',
+    difPrixClientPrixModule: 'NON',
+    libre: 'NON',
+    dateApplication: new Date().toISOString().slice(0, 10)
+  };
 
-  const [submitError, setSubmitError] = useState('');
-  const [submitSuccess, setSubmitSuccess] = useState('');
+  const [formData, setFormData] = useState(initialState);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const resetForm = () => {
+    setFormData(initialState);
+    setEditingCommission(null);
+    setMessage(null);
+    setIsModalOpen(false);
+  };
+
+  const handleOpenEdit = (comm: Commission) => {
+    setEditingCommission(comm);
+    setFormData({
+      moduleId: comm.moduleId,
+      status: comm.status,
+      provenantOdoo: comm.provenantOdoo,
+      librePrixModule: comm.librePrixModule,
+      forfaitUnite: comm.forfaitUnite,
+      difPrixClientPrixModule: comm.DifPrixClientPrixModule,
+      libre: comm.libre,
+      dateApplication: comm.dateApplication.slice(0, 10)
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedModuleId) {
-      setSubmitError('Module requis');
-      return;
-    }
-    const result = await dispatch(createCommission({
-      moduleId: selectedModuleId,
-      dateApplication: new Date().toISOString(), // Date réelle de création
-      status,
-      provenantOdoo,
-      librePrixModule,
-      forfaitUnite,
-      DifPrixClientPrixModule: difPrixClientPrixModule,
-      libre,
-    }));
-    if (createCommission.fulfilled.match(result)) {
-      setSubmitSuccess('Commission créée !');
-      setSelectedModuleId('');
-      setDateApplication(new Date().toISOString().slice(0, 10));
-      setStatus('ACTIF');
-      setProvenantOdoo('OUI');
-      setLibrePrixModule('NON');
-      setForfaitUnite('OUI');
-      setDifPrixClientPrixModule('NON');
-      setLibre('NON');
+    setIsSubmitting(true);
+    setMessage(null);
+
+    const payload = {
+      ...formData,
+      DifPrixClientPrixModule: formData.difPrixClientPrixModule, // Mapping pour l'API
+      dateApplication: new Date(formData.dateApplication).toISOString(),
+    };
+
+    const action = editingCommission 
+      ? updateCommission({ id: editingCommission.id, ...payload }) 
+      : createCommission(payload);
+
+    const result = await dispatch(action);
+
+    if (createCommission.fulfilled.match(result) || updateCommission.fulfilled.match(result)) {
+      setMessage({ text: editingCommission ? 'Modifié avec succès !' : 'Commission créée !', isError: false });
+      setTimeout(resetForm, 1500);
     } else {
-      setSubmitError('Erreur création');
+      setMessage({ text: 'Erreur lors de l\'enregistrement.', isError: true });
     }
+    setIsSubmitting(false);
   };
 
-  const startEdit = (comm: Commission) => {
-    setEditingId(comm.id);
-    setEditModuleId(comm.moduleId);
-    setEditDateApplication(comm.dateApplication.slice(0, 10));
-    setEditStatus(comm.status);
-    setEditProvenantOdoo(comm.provenantOdoo);
-    setEditLibrePrixModule(comm.librePrixModule);
-    setEditForfaitUnite(comm.forfaitUnite);
-    setEditDifPrixClientPrixModule(comm.DifPrixClientPrixModule);
-    setEditLibre(comm.libre);
-  };
-
-  const cancelEdit = () => setEditingId(null);
-
-  const handleUpdate = async (id: string) => {
-    const result = await dispatch(updateCommission({
-      id,
-      moduleId: editModuleId,
-      dateApplication: new Date(editDateApplication).toISOString(),
-      status: editStatus,
-      provenantOdoo: editProvenantOdoo,
-      librePrixModule: editLibrePrixModule,
-      forfaitUnite: editForfaitUnite,
-      DifPrixClientPrixModule: editDifPrixClientPrixModule,
-      libre: editLibre,
-    }));
-    if (updateCommission.fulfilled.match(result)) {
-      setSubmitSuccess('Commission modifiée !');
-      cancelEdit();
-    } else {
-      setSubmitError('Erreur modification');
-    }
-  };
-
-  const handleActivate = async (id: string) => {
-    await dispatch(activateCommission({ id }));
-  };
-
-  const handleDeactivate = async (id: string) => {
-    await dispatch(deactivateCommission({ id }));
+  const handleAction = async (actionFn: any, id: string) => {
+    setIsSubmitting(true);
+    await dispatch(actionFn({ id }));
+    setIsSubmitting(false);
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Supprimer cette commission ?')) return;
+    if (!window.confirm('Supprimer cette configuration de commission ?')) return;
+    setIsSubmitting(true);
     await dispatch(deleteCommission({ id }));
+    setIsSubmitting(false);
   };
 
-  if (commissionsLoading) return <div className="p-6">Chargement...</div>;
-
   return (
-    <div className="p-8 max-w-[1600px] mx-auto">
-      <h2 className="text-2xl font-bold mb-6">Gestion des Commissions</h2>
-
-      {/* Formulaire création */}
-      <form onSubmit={handleCreate} className="mb-10 p-6 bg-gray-50 rounded-xl shadow">
-        <h3 className="text-xl font-semibold mb-4">Nouvelle Commission</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <label className="block text-sm font-medium mb-1">Module</label>
-            <select value={selectedModuleId} onChange={(e) => setSelectedModuleId(e.target.value)} className="w-full p-3 border rounded-xl" required>
-              <option value="">Sélectionner...</option>
-              {modules.map((m: ModuleRef) => (
-                <option key={m.id} value={m.id}>{m.nom} ({m.code})</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Date application</label>
-            <input
-              type="date"
-              value={dateApplication}
-              onChange={(e) => setDateApplication(e.target.value)}
-              className="w-full p-3 border rounded-xl"
-              disabled // Non modifiable, fixée à la création
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Status</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full p-3 border rounded-xl">
-              <option value="ACTIF">ACTIF</option>
-              <option value="INACTIF">INACTIF</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Provenant Odoo</label>
-            <select value={provenantOdoo} onChange={(e) => setProvenantOdoo(e.target.value)} className="w-full p-3 border rounded-xl">
-              <option value="OUI">OUI</option>
-              <option value="NON">NON</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Libre Prix Module</label>
-            <select value={librePrixModule} onChange={(e) => setLibrePrixModule(e.target.value)} className="w-full p-3 border rounded-xl">
-              <option value="OUI">OUI</option>
-              <option value="NON">NON</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Forfait Unité</label>
-            <select value={forfaitUnite} onChange={(e) => setForfaitUnite(e.target.value)} className="w-full p-3 border rounded-xl">
-              <option value="OUI">OUI</option>
-              <option value="NON">NON</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Dif Prix Client/Module</label>
-            <select value={difPrixClientPrixModule} onChange={(e) => setDifPrixClientPrixModule(e.target.value)} className="w-full p-3 border rounded-xl">
-              <option value="OUI">OUI</option>
-              <option value="NON">NON</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Libre</label>
-            <select value={libre} onChange={(e) => setLibre(e.target.value)} className="w-full p-3 border rounded-xl">
-              <option value="OUI">OUI</option>
-              <option value="NON">NON</option>
-            </select>
-          </div>
+    <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
+      
+      {/* Overlay global pour actions rapides */}
+      {isSubmitting && !isModalOpen && (
+        <div className="fixed inset-0 z-[60] bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
+          <FiLoader className="text-indigo-600 animate-spin" size={40} />
         </div>
-        <button type="submit" className="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700">
-          Créer
+      )}
+
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+        <div>
+          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+            <FiPercent className="text-indigo-600" /> Gestion des Commissions
+          </h2>
+          <p className="text-gray-500 font-medium">Configurez les règles de calcul des commissions par module.</p>
+        </div>
+        <button
+          onClick={() => { resetForm(); setIsModalOpen(true); }}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
+        >
+          <FiPlus size={20} /> Nouvelle Commission
         </button>
-        {submitError && <p className="text-red-500 mt-4">{submitError}</p>}
-        {submitSuccess && <p className="text-green-500 mt-4">{submitSuccess}</p>}
-      </form>
+      </div>
 
       {/* Tableau */}
-      <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-100 text-left">
+          <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Module</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Date application</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Provenant Odoo</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Libre Prix Module</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Forfait Unité</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Dif Prix Client/Module</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Libre</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Actions</th>
+              <th className="px-6 py-5">Module</th>
+              <th className="px-6 py-5 text-center">Odoo</th>
+              <th className="px-6 py-5 text-center">Libre Prix</th>
+              <th className="px-6 py-5 text-center">Forfait</th>
+              <th className="px-6 py-5 text-center">Diff. Prix</th>
+              <th className="px-6 py-5 text-center">Libre</th>
+              <th className="px-6 py-5">Status</th>
+              <th className="px-6 py-5 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-50 bg-white font-medium">
             {commissions.map((comm) => (
-              <tr key={comm.id} className="hover:bg-gray-50 transition">
-                {/* Module */}
-                <td className="px-6 py-4 text-sm">
-                  {editingId === comm.id ? (
-                    <select value={editModuleId} onChange={(e) => setEditModuleId(e.target.value)} className="w-full p-2 border rounded">
-                      <option value="">Sélectionner...</option>
-                      {modules.map((m: ModuleRef) => (
-                        <option key={m.id} value={m.id}>{m.nom} ({m.code})</option>
-                      ))}
-                    </select>
-                  ) : (
-                    comm.module ? `${comm.module.nom} (${comm.module.code})` : 'N/A'
-                  )}
+              <tr key={comm.id} className="hover:bg-indigo-50/30 transition-colors text-sm text-gray-700">
+                <td className="px-6 py-4">
+                  <div className="font-bold text-gray-900">{comm.module?.nom || 'N/A'}</div>
+                  <div className="text-[10px] font-mono text-indigo-500 uppercase">{comm.module?.code}</div>
                 </td>
-
-                {/* Date application */}
-                <td className="px-6 py-4 text-sm">
-                  {editingId === comm.id ? (
-                    <input
-                      type="date"
-                      value={editDateApplication}
-                      onChange={(e) => setEditDateApplication(e.target.value)}
-                      className="w-full p-2 border rounded"
-                    />
-                  ) : (
-                    new Date(comm.dateApplication).toLocaleDateString()
-                  )}
+                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.provenantOdoo} /></td>
+                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.librePrixModule} /></td>
+                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.forfaitUnite} /></td>
+                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.DifPrixClientPrixModule} /></td>
+                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.libre} /></td>
+                <td className="px-6 py-4">
+                  <span className={`px-2 py-1 rounded-full text-[10px] font-black ${comm.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {comm.status}
+                  </span>
                 </td>
-
-                {/* Status */}
-                <td className="px-6 py-4 text-sm">
-                  {editingId === comm.id ? (
-                    <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} className="w-full p-2 border rounded">
-                      <option value="ACTIF">ACTIF</option>
-                      <option value="INACTIF">INACTIF</option>
-                    </select>
-                  ) : (
-                    <span className={`px-3 py-1 rounded text-xs ${comm.status === 'ACTIF' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {comm.status}
-                    </span>
-                  )}
-                </td>
-
-                {/* Provenant Odoo */}
-                <td className="px-6 py-4 text-sm">
-                  {editingId === comm.id ? (
-                    <select value={editProvenantOdoo} onChange={(e) => setEditProvenantOdoo(e.target.value)} className="w-full p-2 border rounded">
-                      <option value="OUI">OUI</option>
-                      <option value="NON">NON</option>
-                    </select>
-                  ) : (
-                    comm.provenantOdoo
-                  )}
-                </td>
-
-                {/* Libre Prix Module */}
-                <td className="px-6 py-4 text-sm">
-                  {editingId === comm.id ? (
-                    <select value={editLibrePrixModule} onChange={(e) => setEditLibrePrixModule(e.target.value)} className="w-full p-2 border rounded">
-                      <option value="OUI">OUI</option>
-                      <option value="NON">NON</option>
-                    </select>
-                  ) : (
-                    comm.librePrixModule
-                  )}
-                </td>
-
-                {/* Forfait Unité */}
-                <td className="px-6 py-4 text-sm">
-                  {editingId === comm.id ? (
-                    <select value={editForfaitUnite} onChange={(e) => setEditForfaitUnite(e.target.value)} className="w-full p-2 border rounded">
-                      <option value="OUI">OUI</option>
-                      <option value="NON">NON</option>
-                    </select>
-                  ) : (
-                    comm.forfaitUnite
-                  )}
-                </td>
-
-                {/* Dif Prix Client/Module */}
-                <td className="px-6 py-4 text-sm">
-                  {editingId === comm.id ? (
-                    <select value={editDifPrixClientPrixModule} onChange={(e) => setEditDifPrixClientPrixModule(e.target.value)} className="w-full p-2 border rounded">
-                      <option value="OUI">OUI</option>
-                      <option value="NON">NON</option>
-                    </select>
-                  ) : (
-                    comm.DifPrixClientPrixModule
-                  )}
-                </td>
-
-                {/* Libre */}
-                <td className="px-6 py-4 text-sm">
-                  {editingId === comm.id ? (
-                    <select value={editLibre} onChange={(e) => setEditLibre(e.target.value)} className="w-full p-2 border rounded">
-                      <option value="OUI">OUI</option>
-                      <option value="NON">NON</option>
-                    </select>
-                  ) : (
-                    comm.libre
-                  )}
-                </td>
-
-                {/* Actions */}
-                <td className="px-6 py-4 space-x-3 text-xs">
-                  {editingId === comm.id ? (
-                    <>
-                      <button onClick={() => handleUpdate(comm.id)} className="text-green-600 underline">Enregistrer</button>
-                      <button onClick={cancelEdit} className="text-gray-600 underline">Annuler</button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={() => startEdit(comm)} className="text-blue-600 underline">Modifier</button>
-                      {comm.status !== 'ACTIF' && <button onClick={() => handleActivate(comm.id)} className="text-green-600 underline">Activer</button>}
-                      {comm.status === 'ACTIF' && <button onClick={() => handleDeactivate(comm.id)} className="text-yellow-600 underline">Désactiver</button>}
-                      <button onClick={() => handleDelete(comm.id)} className="text-red-600 underline">Supprimer</button>
-                    </>
-                  )}
+                <td className="px-6 py-4 text-right">
+                  <div className="flex justify-end gap-3 text-[10px] font-black uppercase">
+                    <button onClick={() => handleOpenEdit(comm)} className="text-blue-600 hover:underline">Modifier</button>
+                    {comm.status === 'ACTIF' ? (
+                      <button onClick={() => handleAction(deactivateCommission, comm.id)} className="text-amber-600 hover:underline">Désactiver</button>
+                    ) : (
+                      <button onClick={() => handleAction(activateCommission, comm.id)} className="text-emerald-600 hover:underline">Activer</button>
+                    )}
+                    <button onClick={() => handleDelete(comm.id)} className="text-red-600 hover:underline">Supprimer</button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {commissionsLoading && <div className="p-10 text-center"><FiLoader className="animate-spin mx-auto text-indigo-600" /></div>}
       </div>
+
+      {/* Modale */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl overflow-hidden animate-in zoom-in-95">
+            <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
+              <h3 className="text-2xl font-black text-gray-800">{editingCommission ? 'Modifier Commission' : 'Nouvelle Commission'}</h3>
+              <button onClick={resetForm} className="text-gray-400 hover:text-gray-600"><FiX size={24} /></button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Module</label>
+                  <select 
+                    value={formData.moduleId} 
+                    onChange={(e) => setFormData({...formData, moduleId: e.target.value})}
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  >
+                    <option value="">Sélectionner un module</option>
+                    {modules.map((m: ModuleRef) => <option key={m.id} value={m.id}>{m.nom} ({m.code})</option>)}
+                  </select>
+                </div>
+
+                <SelectField label="Provenant Odoo" value={formData.provenantOdoo} onChange={(v) => setFormData({...formData, provenantOdoo: v})} />
+                <SelectField label="Libre Prix Module" value={formData.librePrixModule} onChange={(v) => setFormData({...formData, librePrixModule: v})} />
+                <SelectField label="Forfait Unité" value={formData.forfaitUnite} onChange={(v) => setFormData({...formData, forfaitUnite: v})} />
+                <SelectField label="Diff. Prix Client/Module" value={formData.difPrixClientPrixModule} onChange={(v) => setFormData({...formData, difPrixClientPrixModule: v})} />
+                <SelectField label="Libre" value={formData.libre} onChange={(v) => setFormData({...formData, libre: v})} />
+                
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Date d'application</label>
+                  <input 
+                    type="date" 
+                    value={formData.dateApplication} 
+                    onChange={(e) => setFormData({...formData, dateApplication: e.target.value})}
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold"
+                  />
+                </div>
+              </div>
+
+              {message && (
+                <div className={`mt-6 p-4 rounded-2xl flex items-center gap-2 font-bold text-sm ${message.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                  {message.isError ? <FiAlertCircle /> : <FiCheckCircle />} {message.text}
+                </div>
+              )}
+
+              <div className="flex gap-4 mt-10">
+                <button type="button" onClick={resetForm} className="flex-1 py-4 border border-gray-100 rounded-2xl font-bold text-gray-500">Annuler</button>
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  className="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition-all flex justify-center items-center gap-2"
+                >
+                  {isSubmitting ? <FiLoader className="animate-spin" /> : editingCommission ? 'Mettre à jour' : 'Confirmer la création'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default Commission;
+// Composants internes pour le style
+const BooleanBadge = ({ value }: { value: string }) => (
+  <span className={`text-[10px] font-black px-2 py-0.5 rounded ${value === 'OUI' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-300'}`}>
+    {value}
+  </span>
+);
+
+const SelectField = ({ label, value, onChange }: { label: string, value: string, onChange: (v: string) => void }) => (
+  <div>
+    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{label}</label>
+    <div className="flex bg-gray-50 p-1 rounded-2xl border border-gray-100">
+      {['OUI', 'NON'].map((opt) => (
+        <button
+          key={opt}
+          type="button"
+          onClick={() => onChange(opt)}
+          className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${value === opt ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+export default CommissionPage;

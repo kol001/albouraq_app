@@ -147,11 +147,19 @@ const PrivilegeComponent = () => {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-2">
-                    {p.autorisations.map((aut: Autorisation) => (
-                      <span key={aut.id} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">
-                        {aut.nom}
-                      </span>
-                    ))}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-2">
+                        {p.autorisations && Array.isArray(p.autorisations) && p.autorisations.length > 0 ? (
+                          p.autorisations.map((aut: Autorisation) => (
+                            <span key={aut.id} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">
+                              {aut.nom}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">Aucune autorisation</span>
+                        )}
+                      </div>
+                    </td>
                   </div>
                 </td>
                 <td className="px-6 py-4">
