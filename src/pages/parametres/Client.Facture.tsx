@@ -22,7 +22,7 @@ const useAppDispatch = () => useDispatch<AppDispatch>();
 const ClientFacturePage = () => {
   const dispatch = useAppDispatch();
   
-  const { data: clients, loading, error: globalError } = useSelector((state: RootState) => state.clientFactures);
+  const { data: clients } = useSelector((state: RootState) => state.clientFactures);
   const { data: allBeneficiaires } = useSelector((state: RootState) => state.clientBeneficiaires);
 
   const [activeModal, setActiveModal] = useState<'none' | 'form'>('none');

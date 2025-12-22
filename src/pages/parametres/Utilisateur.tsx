@@ -20,7 +20,7 @@ const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const Utilisateur = () => {
   const dispatch = useAppDispatch();
-  const { data: users, loading: usersLoading, error: globalError } = useSelector((state: RootState) => state.users);
+  const { data: users, error: globalError } = useSelector((state: RootState) => state.users);
   const { data: profiles } = useSelector((state: RootState) => state.profiles);
 
   // UI States

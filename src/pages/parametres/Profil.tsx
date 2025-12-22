@@ -21,7 +21,7 @@ const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const ProfileComponent = () => {
   const dispatch = useAppDispatch();
-  const { data: profiles, loading: profilesLoading, error: globalError } = useSelector((state: RootState) => state.profiles);
+  const { data: profiles, error: globalError } = useSelector((state: RootState) => state.profiles);
   const { data: autorisations } = useSelector((state: RootState) => state.autorisations);
 
   // États UI
