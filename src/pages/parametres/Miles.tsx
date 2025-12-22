@@ -14,6 +14,7 @@ import {
   FiPlus,
   FiCheckCircle, FiAlertCircle, FiLoader, FiX, FiLayers 
 } from 'react-icons/fi';
+import AuditModal from '../../components/AuditModal';
 
 const Miles = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -33,6 +34,10 @@ const Miles = () => {
     borneCaSup: 1000,
     miles: 100
   });
+
+  // Audit
+  const [auditEntityId, setAuditEntityId] = useState<string | null>(null);
+  const [auditEntityName, setAuditEntityName] = useState('');
 
   useEffect(() => {
     dispatch(fetchMiles());
@@ -82,6 +87,16 @@ const Miles = () => {
       await dispatch(deleteMile({ id }));
       setIsSubmitting(false);
     }
+  };
+
+  const openAudit = (miles: Mile) => {
+      setAuditEntityId(miles.id);
+      setAuditEntityName(miles.module.nom);
+    };
+
+  const closeAudit = () => {
+    setAuditEntityId(null);
+    setAuditEntityName('');
   };
 
   const toggleStatus = async (m: Mile) => {
@@ -170,6 +185,12 @@ const Miles = () => {
                     <button onClick={() => toggleStatus(m)} className={`p-2 rounded-xl transition-all text-xs ${m.status === 'ACTIF' ? 'text-amber-500 hover:bg-amber-50' : 'text-green-500 hover:bg-green-50'}`} title={m.status === 'ACTIF' ? 'Désactiver' : 'Activer'}>
                       {/* <FiPower size={18} /> */}
                       {m.status != 'ACTIF' ? 'Activer' : 'Désactiver'}
+                    </button>
+                    <button
+                      onClick={() => openAudit(m)}
+                      className="text-purple-600 hover:text-purple-800 text-xs "
+                    >
+                      Historique
                     </button>
                     <button onClick={() => handleDelete(m.id)} className="p-2 text-xs text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Supprimer">
                       {/* <FiTrash2 size={18} /> */}
@@ -265,6 +286,14 @@ const Miles = () => {
           </div>
         </div>
       )}
+
+      <AuditModal
+        entity="MILES"
+        entityId={auditEntityId}
+        entityName={auditEntityName}
+        isOpen={!!auditEntityId}
+        onClose={closeAudit}
+      />
     </div>
   );
 };

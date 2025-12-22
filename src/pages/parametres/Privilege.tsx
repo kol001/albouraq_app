@@ -1,335 +1,301 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { createPrivilege, updatePrivilege, deletePrivilege, activatePrivilege, deactivatePrivilege, fetchAutorisationsByPrivilege } from '../../app/privilegesSlice';
+import { 
+  createPrivilege, 
+  updatePrivilege, 
+  deletePrivilege, 
+  activatePrivilege, 
+  deactivatePrivilege, 
+  fetchAutorisationsByPrivilege 
+} from '../../app/privilegesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Privilege, Autorisation } from '../../app/privilegesSlice';
+import { 
+  FiPlus, FiX, FiCheckCircle, FiAlertCircle, 
+  FiLoader, FiKey, FiActivity, FiLayers 
+} from 'react-icons/fi';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const PrivilegeComponent = () => {
   const dispatch = useAppDispatch();
-  const { data: privileges, loading, error: globalError } = useSelector((state: RootState) => state.privileges);
+  const { data: privileges, loading: privLoading, error: globalError } = useSelector((state: RootState) => state.privileges);
 
-  // États création
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // UI States
+  const [activeModal, setActiveModal] = useState<'none' | 'create' | 'edit' | 'view-auth'>('none');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState({ text: '', isError: false });
+
+  // Form states
   const [privilegeName, setPrivilegeName] = useState('');
   const [fonctionnalite, setFonctionnalite] = useState('');
-  const [createError, setCreateError] = useState('');
-  const [createSuccess, setCreateSuccess] = useState('');
-
-  // États édition
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingPrivilege, setEditingPrivilege] = useState<Privilege | null>(null);
-  const [editPrivilegeName, setEditPrivilegeName] = useState('');
-  const [editFonctionnalite, setEditFonctionnalite] = useState('');
-  const [editError, setEditError] = useState('');
-  const [editSuccess, setEditSuccess] = useState('');
 
-  // Modal autorisations liées
-  const [isAutorisationsModalOpen, setIsAutorisationsModalOpen] = useState(false);
+  // Autorisations liées
   const [selectedPrivilegeAutorisations, setSelectedPrivilegeAutorisations] = useState<Autorisation[]>([]);
   const [selectedPrivilegeName, setSelectedPrivilegeName] = useState('');
 
+  const closeModals = () => {
+    setActiveModal('none');
+    setPrivilegeName('');
+    setFonctionnalite('');
+    setEditingPrivilege(null);
+    setMessage({ text: '', isError: false });
+  };
+
+  const handleAction = async (actionFn: any, payload: any) => {
+    setIsSubmitting(true);
+    await dispatch(actionFn(payload));
+    setIsSubmitting(false);
+  };
+
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!privilegeName || !fonctionnalite) {
-      setCreateError('Tous les champs sont requis');
-      return;
-    }
+    setIsSubmitting(true);
     const result = await dispatch(createPrivilege({ privilege: privilegeName, fonctionnalite }));
     if (createPrivilege.fulfilled.match(result)) {
-      setCreateSuccess('Privilège créé !');
-      setTimeout(() => {
-        setPrivilegeName('');
-        setFonctionnalite('');
-        setCreateSuccess('');
-        setIsCreateModalOpen(false);
-      }, 1500);
+      setMessage({ text: 'Privilège créé avec succès !', isError: false });
+      setTimeout(closeModals, 1500);
     } else {
-      setCreateError('Erreur création');
+      setMessage({ text: 'Erreur lors de la création', isError: true });
     }
+    setIsSubmitting(false);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingPrivilege || !editPrivilegeName || !editFonctionnalite) {
-      setEditError('Tous les champs sont requis');
-      return;
-    }
+    if (!editingPrivilege) return;
+    setIsSubmitting(true);
     const result = await dispatch(updatePrivilege({
       id: editingPrivilege.id,
-      privilege: editPrivilegeName,
-      fonctionnalite: editFonctionnalite,
+      privilege: privilegeName,
+      fonctionnalite,
     }));
     if (updatePrivilege.fulfilled.match(result)) {
-      setEditSuccess('Privilège modifié !');
-      setTimeout(() => {
-        setEditSuccess('');
-        setIsEditModalOpen(false);
-        setEditingPrivilege(null);
-      }, 1500);
+      setMessage({ text: 'Privilège mis à jour !', isError: false });
+      setTimeout(closeModals, 1500);
     } else {
-      setEditError('Erreur modification');
+      setMessage({ text: 'Erreur lors de la modification', isError: true });
     }
+    setIsSubmitting(false);
   };
 
   const openEdit = (p: Privilege) => {
     setEditingPrivilege(p);
-    setEditPrivilegeName(p.privilege);
-    setEditFonctionnalite(p.fonctionnalite);
-    setIsEditModalOpen(true);
+    setPrivilegeName(p.privilege);
+    setFonctionnalite(p.fonctionnalite);
+    setActiveModal('edit');
   };
 
   const openAutorisations = async (p: Privilege) => {
+    setIsSubmitting(true);
     const result = await dispatch(fetchAutorisationsByPrivilege({ id: p.id }));
     if (fetchAutorisationsByPrivilege.fulfilled.match(result)) {
       setSelectedPrivilegeAutorisations(result.payload.data);
       setSelectedPrivilegeName(p.privilege);
-      setIsAutorisationsModalOpen(true);
+      setActiveModal('view-auth');
     }
-  };
-
-  const handleDelete = (id: string) => {
-    if (window.confirm('Supprimer ce privilège ?')) {
-      dispatch(deletePrivilege({ id }));
-    }
-  };
-
-  const toggleStatus = (p: Privilege) => {
-    if (p.status === 'ACTIF') {
-      dispatch(deactivatePrivilege({ id: p.id }));
-    } else {
-      dispatch(activatePrivilege({ id: p.id }));
-    }
+    setIsSubmitting(false);
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-800">Paramétrage privilèges</h2>
+    <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
+      
+      {/* Overlay global */}
+      {isSubmitting && activeModal === 'none' && (
+        <div className="fixed inset-0 z-[60] bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
+          <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-3 border border-gray-100">
+            <FiLoader className="text-indigo-600 animate-spin" size={32} />
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Action en cours...</p>
+          </div>
+        </div>
+      )}
+
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+        <div>
+          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+            <FiKey className="text-indigo-600" /> Gestion des Privilèges
+          </h2>
+          <p className="text-gray-500 font-medium italic">Définissez les droits d'accès granulaires par fonctionnalité.</p>
+        </div>
         <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition-all shadow-sm hover:shadow-md"
+          onClick={() => setActiveModal('create')}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-3.5 rounded-2xl font-black transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-          </svg>
-          Nouveau Privilège
+          <FiPlus size={20} /> Nouveau Privilège
         </button>
       </div>
 
-      {loading && <p className="text-center py-10">Chargement...</p>}
-      {globalError && <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-4">{globalError}</div>}
+      {globalError && (
+        <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-2 font-bold italic">
+          <FiAlertCircle /> {globalError}
+        </div>
+      )}
 
-      {/* Tableau */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      {/* TABLEAU */}
+      <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-100">
+          <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Privilège</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fonctionnalité</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Autorisations</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-5 text-left">Privilège</th>
+              <th className="px-6 py-5 text-left">Fonctionnalité</th>
+              <th className="px-6 py-5 text-left">Autorisations liées</th>
+              <th className="px-6 py-5 text-left">Status</th>
+              <th className="px-6 py-5 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-50 bg-white font-medium">
             {privileges.map((p) => (
               <tr key={p.id} className="hover:bg-indigo-50/30 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold uppercase">
+                <td className="px-6 py-4">
+                  <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-[10px] font-black uppercase border border-indigo-100">
                     {p.privilege}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600 font-medium">
-                  {p.fonctionnalite}
-                </td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-2">
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        {p.autorisations && Array.isArray(p.autorisations) && p.autorisations.length > 0 ? (
-                          p.autorisations.map((aut: Autorisation) => (
-                            <span key={aut.id} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">
-                              {aut.nom}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-gray-400 italic">Aucune autorisation</span>
-                        )}
-                      </div>
-                    </td>
+                  <div className="flex items-center gap-2 text-sm text-gray-700 font-bold">
+                    <FiActivity className="text-gray-300" /> {p.fonctionnalite}
                   </div>
                 </td>
+                
+                {/* SECTION AUTORISATIONS NON COMPRESSÉE */}
                 <td className="px-6 py-4">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                  <div className="flex flex-wrap gap-1.5 max-w-[300px]">
+                    {p.autorisations && p.autorisations.length > 0 ? (
+                      p.autorisations.map((aut: any) => (
+                        <span key={aut.id} className="text-[9px] font-black bg-gray-50 text-gray-500 px-2 py-1 rounded-md border border-gray-200 uppercase tracking-tighter whitespace-nowrap">
+                          {aut.nom}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-[10px] text-gray-300 italic">Aucune liaison</span>
+                    )}
+                  </div>
+                </td>
+
+                <td className="px-6 py-4">
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
                     p.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                   }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${p.status === 'ACTIF' ? 'bg-green-500' : 'bg-red-500'}`} />
                     {p.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right space-x-2">
-                  <button onClick={() => openEdit(p)} className="text-blue-600 hover:text-blue-800 text-xs font-bold">
-                    Modifier
-                  </button>
-                  <button onClick={() => toggleStatus(p)} className={`text-xs font-bold ${p.status === 'ACTIF' ? 'text-amber-600' : 'text-green-600'}`}>
-                    {p.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
-                  </button>
-                  <button onClick={() => openAutorisations(p)} className="text-purple-600 hover:text-purple-800 text-xs font-bold">
-                    Voir Autorisations
-                  </button>
-                  <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:text-red-800 text-xs font-bold">
-                    Supprimer
-                  </button>
+                <td className="px-6 py-4 text-right">
+                  <div className="flex justify-end gap-4 text-[11px] font-black uppercase tracking-tighter">
+                    <button onClick={() => openEdit(p)} className="text-blue-600 hover:underline">Modifier</button>
+                    <button
+                      onClick={() => handleAction(p.status === 'ACTIF' ? deactivatePrivilege : activatePrivilege, { id: p.id })}
+                      className={p.status === 'ACTIF' ? 'text-amber-600 hover:underline' : 'text-emerald-600 hover:underline'}
+                    >
+                      {p.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
+                    </button>
+                    <button onClick={() => openAutorisations(p)} className="text-purple-600 hover:underline">Détails</button>
+                    <button onClick={() => window.confirm('Supprimer ?') && handleAction(deletePrivilege, { id: p.id })} className="text-red-500 hover:underline border-l border-gray-100 pl-4">Supprimer</button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {privLoading && privileges.length === 0 && (
+          <div className="p-20 text-center"><FiLoader className="animate-spin mx-auto text-indigo-600" size={30} /></div>
+        )}
       </div>
 
-      {/* Modal Création */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="flex justify-between items-center p-6 border-b">
-              <h3 className="text-xl font-bold text-gray-800">Ajouter un privilège</h3>
-              <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <form onSubmit={handleCreateSubmit} className="p-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nom du Privilège</label>
-                  <input
-                    type="text"
-                    placeholder="ex: LECTURE_TOTALE"
-                    value={privilegeName}
-                    onChange={(e) => setPrivilegeName(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fonctionnalité</label>
-                  <input
-                    type="text"
-                    placeholder="ex: Gestion des utilisateurs"
-                    value={fonctionnalite}
-                    onChange={(e) => setFonctionnalite(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                    required
-                  />
-                </div>
-              </div>
-              {createError && <p className="text-red-500 text-sm mt-4 text-center">{createError}</p>}
-              {createSuccess && <p className="text-green-500 text-sm mt-4 text-center font-medium">{createSuccess}</p>}
-              <div className="mt-8 flex gap-3">
-                <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors">
-                  Annuler
-                </button>
-                <button type="submit" disabled={loading} className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 font-medium shadow-sm disabled:opacity-50 transition-colors">
-                  {loading ? 'Création...' : 'Confirmer'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Edition */}
-      {isEditModalOpen && editingPrivilege && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="flex justify-between items-center p-6 border-b">
-              <h3 className="text-xl font-bold text-gray-800">Modifier le privilège</h3>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <form onSubmit={handleEditSubmit} className="p-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nom du Privilège</label>
-                  <input
-                    type="text"
-                    value={editPrivilegeName}
-                    onChange={(e) => setEditPrivilegeName(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fonctionnalité</label>
-                  <input
-                    type="text"
-                    value={editFonctionnalite}
-                    onChange={(e) => setEditFonctionnalite(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    required
-                  />
-                </div>
-              </div>
-              {editError && <p className="text-red-500 text-sm mt-4 text-center">{editError}</p>}
-              {editSuccess && <p className="text-green-500 text-sm mt-4 text-center font-medium">{editSuccess}</p>}
-              <div className="mt-8 flex gap-3">
-                <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors">
-                  Annuler
-                </button>
-                <button type="submit" disabled={loading} className="flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 font-medium shadow-sm disabled:opacity-50 transition-colors">
-                  {loading ? 'Modification...' : 'Confirmer'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Autorisations liées */}
-      {isAutorisationsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="flex justify-between items-center p-6 border-b">
-              <h3 className="text-xl font-bold text-gray-800">
-                Autorisations utilisant le privilège "{selectedPrivilegeName}"
+      {/* MODALE FORMULAIRE */}
+      {(activeModal === 'create' || activeModal === 'edit') && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-in zoom-in-95">
+            <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
+              <h3 className="text-2xl font-black text-gray-800">
+                {activeModal === 'create' ? 'Nouveau Privilège' : 'Modifier Privilège'}
               </h3>
-              <button onClick={() => setIsAutorisationsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button onClick={closeModals} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400">
+                <FiX size={24} />
               </button>
             </div>
-            <div className="p-6 max-h-[70vh] overflow-y-auto">
+            
+            <form onSubmit={activeModal === 'create' ? handleCreateSubmit : handleEditSubmit} className="p-8 space-y-6">
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Code Privilège</label>
+                <input
+                  type="text"
+                  placeholder="ex: LECTURE_TOTALE"
+                  value={privilegeName}
+                  onChange={(e) => setPrivilegeName(e.target.value)}
+                  className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Fonctionnalité</label>
+                <input
+                  type="text"
+                  placeholder="ex: Gestion des flux"
+                  value={fonctionnalite}
+                  onChange={(e) => setFonctionnalite(e.target.value)}
+                  className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                  required
+                />
+              </div>
+
+              {message.text && (
+                <div className={`p-4 rounded-2xl flex items-center gap-3 font-bold text-xs ${message.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
+                  {message.isError ? <FiAlertCircle /> : <FiCheckCircle />} {message.text}
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={closeModals} className="flex-1 py-4 border border-gray-100 rounded-2xl font-bold text-gray-400">Annuler</button>
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? <FiLoader className="animate-spin" /> : 'Confirmer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODALE DETAILS AUTORISATIONS */}
+      {activeModal === 'view-auth' && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95">
+            <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-600 text-white rounded-xl"><FiLayers size={20}/></div>
+                <h3 className="text-xl font-black text-gray-800">Liaisons : {selectedPrivilegeName}</h3>
+              </div>
+              <button onClick={closeModals} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400"><FiX size={24} /></button>
+            </div>
+            <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
               {selectedPrivilegeAutorisations.length === 0 ? (
-                <p className="text-center text-gray-500">Aucune autorisation liée</p>
+                <div className="text-center py-10 text-gray-400 italic font-medium">Aucune autorisation n'utilise ce privilège.</div>
               ) : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50 sticky top-0">
+                <table className="min-w-full">
+                  <thead className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Nom</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Module</th>
+                      <th className="px-4 py-3 text-left">Nom Autorisation</th>
+                      <th className="px-4 py-3 text-left">Status</th>
+                      <th className="px-4 py-3 text-left">Module</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-50">
                     {selectedPrivilegeAutorisations.map((aut) => (
-                      <tr key={aut.id}>
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{aut.nom}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                            aut.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                          }`}>
+                      <tr key={aut.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-4 text-sm font-black text-gray-700">{aut.nom}</td>
+                        <td className="px-4 py-4">
+                          <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase ${aut.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                             {aut.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                          {aut.module ? aut.module.nom : 'N/A'}
+                        <td className="px-4 py-4 text-xs font-bold text-indigo-500 uppercase tracking-tight">
+                          {aut.module ? aut.module.nom : 'Système'}
                         </td>
                       </tr>
                     ))}
@@ -337,10 +303,8 @@ const PrivilegeComponent = () => {
                 </table>
               )}
             </div>
-            <div className="p-6 border-t flex justify-end">
-              <button onClick={() => setIsAutorisationsModalOpen(false)} className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
-                Fermer
-              </button>
+            <div className="p-6 border-t bg-gray-50 flex justify-end">
+              <button onClick={closeModals} className="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all">Fermer</button>
             </div>
           </div>
         </div>

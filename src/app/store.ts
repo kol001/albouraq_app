@@ -15,6 +15,9 @@ import modelesReducer from './modelesSlice';
 import commissionsReducer from './commissionsSlice';
 import numerotationReducer from './numerotationSlice';
 import milesReducer from './milesSlice';
+import piecesReducer from './piecesSlice';
+import clientBeneficiairesReducer from './clientBeneficiairesSlice';
+import clientFacturesReducer from './clientFacturesSlice';
 
 import {
   FLUSH,
@@ -38,6 +41,9 @@ const appReducer = combineReducers({
   commissions: commissionsReducer,
   numerotation: numerotationReducer,
   miles: milesReducer,
+  pieces: piecesReducer,
+  clientBeneficiaires: clientBeneficiairesReducer,
+  clientFactures: clientFacturesReducer,
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

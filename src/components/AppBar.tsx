@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { logout } from '../app/authSlice';
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '../app/store';
+import logo from '../assets/logo.jpg';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
@@ -39,11 +40,15 @@ export default function AppBar() {
         <div className="flex items-center gap-8">
           {/* Logo avec style */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="h-9 w-9 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-indigo-200 shadow-lg group-hover:rotate-6 transition-transform">
-              <span className="font-black text-xl italic text-white">B</span>
+            <div className="h-12 w-12 bg-white rounded-full flex items-center justify-center group-hover:rotate-6 transition-transform overflow-hidden">
+              <img 
+                src={logo}
+                alt="Logo Al Bouraq"
+                className="h-12 w-12 object-cover rounded-md" // object-cover pour remplir sans déformer
+              />
             </div>
-            <span className="font-bold text-gray-900 tracking-tight hidden sm:block">
-              Al bouraq
+            <span className="font-bold text-gray-700 tracking-tight hidden sm:block">
+              AL BOURAQ Travel
             </span>
           </Link>
 
@@ -51,13 +56,15 @@ export default function AppBar() {
           <nav className="hidden md:flex items-center text-sm font-medium">
             <div className="h-4 w-px bg-gray-200 mx-2" /> {/* Séparateur vertical */}
             <div className="flex items-center gap-2 text-gray-400">
-              <Link to="/" className="hover:text-indigo-600 transition-colors">Accueil</Link>
+              {/* <Link to="/" className="hover:text-indigo-600 transition-colors">Menu</Link> */}
               {paths.map((p, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <span className="text-gray-300">/</span>
-                  <span className={`capitalize ${index === paths.length - 1 ? "text-indigo-600 font-semibold" : "hover:text-gray-600 transition-colors"}`}>
-                    {p.replace(/-/g, ' ')}
-                  </span>
+                  <Link to={`/${p}`} className="hover:text-indigo-600 transition-colors">
+                    <span className={`capitalize ${index === paths.length - 1 ? "text-indigo-600 font-semibold" : "hover:text-gray-600 transition-colors"}`}>
+                      {p.replace(/-/g, ' ')}
+                    </span>
+                    <span className="text-gray-300"> /</span>
+                  </Link>
                 </div>
               ))}
             </div>
@@ -66,7 +73,6 @@ export default function AppBar() {
 
         {/* RIGHT : Icons & User */}
         <div className="flex items-center gap-3">
-          
           {/* Aide & Notifications */}
           <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
             <button className="p-2 text-gray-500 hover:bg-white hover:text-indigo-600 hover:shadow-sm rounded-lg transition-all">
@@ -86,8 +92,8 @@ export default function AppBar() {
               onClick={() => setOpenUserMenu(!openUserMenu)}
               className="flex items-center gap-3 p-1 pr-3 hover:bg-gray-50 rounded-xl transition-all border border-transparent hover:border-gray-100"
             >
-              <div className="h-9 w-9 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
-                JD
+              <div className="h-9 w-9 bg-linear-to-tr from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
+                A
               </div>
               <div className="hidden lg:flex flex-col items-start leading-none text-left">
                 <span className="text-sm font-bold text-gray-800 italic">Administrateur</span>

@@ -10,6 +10,7 @@ import {
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Commission, ModuleRef } from '../../app/commissionsSlice';
 import { FiPlus, FiX, FiLoader, FiPercent, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import AuditModal from '../../components/AuditModal';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
@@ -23,6 +24,10 @@ const CommissionPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCommission, setEditingCommission] = useState<Commission | null>(null);
   const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null);
+
+  // Audit
+  const [auditEntityId, setAuditEntityId] = useState<string | null>(null);
+  const [auditEntityName, setAuditEntityName] = useState('');
 
   // Form State initial
   const initialState = {
@@ -99,6 +104,16 @@ const CommissionPage = () => {
     setIsSubmitting(false);
   };
 
+  const openAudit = (commission: Commission) => {
+      setAuditEntityId(commission.id);
+      setAuditEntityName(commission.module.nom);
+    };
+
+  const closeAudit = () => {
+    setAuditEntityId(null);
+    setAuditEntityName('');
+  };
+
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
       
@@ -165,6 +180,12 @@ const CommissionPage = () => {
                     ) : (
                       <button onClick={() => handleAction(activateCommission, comm.id)} className="text-emerald-600 hover:underline">Activer</button>
                     )}
+                    <button
+                      onClick={() => openAudit(comm)}
+                      className="text-purple-600 hover:text-purple-800"
+                    >
+                      Historique
+                    </button>
                     <button onClick={() => handleDelete(comm.id)} className="text-red-600 hover:underline">Supprimer</button>
                   </div>
                 </td>
@@ -235,6 +256,14 @@ const CommissionPage = () => {
           </div>
         </div>
       )}
+
+      <AuditModal
+        entity="COMMISSIONS"
+        entityId={auditEntityId}
+        entityName={auditEntityName}
+        isOpen={!!auditEntityId}
+        onClose={closeAudit}
+      />
     </div>
   );
 };

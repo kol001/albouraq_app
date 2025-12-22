@@ -11,6 +11,9 @@ import { fetchModules } from '../app/modulesSlice';
 import { fetchModeles} from '../app/modelesSlice';
 import { fetchCommissions } from '../app/commissionsSlice';
 import { fetchDossiers } from '../app/numerotationSlice';
+import { fetchMiles } from '../app/milesSlice';
+import { fetchPieces } from '../app/piecesSlice';
+import { fetchClientBeneficiaires } from '../app/clientBeneficiairesSlice';
 import { PARAMETRES } from '../constants/parametres';
 import type { RootState, AppDispatch } from '../app/store';
 import { FiRefreshCw, FiChevronRight, FiActivity } from 'react-icons/fi';
@@ -32,6 +35,9 @@ function ListeParametre() {
   const { data: modeles, loading: modelesLoading } = useSelector((state: RootState) => state.modeles);
   const { data: commission, loading: commissionLoading } = useSelector((state: RootState) => state.commissions);
   const { data: numerotation, loading: numerotationLoading } = useSelector((state: RootState) => state.numerotation);
+  const { data: miles, loading: milesLoading } = useSelector((state: RootState) => state.miles);
+  const { data: pieces, loading: piecesLoading } = useSelector((state: RootState) => state.pieces);
+  const { data: clientBeneficiaires, loading: clientBeneficiairesLoading } = useSelector((state: RootState) => state.clientBeneficiaires);
   const { token } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
@@ -48,6 +54,9 @@ function ListeParametre() {
       if (modeles.length === 0 && !modelesLoading) dispatch(fetchModeles());
       if (commission.length === 0 && !commissionLoading)dispatch(fetchCommissions());
       if (numerotation.length === 0 && !numerotationLoading)dispatch(fetchDossiers());
+      if (miles.length === 0 && !milesLoading)dispatch(fetchDossiers());
+      if (pieces.length === 0 && !piecesLoading)dispatch(fetchPieces());
+      if (clientBeneficiaires.length === 0 && !clientBeneficiairesLoading)dispatch(fetchClientBeneficiaires());
     };
     loadData();
   }, [dispatch, token, navigate]);
@@ -63,10 +72,13 @@ function ListeParametre() {
     dispatch(fetchModeles());
     dispatch(fetchCommissions());
     dispatch(fetchDossiers());
+    dispatch(fetchMiles());
+    dispatch(fetchPieces());
+    dispatch(fetchClientBeneficiaires());
   };
 
   const anyLoading = privilegesLoading || profilesLoading || autorisationsLoading || usersLoading || 
-                     transactionTypesLoading || transactionsLoading || modulesLoading || modelesLoading || commissionLoading;
+                     transactionTypesLoading || transactionsLoading || modulesLoading || modelesLoading || commissionLoading || numerotationLoading || milesLoading;
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">

@@ -11,6 +11,9 @@ import Commission from "../pages/parametres/Commission";
 import Numerotation from "../pages/parametres/Numerotation";
 import Modele from "../pages/parametres/Modele";
 import Miles from "../pages/parametres/Miles";
+import Piece from "../pages/parametres/Piece";
+import ClientBeneficiaire from "../pages/parametres/Client.Beneficiaire";
+import ClientFacture from "../pages/parametres/Client.Facture";
 
 export function parametresRoutes() {
   return [
@@ -25,5 +28,8 @@ export function parametresRoutes() {
     <Route key="numerotation" path="numerotation" element={<Numerotation />} />,
     <Route key="modele" path="modele" element={<Modele />} />,
     <Route key="miles" path="miles" element={<Miles />} />,
+    <Route key="piece" path="piece" element={<Piece />} />,
+    <Route key="client-beneficiaire" path="client-beneficiaire" element={<ClientBeneficiaire />} />,
+    <Route key="client-facture" path="client-facture" element={<ClientFacture />} />,
   ];
 }
