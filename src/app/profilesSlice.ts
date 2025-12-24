@@ -1,346 +1,67 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { PayloadAction} from '@reduxjs/toolkit';
-import axiosInstance from '../service/Axios'; // Assure-toi que baseURL est '/api'
+import axiosInstance from '../service/Axios';
 
-// Types basés sur la réponse API
-export interface User {
-  id: string;
-  email: string;
-  nom: string;
-  prenom: string;
-}
-
-export interface Privilege {
-  id: string;
-  privilege: string;
-  fonctionnalite: string;
-}
-
-export interface Autorisation {
-  id: string;
-  nom: string;
+// Interfaces détaillées
+export interface PrivilegeAttribution {
   profileId: string;
-  moduleId: string | null;
   privilegeId: string;
-  privilege: Privilege;
+  dateAttribution: string;
+  status: 'ACTIF' | 'INACTIF';
+  privilege: {
+    id: string;
+    privilege: string;
+    fonctionnalite: string;
+    status: string;
+  };
 }
 
-export interface Profile {
+export interface ModuleAttribution {
+  profileId: string;
+  moduleId: string;
+  dateAttribution: string;
+  status: 'ACTIF' | 'INACTIF';
+  module: {
+    id: string;
+    code: string;
+    nom: string;
+    description: string;
+    status: string;
+  };
+}
+
+export interface UserAttribution {
+  userId: string;
+  profileId: string;
+  dateAffectation: string;
+  status: 'ACTIF' | 'INACTIF';
+  user: {
+    id: string;
+    email: string;
+    nom: string;
+    prenom: string;
+    pseudo: string;
+    departement: string;
+    status: string;
+  };
+}
+
+export interface Profil {
   id: string;
   profil: string;
   dateCreation: string;
   dateActivation: string | null;
   dateDesactivation: string | null;
-  status: string;
-  autorisations: Autorisation[];
-  users: User[];
+  status: 'ACTIF' | 'INACTIF';
+  privileges: PrivilegeAttribution[];
+  modules: ModuleAttribution[];
+  users: UserAttribution[];
 }
 
 export interface ProfilesState {
-  data: Profile[];
+  data: Profil[];
   loading: boolean;
   error: string | null;
 }
-
-// Async thunk pour fetch les profils
-export const fetchProfiles = createAsyncThunk<
-  { success: boolean; data: Profile[] }, // Return type
-  void, // Args (aucun)
-  { state: { auth: { token: string } } } // Extra pour token
->(
-  'profiles/fetchProfiles',
-  async (_, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      if (!auth.token) {
-        return rejectWithValue('Token manquant');
-      }
-
-      const response = await axiosInstance.get('/profiles', {
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-        },
-      });
-
-      if (response.data.success) {
-        return { success: true, data: response.data.data };
-      } else {
-        return rejectWithValue('Échec de la récupération des profils');
-      }
-    } catch (error: any) {
-      console.error('Erreur fetch profils:', error);
-      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
-    }
-  }
-);
-
-// Nouveau thunk pour créer un profil
-export const createProfile = createAsyncThunk<
-  { success: boolean; data: Profile }, // Return type
-  { profil: string; status: string }, // Args (body du POST)
-  { state: { auth: { token: string } } } // Extra pour token
->(
-  'profiles/createProfile',
-  async (payload, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      if (!auth.token) {
-        return rejectWithValue('Token manquant');
-      }
-
-      const response = await axiosInstance.post('/profiles', {
-        ...payload,
-        autorisationIds: [],
-      }, {
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-        },
-      });
-
-      // La réponse est nested : response.data.data.success et response.data.data.data
-      if (response.data.success ) {
-        return { success: true, data: response.data.data };
-      } else {
-        return rejectWithValue('Échec de la création du profil');
-      }
-    } catch (error: any) {
-      console.error('Erreur create profile:', error);
-      return rejectWithValue(error.response?.message || 'Erreur réseau');
-    }
-  }
-);
-
-// Async thunk pour modifier un profil (seulement le nom)
-export const updateProfile = createAsyncThunk<
-  { success: boolean; data: Profile },
-  { id: string; profil: string },
-  { state: { auth: { token: string } } }
->(
-  'profiles/updateProfile',
-  async (payload, { getState, rejectWithValue, dispatch }) => {
-    try {
-      const { auth } = getState();
-      if (!auth.token) {
-        return rejectWithValue('Token manquant');
-      }
-      const response = await axiosInstance.patch(`/profiles/${payload.id}`, {
-        profil: payload.profil,
-      }, {
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (response.data.success) {
-        dispatch(fetchProfiles()); // Re-fetch pour cohérence
-        return { success: true, data: response.data.data };
-      } else {
-        return rejectWithValue('Échec de la modification');
-      }
-    } catch (error: any) {
-      console.error('Erreur update profile:', error);
-      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
-    }
-  }
-);
-
-// Async thunk pour activer un profil
-export const activateProfile = createAsyncThunk<
-  { success: boolean; data: Profile },
-  { profileId: string },
-  { state: { auth: { token: string } } }
->(
-  'profiles/activateProfile',
-  async (payload, { getState, rejectWithValue, dispatch }) => {
-    try {
-      const { auth } = getState();
-      if (!auth.token) {
-        return rejectWithValue('Token manquant');
-      }
-
-      const response = await axiosInstance.patch(`/profiles/${payload.profileId}/activate`, {}, {
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      let updatedProfile: Profile;
-      if (response.data.data ) {
-        updatedProfile = response.data.data;
-      } else if (response.data.success) {
-        updatedProfile = response.data.data;
-      } else {
-        return rejectWithValue('Échec de l\'activation');
-      }
-
-      // Re-fetch pour cohérence
-      dispatch(fetchProfiles());
-
-      return { success: true, data: updatedProfile };
-    } catch (error: any) {
-      console.error('Erreur activate profile:', error);
-      return rejectWithValue(error.response?.message || 'Erreur réseau');
-    }
-  }
-);
-
-// Async thunk pour désactiver un profil
-export const deactivateProfile = createAsyncThunk<
-  { success: boolean; data: Profile },
-  { profileId: string },
-  { state: { auth: { token: string } } }
->(
-  'profiles/deactivateProfile',
-  async (payload, { getState, rejectWithValue, dispatch }) => {
-    try {
-      const { auth } = getState();
-      if (!auth.token) {
-        return rejectWithValue('Token manquant');
-      }
-
-      const response = await axiosInstance.patch(`/profiles/${payload.profileId}/deactivate`, {}, {
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      let updatedProfile: Profile;
-      if (response.data.data) {
-        updatedProfile = response.data.data;
-      } else if (response.data.success) {
-        updatedProfile = response.data.data;
-      } else {
-        return rejectWithValue('Échec de la désactivation');
-      }
-
-      // Re-fetch pour cohérence
-      dispatch(fetchProfiles());
-
-      return { success: true, data: updatedProfile };
-    } catch (error: any) {
-      console.error('Erreur deactivate profile:', error);
-      return rejectWithValue(error.response?.message || 'Erreur réseau');
-    }
-  }
-);
-
-// Async thunk pour supprimer un profil
-export const deleteProfile = createAsyncThunk<
-  { success: boolean; data: string }, // Return ID supprimé
-  { profileId: string },
-  { state: { auth: { token: string } } }
->(
-  'profiles/deleteProfile',
-  async (payload, { getState, rejectWithValue, dispatch }) => {
-    try {
-      const { auth } = getState();
-      if (!auth.token) {
-        return rejectWithValue('Token manquant');
-      }
-
-      const response = await axiosInstance.delete(`/profiles/${payload.profileId}`, {
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-        },
-      });
-
-      if (response.data.success) {
-        // Re-fetch pour cohérence (supprime de la liste)
-        dispatch(fetchProfiles());
-        return { success: true, data: payload.profileId };
-      } else {
-        return rejectWithValue('Échec de la suppression');
-      }
-    } catch (error: any) {
-      console.error('Erreur delete profile:', error);
-      return rejectWithValue(error.response?.message || 'Erreur réseau');
-    }
-  }
-);
-
-// Async thunk pour ajouter une autorisation à un profil
-export const addAutorisationToProfile = createAsyncThunk<
-  { success: boolean; data: Profile },
-  { profileId: string; autorisationId: string },
-  { state: { auth: { token: string } } }
->(
-  'profiles/addAutorisationToProfile',
-  async (payload, { getState, rejectWithValue, dispatch }) => {
-    try {
-      const { auth } = getState();
-      if (!auth.token) {
-        return rejectWithValue('Token manquant');
-      }
-
-      const response = await axiosInstance.patch(`/profiles/${payload.profileId}/add-autorisation/${payload.autorisationId}`, {}, {
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      let updatedProfile: Profile;
-      if (response.data.data ) {
-        updatedProfile = response.data.data;
-      } else if (response.data.success) {
-        updatedProfile = response.data.data;
-      } else {
-        return rejectWithValue('Échec de l\'ajout d\'autorisation');
-      }
-
-      // Re-fetch pour cohérence
-      dispatch(fetchProfiles());
-
-      return { success: true, data: updatedProfile };
-    } catch (error: any) {
-      console.error('Erreur add autorisation to profile:', error);
-      return rejectWithValue(error.response?.message || 'Erreur réseau');
-    }
-  }
-);
-
-// Async thunk pour enlever une autorisation d'un profil
-export const removeAutorisationFromProfile = createAsyncThunk<
-  { success: boolean; data: Profile },
-  { autorisationId: string }, // Pas de profileId spécifique, comme API
-  { state: { auth: { token: string } } }
->(
-  'profiles/removeAutorisationFromProfile',
-  async (payload, { getState, rejectWithValue, dispatch }) => {
-    try {
-      const { auth } = getState();
-      if (!auth.token) {
-        return rejectWithValue('Token manquant');
-      }
-
-      const response = await axiosInstance.patch(`/profiles/remove-autorisation/${payload.autorisationId}`, {}, {
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      let updatedProfile: Profile;
-      if (response.data.data ) {
-        updatedProfile = response.data.data;
-      } else if (response.data.success) {
-        updatedProfile = response.data.data;
-      } else {
-        return rejectWithValue('Échec de la suppression d\'autorisation');
-      }
-
-      // Re-fetch pour cohérence
-      dispatch(fetchProfiles());
-
-      return { success: true, data: updatedProfile };
-    } catch (error: any) {
-      console.error('Erreur remove autorisation from profile:', error);
-      return rejectWithValue(error.response?.message || 'Erreur réseau');
-    }
-  }
-);
 
 const initialState: ProfilesState = {
   data: [],
@@ -348,146 +69,232 @@ const initialState: ProfilesState = {
   error: null,
 };
 
+// Fetch tous les profils
+export const fetchProfiles = createAsyncThunk<
+  { success: boolean; data: Profil[] },
+  void
+>('profiles/fetchProfiles', async (_, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get('/profiles');
+    if (response.data.success) {
+      return { success: true, data: response.data.data };
+    }
+    return rejectWithValue('Échec récupération des profils');
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+  }
+});
+
+// Créer un profil
+export const createProfil = createAsyncThunk<
+  { success: boolean; data: Profil },
+  { profil: string; status?: 'ACTIF' | 'INACTIF' }
+>('profiles/createProfil', async (payload, { dispatch, rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.post('/profiles', payload);
+    if (response.data.success) {
+      dispatch(fetchProfiles());
+      return { success: true, data: response.data.data };
+    }
+    return rejectWithValue('Échec création');
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+  }
+});
+
+// Update (PATCH)
+export const updateProfil = createAsyncThunk<
+  { success: boolean; data: Profil },
+  { id: string; profil: string; status?: 'ACTIF' | 'INACTIF' }
+>('profiles/updateProfil', async (payload, { dispatch, rejectWithValue }) => {
+  try {
+    const { id, ...data } = payload;
+    const response = await axiosInstance.patch(`/profiles/${id}`, data);
+    if (response.data.success) {
+      dispatch(fetchProfiles());
+      return { success: true, data: response.data.data };
+    }
+    return rejectWithValue('Échec mise à jour');
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+  }
+});
+
+// Delete
+export const deleteProfil = createAsyncThunk<
+  { success: boolean; data: string },
+  string
+>('profiles/deleteProfil', async (id, { dispatch, rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.delete(`/profiles/${id}`);
+    if (response.data.success) {
+      dispatch(fetchProfiles());
+      return { success: true, data: id };
+    }
+    return rejectWithValue('Échec suppression');
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+  }
+});
+
+// Assign / Deactivate Privilege
+export const assignPrivilegeToProfil = createAsyncThunk<
+  { success: boolean; data: Profil },
+  { profilId: string; privilegeId: string }
+>('profiles/assignPrivilege', async (payload, { dispatch, rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.patch(`/profiles/${payload.profilId}/assign-privilege/${payload.privilegeId}`);
+    if (response.data.success) {
+      dispatch(fetchProfiles());
+      return { success: true, data: response.data.data };
+    }
+    return rejectWithValue('Échec attribution');
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+  }
+});
+
+export const deactivatePrivilegeFromProfil = createAsyncThunk<
+  { success: boolean; data: Profil },
+  { profilId: string; privilegeId: string }
+>('profiles/deactivatePrivilege', async (payload, { dispatch, rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.patch(`/profiles/${payload.profilId}/deactivate-privilege/${payload.privilegeId}`);
+    if (response.data.success) {
+      dispatch(fetchProfiles());
+      return { success: true, data: response.data.data };
+    }
+    return rejectWithValue('Échec désactivation');
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+  }
+});
+
+// Assign / Deactivate Module
+export const assignModuleToProfil = createAsyncThunk<
+  { success: boolean; data: Profil },
+  { profilId: string; moduleId: string }
+>('profiles/assignModule', async (payload, { dispatch, rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.patch(`/profiles/${payload.profilId}/assign-module/${payload.moduleId}`);
+    if (response.data.success) {
+      dispatch(fetchProfiles());
+      return { success: true, data: response.data.data };
+    }
+    return rejectWithValue('Échec attribution');
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+  }
+});
+
+export const deactivateModuleFromProfil = createAsyncThunk<
+  { success: boolean; data: Profil },
+  { profilId: string; moduleId: string }
+>('profiles/deactivateModule', async (payload, { dispatch, rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.patch(`/profiles/${payload.profilId}/deactivate-module/${payload.moduleId}`);
+    if (response.data.success) {
+      dispatch(fetchProfiles());
+      return { success: true, data: response.data.data };
+    }
+    return rejectWithValue('Échec désactivation');
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+  }
+});
+
+// Assign / Deactivate User
+export const assignUserToProfil = createAsyncThunk<
+  { success: boolean; data: Profil },
+  { profilId: string; userId: string }
+>('profiles/assignUser', async (payload, { dispatch, rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.patch(`/profiles/${payload.profilId}/assign-user/${payload.userId}`);
+    if (response.data.success) {
+      dispatch(fetchProfiles());
+      return { success: true, data: response.data.data };
+    }
+    return rejectWithValue('Échec attribution');
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+  }
+});
+
+export const deactivateUserFromProfil = createAsyncThunk<
+  { success: boolean; data: Profil },
+  { profilId: string; userId: string }
+>('profiles/deactivateUser', async (payload, { dispatch, rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.patch(`/profiles/${payload.profilId}/deactivate-user/${payload.userId}`);
+    if (response.data.success) {
+      dispatch(fetchProfiles());
+      return { success: true, data: response.data.data };
+    }
+    return rejectWithValue('Échec désactivation');
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+  }
+});
+
 const profilesSlice = createSlice({
   name: 'profiles',
   initialState,
-  reducers: {
-    clearError: (state) => {
-      state.error = null;
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
+      // Fetch
       .addCase(fetchProfiles.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchProfiles.fulfilled, (state, action: PayloadAction<{ success: boolean; data: Profile[] }>) => {
+      .addCase(fetchProfiles.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload.success) {
+        if (action.payload?.success) {
           state.data = action.payload.data;
         }
       })
       .addCase(fetchProfiles.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = action.error.message || 'Erreur lors du chargement des profils';
       })
-      .addCase(createProfile.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(createProfile.fulfilled, (state, action: PayloadAction<{ success: boolean; data: Profile }>) => {
-        state.loading = false;
-        if (action.payload.success) {
-          // Ajoute le nouveau profil à la liste (optimistic update)
-          state.data.push(action.payload.data);
+
+      // Autres actions (create, update, delete, assignations...)
+      .addMatcher(
+        (action) =>
+          [
+            createProfil.fulfilled.type,
+            updateProfil.fulfilled.type,
+            deleteProfil.fulfilled.type,
+            assignPrivilegeToProfil.fulfilled.type,
+            deactivatePrivilegeFromProfil.fulfilled.type,
+            assignModuleToProfil.fulfilled.type,
+            deactivateModuleFromProfil.fulfilled.type,
+            assignUserToProfil.fulfilled.type,
+            deactivateUserFromProfil.fulfilled.type,
+          ].includes(action.type),
+        (state) => {
+          state.loading = false;
         }
-      })
-      .addCase(createProfile.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(activateProfile.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(activateProfile.fulfilled, (state, action: PayloadAction<{ success: boolean; data: Profile }>) => {
-        state.loading = false;
-        if (action.payload.success) {
-          const index = state.data.findIndex(p => p.id === action.payload.data.id);
-          if (index !== -1) {
-            state.data[index] = action.payload.data;
-          }
+      )
+      .addMatcher(
+        (action) =>
+          [
+            createProfil.rejected.type,
+            updateProfil.rejected.type,
+            deleteProfil.rejected.type,
+            assignPrivilegeToProfil.rejected.type,
+            deactivatePrivilegeFromProfil.rejected.type,
+            assignModuleToProfil.rejected.type,
+            deactivateModuleFromProfil.rejected.type,
+            assignUserToProfil.rejected.type,
+            deactivateUserFromProfil.rejected.type,
+          ].includes(action.type),
+        (state, action) => {
+          state.loading = false;
+          state.error = action.error.message || 'Une erreur est survenue';
         }
-      })
-      .addCase(activateProfile.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(deactivateProfile.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(deactivateProfile.fulfilled, (state, action: PayloadAction<{ success: boolean; data: Profile }>) => {
-        state.loading = false;
-        if (action.payload.success) {
-          const index = state.data.findIndex(p => p.id === action.payload.data.id);
-          if (index !== -1) {
-            state.data[index] = action.payload.data;
-          }
-        }
-      })
-      .addCase(deactivateProfile.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(deleteProfile.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(deleteProfile.fulfilled, (state, action: PayloadAction<{ success: boolean; data: string }>) => {
-        state.loading = false;
-        if (action.payload.success) {
-          state.data = state.data.filter(p => p.id !== action.payload.data);
-        }
-      })
-      .addCase(deleteProfile.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(addAutorisationToProfile.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(addAutorisationToProfile.fulfilled, (state, action: PayloadAction<{ success: boolean; data: Profile }>) => {
-        state.loading = false;
-        if (action.payload.success) {
-          const index = state.data.findIndex(p => p.id === action.payload.data.id);
-          if (index !== -1) {
-            state.data[index] = action.payload.data;
-          }
-        }
-      })
-      .addCase(addAutorisationToProfile.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(removeAutorisationFromProfile.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(removeAutorisationFromProfile.fulfilled, (state, action: PayloadAction<{ success: boolean; data: Profile }>) => {
-        state.loading = false;
-        if (action.payload.success) {
-          const index = state.data.findIndex(p => p.id === action.payload.data.id);
-          if (index !== -1) {
-            state.data[index] = action.payload.data;
-          }
-        }
-      })
-      .addCase(removeAutorisationFromProfile.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(updateProfile.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(updateProfile.fulfilled, (state, action: PayloadAction<{ success: boolean; data: Profile }>) => {
-        state.loading = false;
-        if (action.payload.success) {
-          const index = state.data.findIndex(p => p.id === action.payload.data.id);
-          if (index !== -1) {
-            state.data[index] = action.payload.data;
-          }
-        }
-      })
-      .addCase(updateProfile.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
+      );
   },
 });
 
-export const { clearError } = profilesSlice.actions;
 export default profilesSlice.reducer;

@@ -135,10 +135,10 @@ const ModelesPage = () => {
           <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
             <tr>
               <th className="px-6 py-5 text-left">Module</th>
-              <th className="px-6 py-5 text-left">Fonctionnalité</th>
+              <th className="px-6 py-5 text-left">Introduction</th>
               <th className="px-6 py-5 text-left">Document</th>
               <th className="px-6 py-5 text-left">Application</th>
-              <th className="px-6 py-5 text-left">Status</th>
+              <th className="px-6 py-5 text-left">Statut</th>
               <th className="px-6 py-5 text-right">Actions</th>
             </tr>
           </thead>
@@ -232,8 +232,8 @@ const ModelesPage = () => {
                   <input 
                     value={formData.fonctionnalite} 
                     onChange={(e) => setFormData({...formData, fonctionnalite: e.target.value})} 
-                    placeholder="Ex: FACTURE_EXPORT" 
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase placeholder:text-gray-300" 
+                    placeholder="Ex: Bonjour, voici le document..." 
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all  placeholder:text-gray-300" 
                     required 
                   />
                 </div>
@@ -241,9 +241,9 @@ const ModelesPage = () => {
                 <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Date d'application</label>
                   <input 
-                    type="date" 
+                    type="date"
                     value={formData.dateApplication} 
-                    onChange={(e) => setFormData({...formData, dateApplication: e.target.value})} 
+                    onChange={(e) => setFormData({...formData, dateApplication: e.target.value})}
                     className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-black outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all text-gray-700" 
                     required 
                   />

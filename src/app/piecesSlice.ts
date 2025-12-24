@@ -60,7 +60,7 @@ export const fetchPieces = createAsyncThunk<
 // Créer une pièce
 export const createPiece = createAsyncThunk<
   { success: boolean; data: Piece },
-  { document: string; moduleIds: string[] },
+  { document: string },
   { state: { auth: { token: string } } }
 >('pieces/createPiece', async (payload, { getState, rejectWithValue, dispatch }) => {
   try {

@@ -14,6 +14,13 @@ import Miles from "../pages/parametres/Miles";
 import Piece from "../pages/parametres/Piece";
 import ClientBeneficiaire from "../pages/parametres/Client.Beneficiaire";
 import ClientFacture from "../pages/parametres/Client.Facture";
+import DevisTransaction from "../pages/parametres/Devis.Transaction";
+import ClientFactureForm from "../pages/parametres/client.facture/ClientFactureForm";
+import Categorie from "../pages/parametres/Categorie";
+import Article from "../pages/parametres/Article";
+import ClientBeneficiaireForm from "../pages/parametres/client.beneficaire/ClientBeneficiaireForm";
+import Fournisseur from "../pages/parametres/Fournisseur";
+import ProfilFormPage from "../pages/parametres/profil.user/ProfilForm";
 
 export function parametresRoutes() {
   return [
@@ -31,5 +38,15 @@ export function parametresRoutes() {
     <Route key="piece" path="piece" element={<Piece />} />,
     <Route key="client-beneficiaire" path="client-beneficiaire" element={<ClientBeneficiaire />} />,
     <Route key="client-facture" path="client-facture" element={<ClientFacture />} />,
+    <Route key="client-facture-form" path="client-facture-form" element={<ClientFactureForm />} />,
+    <Route key="devis-transaction" path="devis-transaction" element={<DevisTransaction />} />,
+    <Route key="client-facture-nouveau" path="client-facture/nouveau" element={<ClientFactureForm />} />,
+    <Route key="client-facture-edit" path="client-facture/:id" element={<ClientFactureForm />} />,
+    <Route key="categorie" path="categorie" element={<Categorie />} />,
+    <Route key="article" path="article" element={<Article />} />,
+    <Route key="client-beneficiaire" path="client-beneficiaire" element={<ClientBeneficiaire />} />,
+    <Route key="client-beneficiaire-edit" path="client-beneficiaire/:id" element={<ClientBeneficiaireForm />} />,
+    <Route key="fournisseur" path="fournisseur" element={<Fournisseur />} />,
+    <Route path="profil/:id" element={<ProfilFormPage />} />,
   ];
 }

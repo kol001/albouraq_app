@@ -5,21 +5,23 @@ import {
   activatePiece,
   deactivatePiece,
   deletePiece,
-  addModuleToPiece,
-  removeModuleFromPiece,
+  // addModuleToPiece,
+  // removeModuleFromPiece,
   createPiece,
 } from '../../app/piecesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Piece } from '../../app/piecesSlice';
-import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiTag, FiFileText, FiTrash2, FiPlusCircle } from 'react-icons/fi';
+import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiTag, FiFileText, FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
+import { useNavigate } from 'react-router-dom';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const PiecePage = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { data: pieces } = useSelector((state: RootState) => state.pieces);
-  const { data: modules } = useSelector((state: RootState) => state.modules);
+  // const { data: modules } = useSelector((state: RootState) => state.modules);
 
   // UI States
   const [activeModal, setActiveModal] = useState<'none' | 'form'>('none');
@@ -36,8 +38,8 @@ const PiecePage = () => {
 
   // Form States
   const [document, setDocument] = useState('');
-  const [selectedModuleIds, setSelectedModuleIds] = useState<string[]>([]);
-  const [newModuleIdToAdd, setNewModuleIdToAdd] = useState('');
+  // const [selectedModuleIds, setSelectedModuleIds] = useState<string[]>([]);
+  // const [newModuleIdToAdd, setNewModuleIdToAdd] = useState('');
 
   // Audit
   const [auditEntityId, setAuditEntityId] = useState<string | null>(null);
@@ -47,8 +49,8 @@ const PiecePage = () => {
     setActiveModal('none');
     setEditingPieceId(null);
     setDocument('');
-    setSelectedModuleIds([]);
-    setNewModuleIdToAdd('');
+    // setSelectedModuleIds([]);
+    // setNewModuleIdToAdd('');
     setMessage({ text: '', isError: false });
   };
 
@@ -69,7 +71,7 @@ const PiecePage = () => {
         setTimeout(closeModals, 1500);
       }
     } else {
-      const result = await dispatch(createPiece({ document, moduleIds: selectedModuleIds }));
+      const result = await dispatch(createPiece({ document }));
       if (createPiece.fulfilled.match(result)) {
         setMessage({ text: 'Pièce créée avec succès !', isError: false });
         setTimeout(closeModals, 1500);
@@ -79,22 +81,22 @@ const PiecePage = () => {
   };
 
   // Les fonctions d'ajout/suppression utilisent maintenant l'ID dynamique
-  const handleAddModule = async () => {
-    if (editingPieceId && newModuleIdToAdd) {
-      setIsSubmitting(true);
-      await dispatch(addModuleToPiece({ pieceId: editingPieceId, moduleId: newModuleIdToAdd }));
-      setNewModuleIdToAdd('');
-      setIsSubmitting(false);
-    }
-  };
+  // const handleAddModule = async () => {
+  //   if (editingPieceId && newModuleIdToAdd) {
+  //     setIsSubmitting(true);
+  //     await dispatch(addModuleToPiece({ pieceId: editingPieceId, moduleId: newModuleIdToAdd }));
+  //     setNewModuleIdToAdd('');
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
-  const handleRemoveModule = async (moduleId: string) => {
-    if (editingPieceId) {
-      setIsSubmitting(true);
-      await dispatch(removeModuleFromPiece({ pieceId: editingPieceId, moduleId }));
-      setIsSubmitting(false);
-    }
-  };
+  // const handleRemoveModule = async (moduleId: string) => {
+  //   if (editingPieceId) {
+  //     setIsSubmitting(true);
+  //     await dispatch(removeModuleFromPiece({ pieceId: editingPieceId, moduleId }));
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
   const openEdit = (piece: Piece) => {
     setEditingPieceId(piece.id);
@@ -117,11 +119,16 @@ const PiecePage = () => {
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FiFileText className="text-indigo-600" /> Gestion des Pièces
-          </h2>
-          <p className="text-gray-500 font-medium italic text-sm">Référentiel des documents requis par module.</p>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+            <FiArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+              <FiFileText className="text-indigo-600" /> Gestion des Pièces
+            </h2>
+            <p className="text-gray-500 font-medium italic text-sm">Référentiel des documents requis par module.</p>
+          </div>
         </div>
         <button 
           onClick={() => { setEditingPieceId(null); setActiveModal('form'); }}
@@ -138,8 +145,8 @@ const PiecePage = () => {
             <tr>
               <th className="px-6 py-5 text-left">Code Doc</th>
               <th className="px-6 py-5 text-left">Document</th>
-              <th className="px-6 py-5 text-left">Modules Liés</th>
-              <th className="px-6 py-5 text-left">Status</th>
+              {/* <th className="px-6 py-5 text-left">Modules Liés</th> */}
+              <th className="px-6 py-5 text-left">Statut</th>
               <th className="px-6 py-5 text-right">Actions</th>
             </tr>
           </thead>
@@ -159,7 +166,7 @@ const PiecePage = () => {
                     <span className="text-gray-900 font-black text-sm uppercase tracking-tight">{piece.document}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                {/* <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-2 max-w-xs">
                     {piece.module.map((m) => (
                       <span key={m.id} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md text-[10px] font-black uppercase border border-gray-200">
@@ -168,7 +175,7 @@ const PiecePage = () => {
                     ))}
                     {piece.module.length === 0 && <span className="text-[10px] text-gray-300 italic font-bold">Aucun lien</span>}
                   </div>
-                </td>
+                </td> */}
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
                     piece.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -224,7 +231,7 @@ const PiecePage = () => {
                 </div>
 
                 {/* GESTION DES MODULES */}
-                <div className="space-y-4">
+                {/* <div className="space-y-4">
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Modules Associés</label>
                   
                   {currentPiece ? (
@@ -244,10 +251,10 @@ const PiecePage = () => {
                             </button>
                           </div>
                         ))}
-                      </div>
+                      </div> */}
                       
                       {/* Sélecteur d'ajout rapide */}
-                      <div className="flex gap-2 bg-gray-50 p-2 rounded-2xl border border-dashed border-gray-200">
+                      {/* <div className="flex gap-2 bg-gray-50 p-2 rounded-2xl border border-dashed border-gray-200">
                         <select 
                           value={newModuleIdToAdd} 
                           onChange={(e) => setNewModuleIdToAdd(e.target.value)} 
@@ -290,7 +297,7 @@ const PiecePage = () => {
                       ))}
                     </div>
                   )}
-                </div>
+                </div> */}
               </div>
 
               {message.text && (

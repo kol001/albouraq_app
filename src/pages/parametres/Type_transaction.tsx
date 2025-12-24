@@ -9,8 +9,9 @@ import {
 import type { RootState, AppDispatch } from '../../app/store';
 import { 
   FiSettings, FiPlus, FiX, FiCheckCircle, 
-  FiAlertCircle, FiActivity, FiLoader 
+  FiAlertCircle, FiActivity, FiLoader , FiArrowLeft
 } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
@@ -26,6 +27,7 @@ const EVENTS = [
 
 const TypeTransaction = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { data: types, loading: globalLoading, error: globalError } = useSelector((state: RootState) => state.transactionTypes);
   
   // UI States
@@ -90,11 +92,16 @@ const TypeTransaction = () => {
 
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FiSettings className="text-indigo-600" /> Types de Transaction
-          </h2>
-          <p className="text-gray-500 font-medium italic">Définissez les règles d'automatisation de vos flux de documents.</p>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+            <FiArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+              <FiSettings className="text-indigo-600" /> Types de Transaction
+            </h2>
+            <p className="text-gray-500 font-medium italic">Définissez les règles d'automatisation de vos flux de documents.</p>
+          </div>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
@@ -119,7 +126,7 @@ const TypeTransaction = () => {
                 <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Workflow</th>
                 <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Événement Déclencheur</th>
                 <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Mode d'exécution</th>
-                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Statut</th>
                 <th className="px-6 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
               </tr>
             </thead>

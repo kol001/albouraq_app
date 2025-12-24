@@ -63,7 +63,7 @@ export default function AppBar() {
                     <span className={`capitalize ${index === paths.length - 1 ? "text-indigo-600 font-semibold" : "hover:text-gray-600 transition-colors"}`}>
                       {p.replace(/-/g, ' ')}
                     </span>
-                    <span className="text-gray-300"> /</span>
+                    <span className="text-gray-300"> / </span>
                   </Link>
                 </div>
               ))}

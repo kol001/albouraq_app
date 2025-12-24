@@ -11,8 +11,8 @@ import {
   FiTag,
   FiPackage,
   FiBox,
-  // FiCreditCard,
-  // FiBriefcase,
+  FiCreditCard,
+  FiBriefcase,
 } from "react-icons/fi";
 
 import type { IconType } from "react-icons";
@@ -31,7 +31,7 @@ export const PARAMETRES: ParametreItem[] = [
 
   { label: "Paramétrage Type Transaction", path: "type-transaction", icon: FiRepeat },
   { label: "Paramétrage Transaction", path: "transaction", icon: FiFileText },
-  
+
   { label: "Paramétrage Module", path: "module", icon: FiPackage },
   { label: "Paramétrage Commission", path: "commission", icon: FiDollarSign },
   { label: "Paramétrage Numérotation", path: "numerotation", icon: FiHash },
@@ -39,14 +39,11 @@ export const PARAMETRES: ParametreItem[] = [
   { label: "Paramétrage Miles", path: "miles", icon: FiTag },
   { label: "Paramétrage Pièces", path: "piece", icon: FiBox },
 
-  // { label: "Paramétrage Devise Transaction", path: "devise-transaction", icon: FiCreditCard },
-
+  { label: "Paramétrage Devise Transaction", path: "devis-transaction", icon: FiCreditCard },
   { label: "Paramétrage Client Facturé", path: "client-facture", icon: FiUser },
   { label: "Paramétrage Client Bénéficiaire", path: "client-beneficiaire", icon: FiUsers },
-
-  // { label: "Paramétrage Fournisseurs", path: "fournisseurs", icon: FiBriefcase },
-
-  // { label: "Paramétrage Sous Catégorie Article", path: "sous-categorie-article", icon: FiLayers },
-  // { label: "Paramétrage Article", path: "article", icon: FiBox },
+  { label: "Paramétrage Sous Catégorie Article", path: "categorie", icon: FiLayers },
+  { label: "Paramétrage Article", path: "article", icon: FiBox },
+  { label: "Paramétrage Fournisseurs", path: "fournisseur", icon: FiBriefcase },
 ];
 

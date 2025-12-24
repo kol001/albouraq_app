@@ -1,6 +1,28 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../service/Axios';
 
+export interface factures{
+  clientFactureId: string;
+  clientBeneficiaireId: string;
+  clientFacture : {
+    id: string;
+    code: string;
+    libelle: string;
+    profilRisque: 'FAIBLE' | 'MOYEN' | 'ELEVE';
+    tauxBase: number;
+    volDomestique: number;
+    volRegional: number;
+    longCourrier: number;
+    auComptant: number;
+    credit15jrs: number;
+    credit30jrs: number;
+    credit60jrs: number;
+    credit90jrs: number;
+    statut: 'ACTIF' | 'INACTIF';
+    dateApplication: string;
+  };
+}
+
 export interface ClientBeneficiaire {
   id: string;
   code: string;
@@ -9,7 +31,7 @@ export interface ClientBeneficiaire {
   dateApplication: string;
   dateCreation: string;
   updatedAt: string;
-  factures: any[]; // À typer plus tard si besoin
+  factures: factures[]; // À typer plus tard si besoin
 }
 
 export interface ClientBeneficiairesState {

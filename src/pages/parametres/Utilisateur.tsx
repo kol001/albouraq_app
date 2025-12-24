@@ -13,13 +13,16 @@ import type { User } from '../../app/usersSlice';
 import AuditModal from '../../components/AuditModal';
 import { 
   FiUserPlus, FiX, FiCheckCircle, FiAlertCircle, 
-  FiLoader, FiUserCheck, FiMail, FiMapPin 
+  FiLoader, FiUserCheck, FiMail, FiMapPin, FiArrowLeft
 } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const Utilisateur = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
   const { data: users, error: globalError } = useSelector((state: RootState) => state.users);
   const { data: profiles } = useSelector((state: RootState) => state.profiles);
 
@@ -128,19 +131,24 @@ const Utilisateur = () => {
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FiUserCheck className="text-indigo-600" /> Annuaire Utilisateurs
-          </h2>
-          <p className="text-gray-500 font-medium italic">Gérez les comptes, les accès et les affectations par département.</p>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+            <FiArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+              <FiUserCheck className="text-indigo-600" /> Annuaire Utilisateurs
+            </h2>
+            <p className="text-gray-500 font-medium italic">Gérez les comptes, les accès et les affectations par département.</p>
+          </div>
         </div>
         <div className="flex gap-4">
-          <button
+          {/* <button
             onClick={() => setActiveModal('assign')}
             className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-2xl font-black transition-all shadow-lg shadow-emerald-100 flex items-center gap-2"
           >
             🔑 Assigner Profil
-          </button>
+          </button> */}
           <button
             onClick={() => setActiveModal('create')}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3.5 rounded-2xl font-black transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
@@ -164,8 +172,7 @@ const Utilisateur = () => {
               <tr>
                 <th className="px-6 py-5 text-left">Utilisateur</th>
                 <th className="px-6 py-5 text-left">Département</th>
-                <th className="px-6 py-5 text-left">Status</th>
-                <th className="px-6 py-5 text-left">Profil Assigné</th>
+                <th className="px-6 py-5 text-left">Statut</th>
                 <th className="px-6 py-5 text-right">Actions</th>
               </tr>
             </thead>
@@ -198,7 +205,7 @@ const Utilisateur = () => {
                       {user.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  {/* <td className="px-6 py-4">
                     {user.profile ? (
                       <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-[10px] font-black uppercase border border-gray-200">
                         {user.profile.profil}
@@ -206,7 +213,7 @@ const Utilisateur = () => {
                     ) : (
                       <span className="text-[10px] text-gray-300 italic font-bold">Non assigné</span>
                     )}
-                  </td>
+                  </td> */}
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-4 text-[11px] font-black uppercase tracking-tighter">
                       <button onClick={() => openEdit(user)} className="text-blue-600 hover:underline">Modifier</button>

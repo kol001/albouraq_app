@@ -10,13 +10,16 @@ import {
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Transaction } from '../../app/transactionsSlice';
 import type { ModuleRef } from '../../app/commissionsSlice';
-import { FiPlus, FiCalendar, FiClock, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiLayers } from 'react-icons/fi';
+import { FiPlus, FiCalendar, FiClock, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiLayers, FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
+import { useNavigate } from 'react-router-dom';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const TransactionPage = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
   const { data: transactions, loading: transLoading } = useSelector((state: RootState) => state.transactions);
   const { data: modules, loading: modulesLoading } = useSelector((state: RootState) => state.modules);
   const { data: types, loading: typesLoading } = useSelector((state: RootState) => state.transactionTypes);
@@ -80,7 +83,7 @@ const TransactionPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Supprimer définitivement cette planification ?')) return;
+    if (!window.confirm('Supprimer définitivement cette transaction ?')) return;
     setIsSubmitting(true);
     await dispatch(deleteTransaction({ id }));
     setIsSubmitting(false);
@@ -109,11 +112,16 @@ const TransactionPage = () => {
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FiCalendar className="text-indigo-600" /> Planification
-          </h2>
-          <p className="text-gray-500 font-medium italic">Programmez l'exécution des flux de transactions par module.</p>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+            <FiArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+              <FiCalendar className="text-indigo-600" /> Transaction
+            </h2>
+            <p className="text-gray-500 font-medium italic">Programmez l'exécution des flux de transactions par module.</p>
+          </div>
         </div>
         <button
           onClick={() => { closeModals(); setIsModalOpen(true); }}
@@ -132,7 +140,7 @@ const TransactionPage = () => {
               <th className="px-6 py-5 text-left">Module Cible</th>
               <th className="px-6 py-5 text-left">Exécution</th>
               <th className="px-6 py-5 text-left">Planification</th>
-              <th className="px-6 py-5 text-left">Status</th>
+              <th className="px-6 py-5 text-left">Statut</th>
               <th className="px-6 py-5 text-right">Actions</th>
             </tr>
           </thead>

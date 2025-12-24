@@ -151,7 +151,7 @@ const CommissionPage = () => {
               <th className="px-6 py-5 text-center">Forfait</th>
               <th className="px-6 py-5 text-center">Diff. Prix</th>
               <th className="px-6 py-5 text-center">Libre</th>
-              <th className="px-6 py-5">Status</th>
+              <th className="px-6 py-5">Statut</th>
               <th className="px-6 py-5 text-right">Actions</th>
             </tr>
           </thead>

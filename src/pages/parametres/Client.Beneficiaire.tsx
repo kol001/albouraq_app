@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchClientBeneficiaires,
@@ -8,18 +8,25 @@ import {
   deactivateClientBeneficiaire,
   deleteClientBeneficiaire,
 } from '../../app/clientBeneficiairesSlice';
+import {
+  addBeneficiaireToClientFacture,
+  removeBeneficiaireFromClientFacture,
+} from '../../app/clientFacturesSlice'; // ← Ajout important
 import type { RootState, AppDispatch } from '../../app/store';
 import type { ClientBeneficiaire } from '../../app/clientBeneficiairesSlice';
-import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiUserCheck, FiTag } from 'react-icons/fi';
+import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiUserCheck, FiTag, FiSearch, FiTrash2, FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
+import { useNavigate } from 'react-router-dom';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const ClientBeneficiairePage = () => {
   const dispatch = useAppDispatch();
-  const { data: clients, loading, error: globalError } = useSelector((state: RootState) => state.clientBeneficiaires);
+  const navigate = useNavigate();
 
-  // Load initial
+  const { data: beneficiaires, loading, error: globalError } = useSelector((state: RootState) => state.clientBeneficiaires);
+  const { data: clientFactures } = useSelector((state: RootState) => state.clientFactures); // ← Pour la liste et recherche
+
   useEffect(() => {
     dispatch(fetchClientBeneficiaires());
   }, [dispatch]);
@@ -34,6 +41,9 @@ const ClientBeneficiairePage = () => {
   const [libelle, setLibelle] = useState('');
   const [statut, setStatut] = useState<'ACTIF' | 'INACTIF'>('ACTIF');
 
+  // Gestion des Clients Factures liés
+  const [searchFacture, setSearchFacture] = useState('');
+
   // Audit
   const [auditEntityId, setAuditEntityId] = useState<string | null>(null);
   const [auditEntityName, setAuditEntityName] = useState('');
@@ -43,6 +53,7 @@ const ClientBeneficiairePage = () => {
     setEditingClient(null);
     setLibelle('');
     setStatut('ACTIF');
+    setSearchFacture('');
     setMessage({ text: '', isError: false });
   };
 
@@ -56,10 +67,9 @@ const ClientBeneficiairePage = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const dateApplication = new Date().toISOString(); // Date actuelle pour création
+    const dateApplication = new Date().toISOString();
 
     if (editingClient) {
-      // Update
       const result = await dispatch(updateClientBeneficiaire({ id: editingClient.id, libelle, statut }));
       if (updateClientBeneficiaire.fulfilled.match(result)) {
         setMessage({ text: 'Client bénéficiaire mis à jour !', isError: false });
@@ -68,7 +78,6 @@ const ClientBeneficiairePage = () => {
         setMessage({ text: 'Une erreur est survenue.', isError: true });
       }
     } else {
-      // Create
       const result = await dispatch(createClientBeneficiaire({ libelle, statut, dateApplication }));
       if (createClientBeneficiaire.fulfilled.match(result)) {
         setMessage({ text: 'Client bénéficiaire créé !', isError: false });
@@ -80,16 +89,59 @@ const ClientBeneficiairePage = () => {
     setIsSubmitting(false);
   };
 
-  const openEdit = (client: ClientBeneficiaire) => {
-    setEditingClient(client);
-    setLibelle(client.libelle);
-    setStatut(client.statut);
-    setActiveModal('form');
+  // const openEdit = (client: ClientBeneficiaire) => {
+  //   setEditingClient(client);
+  //   setLibelle(client.libelle);
+  //   setStatut(client.statut);
+  //   setActiveModal('form');
+  // };
+
+  // Clients Factures disponibles (non déjà liés + recherche)
+  const availableClientFactures = useMemo(() => {
+    if (!editingClient) return [];
+    const linkedFactureIds = editingClient.factures.map(f => f.clientFacture.id);
+    return clientFactures.filter(cf =>
+      !linkedFactureIds.includes(cf.id) &&
+      (cf.libelle.toLowerCase().includes(searchFacture.toLowerCase()) ||
+       cf.code.toLowerCase().includes(searchFacture.toLowerCase()))
+    );
+  }, [clientFactures, editingClient, searchFacture]);
+
+  // Ajouter un Client Facture au Bénéficiaire
+  const handleAddClientFacture = async (clientFactureId: string) => {
+    if (editingClient) {
+      setIsSubmitting(true);
+      const result = await dispatch(addBeneficiaireToClientFacture({
+        id: clientFactureId,
+        beneficiaireId: editingClient.id
+      }));
+
+      if (addBeneficiaireToClientFacture.fulfilled.match(result)) {
+        // Rafraîchir la liste des bénéficiaires pour voir le nouveau lien
+        await dispatch(fetchClientBeneficiaires());
+      }
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRemoveClientFacture = async (clientFactureId: string) => {
+    if (editingClient) {
+      setIsSubmitting(true);
+      const result = await dispatch(removeBeneficiaireFromClientFacture({
+        id: clientFactureId,
+        beneficiaireId: editingClient.id
+      }));
+
+      if (removeBeneficiaireFromClientFacture.fulfilled.match(result)) {
+        // Rafraîchir après suppression
+        await dispatch(fetchClientBeneficiaires());
+      }
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
-      
       {/* Overlay loading */}
       {isSubmitting && (
         <div className="fixed inset-0 z-[60] bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
@@ -102,13 +154,18 @@ const ClientBeneficiairePage = () => {
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FiUserCheck className="text-indigo-600" /> Clients Bénéficiaires
-          </h2>
-          <p className="text-gray-500 font-medium italic">Gérez les bénéficiaires des transactions.</p>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+            <FiArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+              <FiUserCheck className="text-indigo-600" />Clients Bénéficiaires
+            </h2>
+            <p className="text-gray-500 font-medium italic">Gérez les bénéficiaires et leurs clients facturés.</p>
+          </div>
         </div>
-        <button 
+        <button
           onClick={() => { setEditingClient(null); setActiveModal('form'); }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-3.5 rounded-2xl font-black transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
         >
@@ -129,13 +186,14 @@ const ClientBeneficiairePage = () => {
             <tr>
               <th className="px-6 py-5 text-left">Code</th>
               <th className="px-6 py-5 text-left">Libellé</th>
+              <th className="px-6 py-5 text-left">Date Application</th>
+              <th className="px-6 py-5 text-left">Clients Factures Liés</th>
               <th className="px-6 py-5 text-left">Statut</th>
-              <th className="px-6 py-5 text-left">Date d'application</th>
               <th className="px-6 py-5 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 bg-white font-medium">
-            {clients.map((client) => (
+            {beneficiaires.map((client) => (
               <tr key={client.id} className="hover:bg-indigo-50/30 transition-colors">
                 <td className="px-6 py-4">
                   <span className="inline-flex items-center gap-2 text-xs font-mono font-black bg-gray-50 text-indigo-600 px-3 py-1 rounded-lg border border-gray-100">
@@ -150,6 +208,19 @@ const ClientBeneficiairePage = () => {
                     <span className="text-gray-900 font-black text-sm">{client.libelle}</span>
                   </div>
                 </td>
+                <td className="px-6 py-4 text-xs text-gray-600">
+                  {new Date(client.dateApplication).toLocaleDateString('fr-FR')}
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex flex-wrap gap-2">
+                    {client.factures.map((f) => (
+                      <span key={f.clientFacture.id} className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold">
+                        {f.clientFacture.libelle}
+                      </span>
+                    ))}
+                    {client.factures.length === 0 && <span className="text-gray-400 italic text-xs">Aucun</span>}
+                  </div>
+                </td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
                     client.statut === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -158,13 +229,15 @@ const ClientBeneficiairePage = () => {
                     {client.statut}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-xs text-gray-600">
-                  {new Date(client.dateApplication).toLocaleDateString('fr-FR')}
-                </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-4 text-[11px] font-black uppercase tracking-tighter">
-                    <button onClick={() => openEdit(client)} className="text-blue-600 hover:underline">Modifier</button>
                     <button 
+                      onClick={() => navigate(`/parametre/client-beneficiaire/${client.id}`)}
+                      className="text-blue-600 hover:underline"
+                    >
+                      Modifier
+                    </button>
+                    <button
                       onClick={() => handleAction(client.statut === 'ACTIF' ? deactivateClientBeneficiaire : activateClientBeneficiaire, { id: client.id })}
                       className={client.statut === 'ACTIF' ? 'text-amber-600 hover:underline' : 'text-emerald-600 hover:underline'}
                     >
@@ -185,7 +258,7 @@ const ClientBeneficiairePage = () => {
             ))}
           </tbody>
         </table>
-        {loading && clients.length === 0 && (
+        {loading && beneficiaires.length === 0 && (
           <div className="p-20 flex flex-col items-center justify-center text-gray-400 gap-3">
             <FiLoader className="animate-spin text-indigo-600" size={32} />
             <p className="text-[10px] font-black uppercase tracking-widest">Chargement des clients bénéficiaires...</p>
@@ -196,7 +269,7 @@ const ClientBeneficiairePage = () => {
       {/* MODALE FORMULAIRE */}
       {activeModal === 'form' && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden transform transition-all animate-in zoom-in-95">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl overflow-hidden">
             <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
               <h3 className="text-2xl font-black text-gray-800">
                 {editingClient ? 'Édition Client Bénéficiaire' : 'Nouveau Client Bénéficiaire'}
@@ -207,23 +280,23 @@ const ClientBeneficiairePage = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Libellé</label>
-                  <input 
-                    type="text" 
-                    placeholder="ex: Client bénéficiaire A" 
-                    value={libelle} 
-                    onChange={(e) => setLibelle(e.target.value)} 
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-black outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" 
-                    required 
+                  <input
+                    type="text"
+                    placeholder="ex: Client bénéficiaire A"
+                    value={libelle}
+                    onChange={(e) => setLibelle(e.target.value)}
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-black outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                    required
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Statut</label>
-                  <select 
-                    value={statut} 
-                    onChange={(e) => setStatut(e.target.value as 'ACTIF' | 'INACTIF')} 
+                  <select
+                    value={statut}
+                    onChange={(e) => setStatut(e.target.value as 'ACTIF' | 'INACTIF')}
                     className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-medium outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
                   >
                     <option value="ACTIF">ACTIF</option>
@@ -231,6 +304,62 @@ const ClientBeneficiairePage = () => {
                   </select>
                 </div>
               </div>
+
+              {/* Section Clients Factures liés (uniquement en édition) */}
+              {editingClient && (
+                <div className="border-t pt-6">
+                  <h4 className="text-sm font-black text-gray-800 uppercase mb-4">Clients Factures Associés</h4>
+                  <div className="space-y-3 mb-6">
+                    {editingClient.factures.map((f) => (
+                      <div key={f.clientFacture.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border">
+                        <div>
+                          <p className="font-bold text-sm">{f.clientFacture.libelle}</p>
+                          <p className="text-xs text-gray-500">{f.clientFacture.code}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveClientFacture(f.clientFacture.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <FiTrash2 size={18} />
+                        </button>
+                      </div>
+                    ))}
+                    {editingClient.factures.length === 0 && (
+                      <p className="text-center text-gray-400 italic py-4">Aucun client facture associé</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="relative mb-3">
+                      <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <input
+                        type="text"
+                        placeholder="Rechercher un client facture à ajouter..."
+                        value={searchFacture}
+                        onChange={(e) => setSearchFacture(e.target.value)}
+                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto space-y-1">
+                      {availableClientFactures.map((cf) => (
+                        <button
+                          key={cf.id}
+                          type="button"
+                          onClick={() => handleAddClientFacture(cf.id)}
+                          className="w-full text-left p-3 hover:bg-indigo-50 rounded-lg flex justify-between items-center"
+                        >
+                          <div>
+                            <p className="font-medium text-sm">{cf.libelle}</p>
+                            <p className="text-xs text-gray-500">{cf.code}</p>
+                          </div>
+                          <FiPlus className="text-indigo-600" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {message.text && (
                 <div className={`p-4 rounded-2xl flex items-center gap-3 font-bold text-xs ${message.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
@@ -243,9 +372,9 @@ const ClientBeneficiairePage = () => {
                 <button type="button" onClick={closeModals} className="flex-1 py-4 border border-gray-100 rounded-2xl font-black text-gray-400 uppercase text-xs tracking-widest hover:bg-gray-50 transition-all">
                   Annuler
                 </button>
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting} 
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
                   className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest"
                 >
                   {isSubmitting ? <FiLoader className="animate-spin" /> : 'Confirmer'}

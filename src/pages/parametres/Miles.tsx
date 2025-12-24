@@ -1,301 +1,320 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  createMile,
   fetchMiles,
-  updateMile,
-  deleteMile,
-  activateMile,
-  deactivateMile,
+  createMiles,
+  updateModulesForMiles,
+  addBorneToLatest,
+  updateBorneMiles,
+  activateMiles, 
+  deactivateMiles
 } from '../../app/milesSlice';
-import type { RootState, AppDispatch } from '../../app/store';
-import type { Mile } from '../../app/milesSlice';
+import type { BorneMiles } from '../../app/milesSlice';
+import type { AppDispatch, RootState } from '../../app/store';
 import { 
-  FiPlus,
-  FiCheckCircle, FiAlertCircle, FiLoader, FiX, FiLayers 
+   FiSave, FiEdit2, FiTrash2, FiZap,
+   FiLayers, FiSettings, FiPlusCircle 
 } from 'react-icons/fi';
-import AuditModal from '../../components/AuditModal';
 
-const Miles = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { data: miles,  error: globalError } = useSelector((state: RootState) => state.miles);
-  const { data: modules } = useSelector((state: RootState) => state.modules);
+const useAppDispatch = () => useDispatch<AppDispatch>();
 
-  // UI State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Chargement spécifique aux actions
-  const [editingMile, setEditingMile] = useState<Mile | null>(null);
-  const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null);
+interface NewBorne {
+  borneCaInf: number;
+  borneCaSup: number;
+  miles: number;
+}
 
-  // Form State
-  const [formData, setFormData] = useState({
-    moduleId: '',
-    borneCaInf: 0,
-    borneCaSup: 1000,
-    miles: 100
-  });
+const MilesPage = () => {
+  const dispatch = useAppDispatch();
+  const { data: milesList } = useSelector((state: RootState) => state.miles);
+  const { data: allModules } = useSelector((state: RootState) => state.modules);
 
-  // Audit
-  const [auditEntityId, setAuditEntityId] = useState<string | null>(null);
-  const [auditEntityName, setAuditEntityName] = useState('');
+  // --- États ---
+  const [creationMode, setCreationMode] = useState<'NEW' | 'ADD_TO_CURRENT'>('NEW');
+  const [bornes, setBornes] = useState<NewBorne[]>([{ borneCaInf: 0, borneCaSup: 1000, miles: 100 }]);
+  const [newBorne, setNewBorne] = useState<NewBorne>({ borneCaInf: 0, borneCaSup: 0, miles: 0 });
+  const [pendingModules, setPendingModules] = useState<Record<string, Set<string>>>({});
+  const [editingBorneId, setEditingBorneId] = useState<string | null>(null);
+  const [editedValues, setEditedValues] = useState<Partial<BorneMiles>>({});
 
   useEffect(() => {
     dispatch(fetchMiles());
   }, [dispatch]);
 
-  const resetForm = () => {
-    setFormData({ moduleId: '', borneCaInf: 0, borneCaSup: 1000, miles: 100 });
-    setEditingMile(null);
-    setMessage(null);
-    setIsModalOpen(false);
+  const sortedMilesList = [...milesList].sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+  const latestMiles = sortedMilesList[0];
+
+  // --- Actions ---
+  const addBorneRow = () => setBornes([...bornes, { borneCaInf: 0, borneCaSup: 0, miles: 0 }]);
+  const removeBorneRow = (index: number) => bornes.length > 1 && setBornes(bornes.filter((_, i) => i !== index));
+  const updateBorne = (index: number, field: keyof NewBorne, value: number) => {
+    const updated = [...bornes];
+    updated[index][field] = value;
+    setBornes(updated);
   };
 
-  const handleOpenEdit = (m: Mile) => {
-    setEditingMile(m);
-    setFormData({
-      moduleId: m.moduleId,
-      borneCaInf: m.borneCaInf,
-      borneCaSup: m.borneCaSup,
-      miles: m.miles
+  const handleCreate = () => {
+    dispatch(createMiles(bornes));
+    setBornes([{ borneCaInf: 0, borneCaSup: 1000, miles: 100 }]);
+  };
+
+  const handleAddSingleBorne = () => {
+    if (newBorne.borneCaInf >= newBorne.borneCaSup || newBorne.miles <= 0) {
+      alert("Vérifiez les valeurs : CA inf < sup et points > 0");
+      return;
+    }
+    dispatch(addBorneToLatest(newBorne));
+    setNewBorne({ borneCaInf: 0, borneCaSup: 0, miles: 0 });
+  };
+
+  const togglePendingModule = (milesId: string, moduleId: string) => {
+    setPendingModules((prev) => {
+      const set = new Set(prev[milesId] || []);
+      set.has(moduleId) ? set.delete(moduleId) : set.add(moduleId);
+      return { ...prev, [milesId]: set };
     });
-    setIsModalOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setMessage(null);
-
-    const action = editingMile 
-      ? updateMile({ id: editingMile.id, ...formData }) 
-      : createMile(formData);
-
-    const result = await dispatch(action);
-
-    if (createMile.fulfilled.match(result) || updateMile.fulfilled.match(result)) {
-      setMessage({ text: editingMile ? 'Configuration mise à jour !' : 'Nouvelle borne créée !', isError: false });
-      setTimeout(resetForm, 1500);
-    } else {
-      setMessage({ text: 'Une erreur est survenue lors de l\'opération.', isError: true });
-    }
-    setIsSubmitting(false);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Supprimer cette configuration de miles ?')) {
-      setIsSubmitting(true);
-      await dispatch(deleteMile({ id }));
-      setIsSubmitting(false);
-    }
-  };
-
-  const openAudit = (miles: Mile) => {
-      setAuditEntityId(miles.id);
-      setAuditEntityName(miles.module.nom);
-    };
-
-  const closeAudit = () => {
-    setAuditEntityId(null);
-    setAuditEntityName('');
-  };
-
-  const toggleStatus = async (m: Mile) => {
-    setIsSubmitting(true);
-    if (m.status === 'ACTIF') {
-      await dispatch(deactivateMile({ id: m.id }));
-    } else {
-      await dispatch(activateMile({ id: m.id }));
-    }
-    setIsSubmitting(false);
+  const getCurrentModulesForMiles = (milesId: string): string[] => {
+    const miles = milesList.find((m) => m.id === milesId);
+    if (!miles) return [];
+    const base = miles.Module.map((mod) => mod.id);
+    const pending = pendingModules[milesId] || new Set<string>();
+    return base.filter((id) => !pending.has(id)).concat(Array.from(pending).filter((id) => !base.includes(id)));
   };
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
-      {/* Overlay de chargement global pour les actions rapides */}
-      {isSubmitting && !isModalOpen && (
-        <div className="fixed inset-0 z-[60] bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
-          <FiLoader className="text-indigo-600 animate-spin" size={40} />
-        </div>
-      )}
-
+    <div className="p-8 max-w-[1600px] mx-auto bg-slate-50 min-h-screen font-sans">
+      
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex justify-between items-end mb-10">
         <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FiLayers className="text-indigo-600" /> Gestion des Miles
-          </h2>
-          <p className="text-gray-500 font-medium">Configurez les paliers de récompenses par module de vente.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Barèmes Miles</h1>
+          <p className="text-slate-500 mt-1 font-medium italic">Configuration technique des seuils de fidélité.</p>
         </div>
-        <button
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
-        >
-          <FiPlus size={20} /> Nouvelle Borne
-        </button>
       </div>
 
-      {globalError && (
-        <div className="p-4 mb-6 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-2 font-bold">
-          <FiAlertCircle /> {globalError}
-        </div>
-      )}
-
-      {/* Tableau Modernisé */}
-      <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-100">
-          <thead className="bg-gray-50/50">
-            <tr>
-              <th className="px-6 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Module</th>
-              <th className="px-6 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Palier CA</th>
-              <th className="px-6 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Valeur Miles</th>
-              <th className="px-6 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Status</th>
-              <th className="px-6 py-5 text-right text-xs font-black text-gray-400 uppercase tracking-widest">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50 bg-white font-medium">
-            {miles.map((m) => (
-              <tr key={m.id} className="hover:bg-indigo-50/30 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="font-bold text-gray-900">{m.module.nom}</div>
-                  <div className="text-[10px] font-mono text-indigo-500 uppercase">{m.module.code}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-gray-600 italic">de</span> <span className="font-bold">{m.borneCaInf}</span> 
-                  <span className="text-gray-600 italic ml-2">à</span> <span className="font-bold">{m.borneCaSup}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg font-black tracking-tight">
-                    {m.miles} Miles
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                    m.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${m.status === 'ACTIF' ? 'bg-green-500' : 'bg-red-500'}`} />
-                    {m.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button onClick={() => handleOpenEdit(m)} className="p-2 text-xs  text-blue-500 hover:bg-blue-50 rounded-xl transition-all" title="Modifier">
-                      {/* <FiEdit3 size={18} /> */}
-                      Modifier
-                      </button>
-                    <button onClick={() => toggleStatus(m)} className={`p-2 rounded-xl transition-all text-xs ${m.status === 'ACTIF' ? 'text-amber-500 hover:bg-amber-50' : 'text-green-500 hover:bg-green-50'}`} title={m.status === 'ACTIF' ? 'Désactiver' : 'Activer'}>
-                      {/* <FiPower size={18} /> */}
-                      {m.status != 'ACTIF' ? 'Activer' : 'Désactiver'}
-                    </button>
-                    <button
-                      onClick={() => openAudit(m)}
-                      className="text-purple-600 hover:text-purple-800 text-xs "
-                    >
-                      Historique
-                    </button>
-                    <button onClick={() => handleDelete(m.id)} className="p-2 text-xs text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Supprimer">
-                      {/* <FiTrash2 size={18} /> */}
-                      Supprimer
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Modale Unique (Création / Édition) */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-            <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-2xl font-black text-gray-800">
-                {editingMile ? 'Modifier la borne' : 'Nouvelle borne'}
-              </h3>
-              <button onClick={resetForm} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400"><FiX size={24} /></button>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* COLONNE GAUCHE : Création et Ajout (Tabs System) */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="grid grid-cols-1 gap-6">
-                <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Module Cible</label>
-                  <select 
-                    value={formData.moduleId} 
-                    onChange={(e) => setFormData({...formData, moduleId: e.target.value})} 
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold" 
-                    required
-                  >
-                    <option value="">Sélectionner un module</option>
-                    {modules.map(m => <option key={m.id} value={m.id}>{m.nom} ({m.code})</option>)}
-                  </select>
-                </div>
+            {/* Tab Selector */}
+            <div className="flex border-b border-slate-100 bg-slate-50/50 p-1">
+              <button 
+                onClick={() => setCreationMode('NEW')}
+                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all ${
+                  creationMode === 'NEW' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                Nouveau Barème
+              </button>
+              <button 
+                onClick={() => setCreationMode('ADD_TO_CURRENT')}
+                disabled={!latestMiles}
+                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all ${
+                  creationMode === 'ADD_TO_CURRENT' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-600 disabled:opacity-30'
+                }`}
+              >
+                Ajuster l'actuel
+              </button>
+            </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">CA Inférieur</label>
-                    <input 
-                      type="number" 
-                      value={formData.borneCaInf} 
-                      onChange={(e) => setFormData({...formData, borneCaInf: Number(e.target.value)})} 
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold" 
-                      required 
-                    />
+            <div className="p-6">
+              {creationMode === 'NEW' ? (
+                /* Vue 1 : Création Complète */
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><FiPlusCircle /></div>
+                    <span className="text-sm font-bold text-slate-700">Définir un nouveau cycle</span>
                   </div>
-                  <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">CA Supérieur</label>
-                    <input 
-                      type="number" 
-                      value={formData.borneCaSup} 
-                      onChange={(e) => setFormData({...formData, borneCaSup: Number(e.target.value)})} 
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold" 
-                      required 
-                    />
+                  {bornes.map((borne, index) => (
+                    <div key={index} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 relative">
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase ml-1">CA min</label>
+                          <input type="number" value={borne.borneCaInf} onChange={(e) => updateBorne(index, 'borneCaInf', Number(e.target.value))} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase ml-1">CA max</label>
+                          <input type="number" value={borne.borneCaSup} onChange={(e) => updateBorne(index, 'borneCaSup', Number(e.target.value))} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase ml-1 text-indigo-500">Points Miles</label>
+                        <input type="number" value={borne.miles} onChange={(e) => updateBorne(index, 'miles', Number(e.target.value))} className="w-full bg-indigo-50/50 border border-indigo-100 rounded-xl px-3 py-2 text-sm font-black text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500" />
+                      </div>
+                      {bornes.length > 1 && (
+                        <button onClick={() => removeBorneRow(index)} className="absolute top-2 right-2 text-slate-300 hover:text-red-500 transition-colors"><FiTrash2 size={14}/></button>
+                      )}
+                    </div>
+                  ))}
+                  <button onClick={addBorneRow} className="w-full py-3 border-2 border-dashed border-slate-100 rounded-2xl text-slate-400 text-[10px] font-black uppercase hover:border-indigo-200 hover:text-indigo-400 transition-all">
+                    + Ajouter une tranche
+                  </button>
+                  <button onClick={handleCreate} className="w-full mt-4 bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 transition-all">
+                    Initialiser le barème
+                  </button>
+                </div>
+              ) : (
+                /* Vue 2 : Ajout à l'actuel (addBorneToLatest) */
+                <div className="space-y-6">
+                   <div className="flex items-center gap-2 mb-2">
+                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><FiZap /></div>
+                    <span className="text-sm font-bold text-slate-700">Ajout rapide de tranche</span>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Récompense (Miles)</label>
-                  <input 
-                    type="number" 
-                    value={formData.miles} 
-                    onChange={(e) => setFormData({...formData, miles: Number(e.target.value)})} 
-                    className="w-full p-4 bg-indigo-50 border border-indigo-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-indigo-700 text-lg" 
-                    required 
-                  />
-                </div>
-              </div>
-
-              {message && (
-                <div className={`p-4 rounded-2xl flex items-center gap-3 font-bold text-sm ${message.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-                  {message.isError ? <FiAlertCircle /> : <FiCheckCircle />}
-                  {message.text}
+                  <div className="p-5 bg-emerald-50/30 border border-emerald-100 rounded-2xl space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-emerald-600 uppercase ml-1">Seuil Inférieur</label>
+                          <input type="number" value={newBorne.borneCaInf} onChange={(e) => setNewBorne({ ...newBorne, borneCaInf: Number(e.target.value) })} className="w-full border-emerald-100 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-emerald-600 uppercase ml-1">Seuil Supérieur</label>
+                          <input type="number" value={newBorne.borneCaSup} onChange={(e) => setNewBorne({ ...newBorne, borneCaSup: Number(e.target.value) })} className="w-full border-emerald-100 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+                        </div>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[9px] font-black text-emerald-600 uppercase ml-1 font-black">Valeur en Points</label>
+                        <input type="number" value={newBorne.miles} onChange={(e) => setNewBorne({ ...newBorne, miles: Number(e.target.value) })} className="w-full bg-white border border-emerald-100 rounded-xl px-3 py-3 text-lg font-black text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500" />
+                    </div>
+                  </div>
+                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
+                    <p className="text-[10px] text-amber-700 leading-relaxed font-medium">
+                      ⚠️ Cette action ajoutera une nouvelle ligne directement au barème <strong>{latestMiles?.numMiles}</strong> actuellement actif.
+                    </p>
+                  </div>
+                  <button onClick={handleAddSingleBorne} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all">
+                    Injecter la tranche
+                  </button>
                 </div>
               )}
-
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={resetForm} className="flex-1 py-4 border border-gray-100 rounded-2xl font-bold text-gray-500 hover:bg-gray-50 transition-all">Annuler</button>
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting} 
-                  className="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? <FiLoader className="animate-spin" /> : editingMile ? 'Mettre à jour' : 'Confirmer'}
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
-      )}
 
-      <AuditModal
-        entity="MILES"
-        entityId={auditEntityId}
-        entityName={auditEntityName}
-        isOpen={!!auditEntityId}
-        onClose={closeAudit}
-      />
+        {/* COLONNE DROITE : Barème Actuel (Détails premium) */}
+        <div className="lg:col-span-8 space-y-8">
+          {latestMiles && (
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all">
+              {/* Top Banner Dark */}
+              <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
+                <div className="flex items-center gap-6">
+                  <div className="h-16 w-16 bg-indigo-500/20 rounded-2xl flex items-center justify-center border border-indigo-500/30">
+                    <FiLayers size={28} className="text-indigo-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black tracking-tight">{latestMiles.numMiles}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`h-2 w-2 rounded-full animate-pulse ${latestMiles.status === 'ACTIF' ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{latestMiles.status}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3">
+                  {latestMiles.status === 'ACTIF' ? (
+                    <button onClick={() => confirm('Désactiver ce barème ?') && dispatch(deactivateMiles(latestMiles.id))} className="px-5 py-2.5 bg-red-500/10 border border-red-500/50 text-red-400 rounded-xl text-xs font-black uppercase hover:bg-red-500 hover:text-white transition-all">Désactiver</button>
+                  ) : (
+                    <button onClick={() => dispatch(activateMiles(latestMiles.id))} className="px-5 py-2.5 bg-emerald-500 text-white rounded-xl text-xs font-black uppercase hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-900/20 tracking-widest">Activer</button>
+                  )}
+                </div>
+              </div>
+
+              {/* Data Grid */}
+              <div className="p-8 grid grid-cols-1 xl:grid-cols-2 gap-10">
+                
+                {/* Tranches Section */}
+                <div>
+                  <h4 className="text-[10px] font-black uppercase text-slate-400 mb-6 flex items-center gap-2 tracking-widest">
+                    <FiSettings className="text-indigo-600" /> Configuration des tranches
+                  </h4>
+                  <div className="space-y-3">
+                    {latestMiles.bornesMiles.map((borne) => {
+                      const isEditing = editingBorneId === borne.id;
+                      return (
+                        <div key={borne.id} className="group flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100 hover:border-indigo-200 transition-all">
+                          <div className="flex items-center gap-4">
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-slate-400 uppercase">Seuils CA</span>
+                              {isEditing ? (
+                                <div className="flex gap-1 mt-1">
+                                  <input type="number" className="w-20 border-indigo-200 rounded-lg p-1 text-xs" value={editedValues.borneCaInf ?? borne.borneCaInf} onChange={e => setEditedValues({...editedValues, borneCaInf: Number(e.target.value)})}/>
+                                  <input type="number" className="w-20 border-indigo-200 rounded-lg p-1 text-xs" value={editedValues.borneCaSup ?? borne.borneCaSup} onChange={e => setEditedValues({...editedValues, borneCaSup: Number(e.target.value)})}/>
+                                </div>
+                              ) : (
+                                <span className="text-sm font-bold text-slate-700">{borne.borneCaInf.toLocaleString()}€ - {borne.borneCaSup.toLocaleString()}€</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-6">
+                            <div className="flex flex-col items-end">
+                               <span className="text-[9px] font-black text-indigo-400 uppercase">Gain</span>
+                               {isEditing ? (
+                                  <input type="number" className="w-16 border-indigo-200 rounded-lg p-1 text-xs font-bold text-indigo-600" value={editedValues.miles ?? borne.miles} onChange={e => setEditedValues({...editedValues, miles: Number(e.target.value)})}/>
+                               ) : (
+                                  <span className="text-lg font-black text-indigo-600">{borne.miles}<span className="text-[10px] ml-1">pts</span></span>
+                               )}
+                            </div>
+                            <div className="w-8">
+                               {isEditing ? (
+                                 <button onClick={() => {
+                                     dispatch(updateBorneMiles({ borneId: borne.id!, updates: editedValues }));
+                                     setEditingBorneId(null);
+                                 }} className="text-emerald-500 hover:scale-110 transition-transform"><FiSave size={18}/></button>
+                               ) : (
+                                 <button onClick={() => { setEditingBorneId(borne.id!); setEditedValues(borne); }} className="text-slate-300 group-hover:text-indigo-400 transition-colors"><FiEdit2 size={16}/></button>
+                               )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Modules Section */}
+                <div>
+                  <h4 className="text-[10px] font-black uppercase text-slate-400 mb-6 flex items-center gap-2 tracking-widest">
+                    <FiLayers className="text-indigo-600" /> Types préstation
+                  </h4>
+                  <div className="bg-slate-50/50 rounded-2xl border border-slate-100 p-2 space-y-1 max-h-[400px] overflow-y-auto">
+                    {allModules.map((mod) => {
+                      const isChecked = getCurrentModulesForMiles(latestMiles.id).includes(mod.id);
+                      return (
+                        <label key={mod.id} className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all ${
+                          isChecked ? 'bg-white shadow-sm border border-indigo-100' : 'hover:bg-slate-100/50 border border-transparent'
+                        }`}>
+                          <div className="flex flex-col">
+                            <span className="text-[11px] font-black text-slate-800 uppercase leading-none mb-1">{mod.nom}</span>
+                            <span className="text-[9px] text-slate-400 font-bold tracking-tighter">{mod.code}</span>
+                            <span className="text-[9px] text-slate-400 font-bold tracking-tighter">{mod.status}</span>
+                          </div>
+                          <input type="checkbox" checked={isChecked} onChange={() => togglePendingModule(latestMiles.id, mod.id)} className="w-5 h-5 text-indigo-600 rounded-lg border-slate-300 focus:ring-offset-0 focus:ring-indigo-500" />
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {Object.keys(pendingModules).length > 0 && (
+                      <button onClick={() => {
+                          const newIds = getCurrentModulesForMiles(latestMiles.id);
+                          dispatch(updateModulesForMiles({ milesId: latestMiles.id, newModuleIds: newIds }));
+                          setPendingModules({});
+                      }} className="w-full mt-4 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200">
+                        Appliquer les changements
+                      </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Miles;
+export default MilesPage;

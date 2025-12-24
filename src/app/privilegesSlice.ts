@@ -3,24 +3,25 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import axiosInstance from '../service/Axios'; // Assure-toi que baseURL est '/api' pour le proxy
 
 // Types (basés sur ta réponse API)
-export interface Autorisation {
-  id: string;
-  nom: string;
-  status: string;
-  module: Module;
-}
+// export interface Autorisation {
+//   id: string;
+//   nom: string;
+//   status: string;
+//   module: Module;
+// }
 
-export interface Module {
-  id: string;
-  nom: string;
-}
+// export interface Module {
+//   id: string;
+//   nom: string;
+// }
 
 export interface Privilege {
   id: string;
   privilege: string;
   fonctionnalite: string;
   status: string;
-  autorisations: Autorisation[];
+  dateActivation: string | null;
+  dateDesactivation: string | null;
 }
 
 export interface PrivilegesState {

@@ -6,19 +6,21 @@ import {
   deletePrivilege, 
   activatePrivilege, 
   deactivatePrivilege, 
-  fetchAutorisationsByPrivilege 
+  // fetchAutorisationsByPrivilege 
 } from '../../app/privilegesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { Privilege, Autorisation } from '../../app/privilegesSlice';
+import type { Privilege } from '../../app/privilegesSlice';
 import { 
   FiPlus, FiX, FiCheckCircle, FiAlertCircle, 
-  FiLoader, FiKey, FiActivity, FiLayers 
+  FiLoader, FiKey, FiActivity, FiLayers, FiArrowLeft
 } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const PrivilegeComponent = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { data: privileges, loading: privLoading, error: globalError } = useSelector((state: RootState) => state.privileges);
 
   // UI States
@@ -32,8 +34,8 @@ const PrivilegeComponent = () => {
   const [editingPrivilege, setEditingPrivilege] = useState<Privilege | null>(null);
 
   // Autorisations liées
-  const [selectedPrivilegeAutorisations, setSelectedPrivilegeAutorisations] = useState<Autorisation[]>([]);
-  const [selectedPrivilegeName, setSelectedPrivilegeName] = useState('');
+  // const [selectedPrivilegeAutorisations, setSelectedPrivilegeAutorisations] = useState<Autorisation[]>([]);
+  // const [selectedPrivilegeName, setSelectedPrivilegeName] = useState('');
 
   const closeModals = () => {
     setActiveModal('none');
@@ -87,16 +89,16 @@ const PrivilegeComponent = () => {
     setActiveModal('edit');
   };
 
-  const openAutorisations = async (p: Privilege) => {
-    setIsSubmitting(true);
-    const result = await dispatch(fetchAutorisationsByPrivilege({ id: p.id }));
-    if (fetchAutorisationsByPrivilege.fulfilled.match(result)) {
-      setSelectedPrivilegeAutorisations(result.payload.data);
-      setSelectedPrivilegeName(p.privilege);
-      setActiveModal('view-auth');
-    }
-    setIsSubmitting(false);
-  };
+  // const openAutorisations = async (p: Privilege) => {
+  //   setIsSubmitting(true);
+  //   const result = await dispatch(fetchAutorisationsByPrivilege({ id: p.id }));
+  //   if (fetchAutorisationsByPrivilege.fulfilled.match(result)) {
+  //     // setSelectedPrivilegeAutorisations(result.payload.data);
+  //     setSelectedPrivilegeName(p.privilege);
+  //     setActiveModal('view-auth');
+  //   }
+  //   setIsSubmitting(false);
+  // };
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
@@ -113,11 +115,16 @@ const PrivilegeComponent = () => {
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FiKey className="text-indigo-600" /> Gestion des Privilèges
-          </h2>
-          <p className="text-gray-500 font-medium italic">Définissez les droits d'accès granulaires par fonctionnalité.</p>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+            <FiArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+              <FiKey className="text-indigo-600" /> Gestion des Privilèges
+            </h2>
+            <p className="text-gray-500 font-medium italic">Définissez les droits d'accès granulaires par fonctionnalité.</p>
+          </div>
         </div>
         <button
           onClick={() => setActiveModal('create')}
@@ -140,8 +147,8 @@ const PrivilegeComponent = () => {
             <tr>
               <th className="px-6 py-5 text-left">Privilège</th>
               <th className="px-6 py-5 text-left">Fonctionnalité</th>
-              <th className="px-6 py-5 text-left">Autorisations liées</th>
-              <th className="px-6 py-5 text-left">Status</th>
+              {/* <th className="px-6 py-5 text-left">Autorisations liées</th> */}
+              <th className="px-6 py-5 text-left">Statut</th>
               <th className="px-6 py-5 text-right">Actions</th>
             </tr>
           </thead>
@@ -160,7 +167,7 @@ const PrivilegeComponent = () => {
                 </td>
                 
                 {/* SECTION AUTORISATIONS NON COMPRESSÉE */}
-                <td className="px-6 py-4">
+                {/* <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-1.5 max-w-[300px]">
                     {p.autorisations && p.autorisations.length > 0 ? (
                       p.autorisations.map((aut: any) => (
@@ -172,7 +179,7 @@ const PrivilegeComponent = () => {
                       <span className="text-[10px] text-gray-300 italic">Aucune liaison</span>
                     )}
                   </div>
-                </td>
+                </td> */}
 
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
@@ -191,7 +198,7 @@ const PrivilegeComponent = () => {
                     >
                       {p.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
                     </button>
-                    <button onClick={() => openAutorisations(p)} className="text-purple-600 hover:underline">Détails</button>
+                    {/* <button onClick={() => openAutorisations(p)} className="text-purple-600 hover:underline">Détails</button> */}
                     <button onClick={() => window.confirm('Supprimer ?') && handleAction(deletePrivilege, { id: p.id })} className="text-red-500 hover:underline border-l border-gray-100 pl-4">Supprimer</button>
                   </div>
                 </td>
@@ -219,7 +226,7 @@ const PrivilegeComponent = () => {
             
             <form onSubmit={activeModal === 'create' ? handleCreateSubmit : handleEditSubmit} className="p-8 space-y-6">
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Code Privilège</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Privilège</label>
                 <input
                   type="text"
                   placeholder="ex: LECTURE_TOTALE"
@@ -273,7 +280,7 @@ const PrivilegeComponent = () => {
               </div>
               <button onClick={closeModals} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400"><FiX size={24} /></button>
             </div>
-            <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            {/* <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
               {selectedPrivilegeAutorisations.length === 0 ? (
                 <div className="text-center py-10 text-gray-400 italic font-medium">Aucune autorisation n'utilise ce privilège.</div>
               ) : (
@@ -302,7 +309,7 @@ const PrivilegeComponent = () => {
                   </tbody>
                 </table>
               )}
-            </div>
+            </div> */}
             <div className="p-6 border-t bg-gray-50 flex justify-end">
               <button onClick={closeModals} className="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all">Fermer</button>
             </div>

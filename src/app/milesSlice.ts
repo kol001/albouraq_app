@@ -1,29 +1,29 @@
+// src/app/milesSlice.ts
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../service/Axios';
 
-export interface ModuleRef {
-  id: string;
-  code: string;
-  nom: string;
-  description: string;
-  status: string;
-}
-
-export interface Mile {
-  id: string;
-  moduleId: string;
-  dateApplication: string;
-  status: string;
+export interface BorneMiles {
+  id?: string;
   borneCaInf: number;
   borneCaSup: number;
   miles: number;
+}
+
+export interface Miles {
+  id: string;
+  numMiles: string;
+  dateApplication: string;
+  status: 'CREER' | 'ACTIF' | 'INACTIF';
+  dateActivation: string | null;
+  dateDesactivation: string | null;
   createdAt: string;
   updatedAt: string;
-  module: ModuleRef;
+  Module: Array<{ id: string; code: string; nom: string; description?: string }>;
+  bornesMiles: BorneMiles[];
 }
 
 export interface MilesState {
-  data: Mile[];
+  data: Miles[];
   loading: boolean;
   error: string | null;
 }
@@ -35,140 +35,142 @@ const initialState: MilesState = {
 };
 
 // Fetch tous les miles
-export const fetchMiles = createAsyncThunk<
-  { success: boolean; data: Mile[] },
-  void,
-  { state: { auth: { token: string } } }
->('miles/fetchMiles', async (_, { getState, rejectWithValue }) => {
-  try {
-    const { auth } = getState();
-    if (!auth.token) return rejectWithValue('Token manquant');
-    const response = await axiosInstance.get('/miles', {
-      headers: { Authorization: `Bearer ${auth.token}` },
-    });
-    if (response.data.success) {
-      return { success: true, data: response.data.data };
+export const fetchMiles = createAsyncThunk(
+  'miles/fetchMiles',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get('/miles');
+      if (response.data.success) {
+        return response.data.data;
+      }
+      return rejectWithValue('Échec récupération des miles');
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
     }
-    return rejectWithValue('Échec récupération');
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
   }
-});
+);
 
-// Créer un mile
-export const createMile = createAsyncThunk<
-  { success: boolean; data: Mile },
-  { moduleId: string; borneCaInf: number; borneCaSup: number; miles: number },
-  { state: { auth: { token: string } } }
->('miles/createMile', async (payload, { getState, rejectWithValue, dispatch }) => {
-  try {
-    const { auth } = getState();
-    if (!auth.token) return rejectWithValue('Token manquant');
-    const response = await axiosInstance.post('/miles', payload, {
-      headers: { Authorization: `Bearer ${auth.token}`, 'Content-Type': 'application/json' },
-    });
-    if (response.data.success) {
-      dispatch(fetchMiles());
-      return { success: true, data: response.data.data };
+// Créer un miles avec bornes
+export const createMiles = createAsyncThunk(
+  'miles/createMiles',
+  async (bornesMiles: BorneMiles[], { dispatch, rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post('/miles', {
+        moduleIds: [],
+        bornesMiles,
+      });
+      if (response.data.success) {
+        dispatch(fetchMiles());
+        return response.data.data;
+      }
+      return rejectWithValue('Échec création du barème');
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
     }
-    return rejectWithValue('Échec création');
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
   }
-});
+);
 
-// Update un mile (PUT)
-export const updateMile = createAsyncThunk<
-  { success: boolean; data: Mile },
-  { id: string; moduleId: string; borneCaInf: number; borneCaSup: number; miles: number },
-  { state: { auth: { token: string } } }
->('miles/updateMile', async (payload, { getState, rejectWithValue, dispatch }) => {
-  try {
-    const { auth } = getState();
-    if (!auth.token) return rejectWithValue('Token manquant');
-    const response = await axiosInstance.put(`/miles/${payload.id}`, {
-      moduleId: payload.moduleId,
-      borneCaInf: payload.borneCaInf,
-      borneCaSup: payload.borneCaSup,
-      miles: payload.miles,
-    }, {
-      headers: { Authorization: `Bearer ${auth.token}`, 'Content-Type': 'application/json' },
-    });
-    if (response.data.success) {
-      dispatch(fetchMiles());
-      return { success: true, data: response.data.data };
-    }
-    return rejectWithValue('Échec modification');
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
-  }
-});
+// Mettre à jour les modules associés
+export const updateModulesForMiles = createAsyncThunk(
+  'miles/updateModules',
+  async (
+    { milesId, newModuleIds }: { milesId: string; newModuleIds: string[] },
+    { dispatch, rejectWithValue }
+  ) => {
+    try {
+      const response = await axiosInstance.get('/miles');
+      const currentMiles = response.data.data.find((m: Miles) => m.id === milesId);
+      if (!currentMiles) return rejectWithValue('Miles non trouvé');
 
-// Delete un mile
-export const deleteMile = createAsyncThunk<
-  { success: boolean; data: string },
-  { id: string },
-  { state: { auth: { token: string } } }
->('miles/deleteMile', async (payload, { getState, rejectWithValue, dispatch }) => {
-  try {
-    const { auth } = getState();
-    if (!auth.token) return rejectWithValue('Token manquant');
-    const response = await axiosInstance.delete(`/miles/${payload.id}`, {
-      headers: { Authorization: `Bearer ${auth.token}` },
-    });
-    if (response.data.success) {
-      dispatch(fetchMiles());
-      return { success: true, data: payload.id };
-    }
-    return rejectWithValue('Échec suppression');
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
-  }
-});
+      const currentModuleIds = currentMiles.Module.map((mod: any) => mod.id);
+      const toAdd = newModuleIds.filter((id) => !currentModuleIds.includes(id));
+      const toRemove = currentModuleIds.filter((id) => !newModuleIds.includes(id));
 
-// Activate
-export const activateMile = createAsyncThunk<
-  { success: boolean; data: Mile },
-  { id: string },
-  { state: { auth: { token: string } } }
->('miles/activateMile', async (payload, { getState, rejectWithValue, dispatch }) => {
-  try {
-    const { auth } = getState();
-    if (!auth.token) return rejectWithValue('Token manquant');
-    const response = await axiosInstance.patch(`/miles/${payload.id}/activate`, {}, {
-      headers: { Authorization: `Bearer ${auth.token}` },
-    });
-    if (response.data.success) {
-      dispatch(fetchMiles());
-      return { success: true, data: response.data.data };
-    }
-    return rejectWithValue('Échec activation');
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
-  }
-});
+      if (toAdd.length > 0) {
+        await axiosInstance.post(`/miles/${milesId}/modules`, { moduleIds: toAdd });
+      }
+      if (toRemove.length > 0) {
+        await axiosInstance.delete(`/miles/${milesId}/modules`, { data: { moduleIds: toRemove } });
+      }
 
-// Deactivate
-export const deactivateMile = createAsyncThunk<
-  { success: boolean; data: Mile },
-  { id: string },
-  { state: { auth: { token: string } } }
->('miles/deactivateMile', async (payload, { getState, rejectWithValue, dispatch }) => {
-  try {
-    const { auth } = getState();
-    if (!auth.token) return rejectWithValue('Token manquant');
-    const response = await axiosInstance.patch(`/miles/${payload.id}/deactivate`, {}, {
-      headers: { Authorization: `Bearer ${auth.token}` },
-    });
-    if (response.data.success) {
       dispatch(fetchMiles());
-      return { success: true, data: response.data.data };
+      return { success: true };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Erreur lors de la mise à jour des modules');
     }
-    return rejectWithValue('Échec désactivation');
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
   }
-});
+);
+
+// Ajouter une nouvelle borne au barème le plus récent
+export const addBorneToLatest = createAsyncThunk(
+  'miles/addBorneToLatest',
+  async (newBorne: { borneCaInf: number; borneCaSup: number; miles: number }, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post('/miles/bornes/add', newBorne);
+      if (response.data.success) {
+        dispatch(fetchMiles()); // Re-fetch pour mettre à jour la liste
+        return response.data.data;
+      }
+      return rejectWithValue('Échec ajout de la tranche');
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+    }
+  }
+);
+
+// Mettre à jour une borne existante
+export const updateBorneMiles = createAsyncThunk(
+  'miles/updateBorneMiles',
+  async (
+    { borneId, updates }: { borneId: string; updates: { borneCaInf: number; borneCaSup: number; miles: number } },
+    { dispatch, rejectWithValue }
+  ) => {
+    try {
+      const response = await axiosInstance.put(`/miles/bornes/${borneId}`, updates);
+      if (response.data.success) {
+        dispatch(fetchMiles()); // Re-fetch pour mettre à jour le barème
+        return response.data.data;
+      }
+      return rejectWithValue('Échec mise à jour de la tranche');
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+    }
+  }
+);
+
+// Activer un barème Miles
+export const activateMiles = createAsyncThunk(
+  'miles/activateMiles',
+  async (milesId: string, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.patch(`/miles/${milesId}/activate`);
+      if (response.data.success) {
+        dispatch(fetchMiles()); // Re-fetch pour mettre à jour le status
+        return response.data.data;
+      }
+      return rejectWithValue('Échec activation du barème');
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+    }
+  }
+);
+
+// Désactiver un barème Miles
+export const deactivateMiles = createAsyncThunk(
+  'miles/deactivateMiles',
+  async (milesId: string, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.patch(`/miles/${milesId}/deactivate`);
+      if (response.data.success) {
+        dispatch(fetchMiles());
+        return response.data.data;
+      }
+      return rejectWithValue('Échec désactivation du barème');
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+    }
+  }
+);
 
 const milesSlice = createSlice({
   name: 'miles',
@@ -176,48 +178,88 @@ const milesSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-        .addCase(fetchMiles.pending, (state) => { state.loading = true; state.error = null; })
-        .addCase(fetchMiles.fulfilled, (state, action) => {
-            state.loading = false;
-            if (action.payload.success) state.data = action.payload.data;
-        })
-        .addCase(fetchMiles.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload as string;
-        })
-        .addCase(createMile.pending, (state) => { state.loading = true; })
-        .addCase(createMile.fulfilled, (state) => { state.loading = false; })
-        .addCase(createMile.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload as string;
-        })
-        .addCase(updateMile.pending, (state) => { state.loading = true; })
-        .addCase(updateMile.fulfilled, (state) => { state.loading = false; })
-        .addCase(updateMile.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload as string;
-        })
-        .addCase(deleteMile.pending, (state) => { state.loading = true; })
-        .addCase(deleteMile.fulfilled, (state, action) => {
-            state.loading = false;
-            state.data = state.data.filter(m => m.id !== action.payload.data);
-        })
-        .addCase(deleteMile.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload as string;
-        })
-        .addCase(activateMile.pending, (state) => { state.loading = true; })
-        .addCase(activateMile.fulfilled, (state) => { state.loading = false; })
-        .addCase(activateMile.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload as string;
-        })
-        .addCase(deactivateMile.pending, (state) => { state.loading = true; })
-        .addCase(deactivateMile.fulfilled, (state) => { state.loading = false; })
-        .addCase(deactivateMile.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload as string;
-        });
+      // fetchMiles
+      .addCase(fetchMiles.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchMiles.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(fetchMiles.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // createMiles
+      .addCase(createMiles.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createMiles.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(createMiles.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // updateModulesForMiles
+      .addCase(updateModulesForMiles.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateModulesForMiles.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(updateModulesForMiles.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // addBorneToLatest
+      .addCase(addBorneToLatest.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(addBorneToLatest.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(addBorneToLatest.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(updateBorneMiles.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateBorneMiles.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(updateBorneMiles.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+            // activateMiles
+      .addCase(activateMiles.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(activateMiles.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(activateMiles.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // deactivateMiles
+      .addCase(deactivateMiles.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deactivateMiles.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(deactivateMiles.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 

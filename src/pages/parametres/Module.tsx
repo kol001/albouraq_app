@@ -116,7 +116,7 @@ const ModulePage = () => {
               <th className="px-6 py-5 text-left">Identifiant (Code)</th>
               <th className="px-6 py-5 text-left">Module</th>
               <th className="px-6 py-5 text-left">Description</th>
-              <th className="px-6 py-5 text-left">Status</th>
+              <th className="px-6 py-5 text-left">Statut</th>
               <th className="px-6 py-5 text-right">Actions</th>
             </tr>
           </thead>

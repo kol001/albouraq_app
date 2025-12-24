@@ -14,6 +14,7 @@ import { fetchDossiers } from '../app/numerotationSlice';
 import { fetchMiles } from '../app/milesSlice';
 import { fetchPieces } from '../app/piecesSlice';
 import { fetchClientBeneficiaires } from '../app/clientBeneficiairesSlice';
+import { fetchDevisTransactions } from '../app/devisTransactionsSlice';
 import { PARAMETRES } from '../constants/parametres';
 import type { RootState, AppDispatch } from '../app/store';
 import { FiRefreshCw, FiChevronRight, FiActivity } from 'react-icons/fi';
@@ -38,6 +39,7 @@ function ListeParametre() {
   const { data: miles, loading: milesLoading } = useSelector((state: RootState) => state.miles);
   const { data: pieces, loading: piecesLoading } = useSelector((state: RootState) => state.pieces);
   const { data: clientBeneficiaires, loading: clientBeneficiairesLoading } = useSelector((state: RootState) => state.clientBeneficiaires);
+  const { data: devisTransactions, loading: devisTransactionsLoading } = useSelector((state: RootState) => state.devisTransactions);
   const { token } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
@@ -57,6 +59,7 @@ function ListeParametre() {
       if (miles.length === 0 && !milesLoading)dispatch(fetchDossiers());
       if (pieces.length === 0 && !piecesLoading)dispatch(fetchPieces());
       if (clientBeneficiaires.length === 0 && !clientBeneficiairesLoading)dispatch(fetchClientBeneficiaires());
+      if (devisTransactions.length === 0 && !devisTransactionsLoading)dispatch(fetchDevisTransactions());
     };
     loadData();
   }, [dispatch, token, navigate]);
@@ -75,10 +78,11 @@ function ListeParametre() {
     dispatch(fetchMiles());
     dispatch(fetchPieces());
     dispatch(fetchClientBeneficiaires());
+    dispatch(fetchDevisTransactions());
   };
 
   const anyLoading = privilegesLoading || profilesLoading || autorisationsLoading || usersLoading || 
-                     transactionTypesLoading || transactionsLoading || modulesLoading || modelesLoading || commissionLoading || numerotationLoading || milesLoading;
+                     transactionTypesLoading || transactionsLoading || modulesLoading || modelesLoading || commissionLoading || numerotationLoading || milesLoading || piecesLoading || clientBeneficiairesLoading || devisTransactionsLoading;
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
