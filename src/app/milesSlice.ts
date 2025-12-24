@@ -82,9 +82,9 @@ export const updateModulesForMiles = createAsyncThunk(
       const currentMiles = response.data.data.find((m: Miles) => m.id === milesId);
       if (!currentMiles) return rejectWithValue('Miles non trouvé');
 
-      const currentModuleIds = currentMiles.Module.map((mod: any) => mod.id);
-      const toAdd = newModuleIds.filter((id) => !currentModuleIds.includes(id));
-      const toRemove = currentModuleIds.filter((id) => !newModuleIds.includes(id));
+      const currentModuleIds = currentMiles.Module.map((mod: { id: string }) => mod.id);
+      const toAdd = newModuleIds.filter((id: string) => !currentModuleIds.includes(id));
+      const toRemove = currentModuleIds.filter((id: string) => !newModuleIds.includes(id));
 
       if (toAdd.length > 0) {
         await axiosInstance.post(`/miles/${milesId}/modules`, { moduleIds: toAdd });

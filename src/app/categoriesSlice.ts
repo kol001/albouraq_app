@@ -34,7 +34,7 @@ const initialState: CategoriesState = {
 export const fetchCategories = createAsyncThunk<
   { success: boolean; data: Categorie[] },
   void
->('categories/fetchCategories', async (_, { getState, rejectWithValue }) => {
+>('categories/fetchCategories', async (_, { rejectWithValue }) => {
   try {
     const response = await axiosInstance.get('/categories');
     if (response.data.success) {

@@ -209,28 +209,28 @@ export const deactivatePrivilege = createAsyncThunk<
 );
 
 // Async thunk pour récupérer les autorisations liées à un privilège
-export const fetchAutorisationsByPrivilege = createAsyncThunk<
-  { success: boolean; data: Autorisation[] },
-  { id: string },
-  { state: { auth: { token: string } } }
->(
-  'privileges/fetchAutorisationsByPrivilege',
-  async (payload, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      if (!auth.token) return rejectWithValue('Token manquant');
-      const response = await axiosInstance.get(`/privileges/${payload.id}/autorisations`, {
-        headers: { Authorization: `Bearer ${auth.token}` },
-      });
-      if (response.data.success) {
-        return { success: true, data: response.data.data };
-      }
-      return rejectWithValue('Échec récupération autorisations');
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
-    }
-  }
-);
+// export const fetchAutorisationsByPrivilege = createAsyncThunk<
+//   { success: boolean; data: Autorisation[] },
+//   { id: string },
+//   { state: { auth: { token: string } } }
+// >(
+//   'privileges/fetchAutorisationsByPrivilege',
+//   async (payload, { getState, rejectWithValue }) => {
+//     try {
+//       const { auth } = getState();
+//       if (!auth.token) return rejectWithValue('Token manquant');
+//       const response = await axiosInstance.get(`/privileges/${payload.id}/autorisations`, {
+//         headers: { Authorization: `Bearer ${auth.token}` },
+//       });
+//       if (response.data.success) {
+//         return { success: true, data: response.data.data };
+//       }
+//       return rejectWithValue('Échec récupération autorisations');
+//     } catch (error: any) {
+//       return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+//     }
+//   }
+// );
 
 const initialState: PrivilegesState = {
   data: [],
@@ -325,12 +325,12 @@ const privilegesSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      .addCase(fetchAutorisationsByPrivilege.pending, (state) => { state.loading = true; })
-      .addCase(fetchAutorisationsByPrivilege.fulfilled, (state) => { state.loading = false; })
-      .addCase(fetchAutorisationsByPrivilege.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
+      // .addCase(fetchAutorisationsByPrivilege.pending, (state) => { state.loading = true; })
+      // .addCase(fetchAutorisationsByPrivilege.fulfilled, (state) => { state.loading = false; })
+      // .addCase(fetchAutorisationsByPrivilege.rejected, (state, action) => {
+      //   state.loading = false;
+      //   state.error = action.payload as string;
+      // });
   },
 });
 

@@ -12,7 +12,7 @@ import type { RootState, AppDispatch } from '../../app/store';
 import type { Privilege } from '../../app/privilegesSlice';
 import { 
   FiPlus, FiX, FiCheckCircle, FiAlertCircle, 
-  FiLoader, FiKey, FiActivity, FiLayers, FiArrowLeft
+  FiLoader, FiKey, FiActivity,  FiArrowLeft
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
@@ -269,53 +269,7 @@ const PrivilegeComponent = () => {
         </div>
       )}
 
-      {/* MODALE DETAILS AUTORISATIONS */}
-      {activeModal === 'view-auth' && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95">
-            <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-600 text-white rounded-xl"><FiLayers size={20}/></div>
-                <h3 className="text-xl font-black text-gray-800">Liaisons : {selectedPrivilegeName}</h3>
-              </div>
-              <button onClick={closeModals} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400"><FiX size={24} /></button>
-            </div>
-            {/* <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
-              {selectedPrivilegeAutorisations.length === 0 ? (
-                <div className="text-center py-10 text-gray-400 italic font-medium">Aucune autorisation n'utilise ce privilège.</div>
-              ) : (
-                <table className="min-w-full">
-                  <thead className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">
-                    <tr>
-                      <th className="px-4 py-3 text-left">Nom Autorisation</th>
-                      <th className="px-4 py-3 text-left">Status</th>
-                      <th className="px-4 py-3 text-left">Module</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {selectedPrivilegeAutorisations.map((aut) => (
-                      <tr key={aut.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-4 text-sm font-black text-gray-700">{aut.nom}</td>
-                        <td className="px-4 py-4">
-                          <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase ${aut.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                            {aut.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-xs font-bold text-indigo-500 uppercase tracking-tight">
-                          {aut.module ? aut.module.nom : 'Système'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div> */}
-            <div className="p-6 border-t bg-gray-50 flex justify-end">
-              <button onClick={closeModals} className="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all">Fermer</button>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 };

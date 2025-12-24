@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../service/Axios';
+import type { Action } from '@reduxjs/toolkit';
 
 // Interfaces détaillées
 export interface PrivilegeAttribution {
@@ -277,8 +278,9 @@ const profilesSlice = createSlice({
         }
       )
       .addMatcher(
-        (action) =>
+        (action): action is Action & { error: Error } => 
           [
+            fetchProfiles.rejected.type,
             createProfil.rejected.type,
             updateProfil.rejected.type,
             deleteProfil.rejected.type,

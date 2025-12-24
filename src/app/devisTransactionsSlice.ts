@@ -42,7 +42,7 @@ const initialState: DevisTransactionsState = {
 export const fetchDevisTransactions = createAsyncThunk<
   { success: boolean; data: DevisTransaction[] },
   void
->('devisTransactions/fetchDevisTransactions', async (_, { getState, rejectWithValue }) => {
+>('devisTransactions/fetchDevisTransactions', async (_, { rejectWithValue }) => {
   try {
     const response = await axiosInstance.get('/devis-transactions');
     if (response.data.success) {
