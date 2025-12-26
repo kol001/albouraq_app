@@ -15,6 +15,9 @@ import { fetchMiles } from '../app/milesSlice';
 import { fetchPieces } from '../app/piecesSlice';
 import { fetchClientBeneficiaires } from '../app/clientBeneficiairesSlice';
 import { fetchDevisTransactions } from '../app/devisTransactionsSlice';
+import { fetchClientFactures } from '../app/clientFacturesSlice';
+import { fetchArticles } from '../app/articlesSlice';
+import { fetchFournisseurs } from '../app/fournisseursSlice';
 import { PARAMETRES } from '../constants/parametres';
 import type { RootState, AppDispatch } from '../app/store';
 import { FiRefreshCw, FiChevronRight, FiActivity } from 'react-icons/fi';
@@ -40,6 +43,10 @@ function ListeParametre() {
   const { data: pieces, loading: piecesLoading } = useSelector((state: RootState) => state.pieces);
   const { data: clientBeneficiaires, loading: clientBeneficiairesLoading } = useSelector((state: RootState) => state.clientBeneficiaires);
   const { data: devisTransactions, loading: devisTransactionsLoading } = useSelector((state: RootState) => state.devisTransactions);
+  const { data: clientFacturesSlice, loading: clientFacturesSliceLoading } = useSelector((state: RootState) => state.clientFactures);
+  const { data: articleSlice, loading: articleSliceLoading } = useSelector((state: RootState) => state.articles);
+  const { data: fournisseurs, loading: fournisseursLoading } = useSelector((state: RootState) => state.fournisseurs);
+  
   const { token } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
@@ -60,9 +67,13 @@ function ListeParametre() {
       if (pieces.length === 0 && !piecesLoading)dispatch(fetchPieces());
       if (clientBeneficiaires.length === 0 && !clientBeneficiairesLoading)dispatch(fetchClientBeneficiaires());
       if (devisTransactions.length === 0 && !devisTransactionsLoading)dispatch(fetchDevisTransactions());
+      if (clientFacturesSlice.length === 0 && !clientFacturesSliceLoading)dispatch(fetchClientFactures());
+      if (articleSlice.length === 0 && !articleSliceLoading)dispatch(fetchArticles());
+      if (fournisseurs.length === 0 && !fournisseursLoading)dispatch(fetchFournisseurs());
+
     };
     loadData();
-  }, [dispatch, token, navigate]);
+  }, [dispatch, token, navigate, privileges.length, profiles.length, autorisations.length, users.length, transactionTypes.length, transactions.length, modules.length, modeles.length, commission.length, numerotation.length, miles.length, pieces.length, clientBeneficiaires.length, devisTransactions.length, clientFacturesSlice.length, articleSlice.length, fournisseurs.length]);
 
   const handleRefreshAll = () => {
     dispatch(fetchPrivileges());
@@ -79,10 +90,13 @@ function ListeParametre() {
     dispatch(fetchPieces());
     dispatch(fetchClientBeneficiaires());
     dispatch(fetchDevisTransactions());
+    dispatch(fetchClientFactures());
+    dispatch(fetchArticles());
+    dispatch(fetchFournisseurs());
   };
 
   const anyLoading = privilegesLoading || profilesLoading || autorisationsLoading || usersLoading || 
-                     transactionTypesLoading || transactionsLoading || modulesLoading || modelesLoading || commissionLoading || numerotationLoading || milesLoading || piecesLoading || clientBeneficiairesLoading || devisTransactionsLoading;
+                     transactionTypesLoading || transactionsLoading || modulesLoading || modelesLoading || commissionLoading || numerotationLoading || milesLoading || piecesLoading || clientBeneficiairesLoading || devisTransactionsLoading || articleSliceLoading || fournisseursLoading;
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
