@@ -42,7 +42,7 @@ const AutorisationPage = () => {
             </div>
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Autorisation enregistrée</p>
-              <h3 className="text-lg font-bold text-gray-900">{firstAuth.action} — N° {firstAuth.numero}</h3>
+              <h3 className="text-lg font-bold text-gray-900">N° {firstAuth.numero}</h3>
               <p className="text-sm text-gray-500">
                 date d'activation {new Date(firstAuth.date).toLocaleDateString('fr-FR')} à {new Date(firstAuth.date).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
               </p>

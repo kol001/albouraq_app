@@ -9,13 +9,15 @@ import {
 } from '../../app/commissionsSlice';
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Commission, ModuleRef } from '../../app/commissionsSlice';
-import { FiPlus, FiX, FiLoader, FiPercent, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import { FiPlus, FiX, FiLoader, FiPercent, FiAlertCircle, FiCheckCircle, FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
+import { useNavigate } from 'react-router-dom';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const CommissionPage = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { data: commissions, loading: commissionsLoading } = useSelector((state: RootState) => state.commissions);
   const { data: modules } = useSelector((state: RootState) => state.modules);
 
@@ -126,12 +128,19 @@ const CommissionPage = () => {
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FiPercent className="text-indigo-600" /> Gestion des Commissions
-          </h2>
-          <p className="text-gray-500 font-medium">Configurez les règles de calcul des commissions par module.</p>
-        </div>
+        
+
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-xl hover:bg-gray-200 transition-all">
+            <FiArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+              <FiPercent className="text-indigo-600" /> Types de Transaction
+            </h2>
+            <p className="text-gray-500 font-medium italic">Définissez les règles d'automatisation de vos flux de documents.</p>
+          </div>
+        </div>  
         <button
           onClick={() => { resetForm(); setIsModalOpen(true); }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
@@ -141,37 +150,43 @@ const CommissionPage = () => {
       </div>
 
       {/* Tableau */}
-      <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-x-auto">
+      <div className="bg-white border border-gray-100 overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-100 text-left">
           <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
             <tr>
-              <th className="px-6 py-5">Module</th>
-              <th className="px-6 py-5 text-center">Odoo</th>
-              <th className="px-6 py-5 text-center">Libre Prix</th>
-              <th className="px-6 py-5 text-center">Forfait</th>
-              <th className="px-6 py-5 text-center">Diff. Prix</th>
+              <th className="px-6 py-5">Code Catégorie</th>
+              <th className="px-6 py-5">Catégorie Prestation</th>
+              <th className="px-6 py-5 text-center">Statut</th>
+              <th className="px-6 py-5">Date d'application</th>
+              <th className="px-6 py-5 text-center">Provenant Odoo</th>
+              <th className="px-6 py-5 text-center">Libre sur prix Prestataire</th>
+              <th className="px-6 py-5 text-center">Forfaitaire Par Unité</th>
+              <th className="px-6 py-5 text-center">Diff Prix Client/Préstataire</th>
               <th className="px-6 py-5 text-center">Libre</th>
-              <th className="px-6 py-5">Statut</th>
-              <th className="px-6 py-5 text-right">Actions</th>
+              <th className="px-6 py-5 text-center">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 bg-white font-medium">
             {commissions.map((comm) => (
               <tr key={comm.id} className="hover:bg-indigo-50/30 transition-colors text-sm text-gray-700">
+                <td className="px-6 py-4 text-center">
+                  <div className="text-[10px] font-mono text-indigo-500 uppercase">{comm.module?.code}</div></td>
                 <td className="px-6 py-4">
                   <div className="font-bold text-gray-900">{comm.module?.nom || 'N/A'}</div>
-                  <div className="text-[10px] font-mono text-indigo-500 uppercase">{comm.module?.code}</div>
                 </td>
-                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.provenantOdoo} /></td>
-                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.librePrixModule} /></td>
-                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.forfaitUnite} /></td>
-                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.DifPrixClientPrixModule} /></td>
-                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.libre} /></td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 rounded-full text-[10px] font-black ${comm.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                     {comm.status}
                   </span>
                 </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="text-[10px] font-mono text-indigo-500 uppercase">{new Date(comm.createdAt).toLocaleDateString('fr-FR')}</div></td>
+                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.provenantOdoo} /></td>
+                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.librePrixModule} /></td>
+                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.forfaitUnite} /></td>
+                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.DifPrixClientPrixModule} /></td>
+                <td className="px-6 py-4 text-center"><BooleanBadge value={comm.libre} /></td>
+                
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-3 text-[10px] font-black uppercase">
                     <button onClick={() => handleOpenEdit(comm)} className="text-blue-600 hover:underline">Modifier</button>

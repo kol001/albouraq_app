@@ -9,13 +9,15 @@ import {
 } from '../../app/modulesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Module } from '../../app/modulesSlice';
-import { FiPackage, FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLayers, FiLoader, FiTag } from 'react-icons/fi';
+import { FiPackage, FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLayers, FiLoader, FiTag, FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
+import { useNavigate } from 'react-router-dom';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const ModulePage = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { data: modules, loading: modulesLoading, error: globalError } = useSelector((state: RootState) => state.modules);
 
   // UI States
@@ -88,11 +90,16 @@ const ModulePage = () => {
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FiLayers className="text-indigo-600" /> Architecture Modules
-          </h2>
-          <p className="text-gray-500 font-medium italic">Gérez les briques logicielles et l'organisation du système.</p>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-xl hover:bg-gray-200 transition-all">
+            <FiArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+              <FiLayers className="text-indigo-600" /> Architecture Modules
+            </h2>
+            <p className="text-gray-500 font-medium italic">Gérez les briques logicielles et l'organisation du système.</p>
+          </div>
         </div>
         <button 
           onClick={() => { setEditingModule(null); setActiveModal('form'); }}
@@ -109,7 +116,7 @@ const ModulePage = () => {
       )}
 
       {/* TABLEAU */}
-      <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white border border-gray-100 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-100">
           <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
             <tr>
@@ -200,7 +207,7 @@ const ModulePage = () => {
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Code Système</label>
                   <input 
                     type="text" 
-                    placeholder="ex: MOD_FACTURATION" 
+                    placeholder="ex: ACT,ASS,ATT,GUI,..." 
                     value={code} 
                     onChange={(e) => setCode(e.target.value)} 
                     className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-black outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase placeholder:text-gray-300" 
@@ -211,7 +218,7 @@ const ModulePage = () => {
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nom du Module</label>
                   <input 
                     type="text" 
-                    placeholder="ex: Gestion des Stocks" 
+                    placeholder="ex: Activité, Assurance, Location" 
                     value={nom} 
                     onChange={(e) => setNom(e.target.value)} 
                     className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" 

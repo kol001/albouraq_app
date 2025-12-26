@@ -114,12 +114,12 @@ const ClientFactureFormPage = () => {
     <div className="p-8 max-w-[1600px] mx-auto">
       {/* Header avec retour */}
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+        <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-2xl hover:bg-gray-200 transition-all">
           <FiArrowLeft size={20} />
         </button>
         <div>
           <h2 className="text-3xl font-black text-gray-900">
-            {isEdit ? 'Modifier Client Facture' : 'Nouveau Client Facture'}
+            {isEdit ? 'Modifier le Client Facturé' : 'Nouveau Client Facturé'}
           </h2>
           <p className="text-gray-500 italic">Configurez les paramètres et bénéficiaires associés</p>
         </div>
@@ -135,7 +135,7 @@ const ClientFactureFormPage = () => {
         {/* Colonne principale : Formulaire */}
         <div className="lg:col-span-8 space-y-8">
           {/* Identité & Risque */}
-          <section className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+          <section className="bg-white shadow-sm border border-gray-100 p-8">
             <h4 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-6">Identité & Risque</h4>
             <div className="grid grid-cols-2 gap-6">
               <div>
@@ -158,7 +158,7 @@ const ClientFactureFormPage = () => {
           </section>
 
           {/* Conditions commerciales */}
-          <section className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+          <section className="bg-white shadow-sm border border-gray-100 p-8">
             <h4 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-6">Conditions Commerciales (%)</h4>
             <div className="grid grid-cols-3 gap-6">
               {['tauxBase', 'volDomestique', 'volRegional', 'longCourrier', 'auComptant', 'credit15jrs', 'credit30jrs', 'credit60jrs', 'credit90jrs'].map(key => (
@@ -179,14 +179,14 @@ const ClientFactureFormPage = () => {
 
         {/* Colonne droite : Bénéficiaires */}
         <div className="lg:col-span-4">
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 h-full flex flex-col">
+          <div className="bg-white shadow-sm border border-gray-100 p-8 h-full flex flex-col">
             <h4 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-6">Bénéficiaires Associés</h4>
 
             {isEdit ? (
               <>
                 <div className="flex-1 space-y-3 mb-6 overflow-y-auto max-h-96">
                   {currentClient?.beneficiaires.map(link => (
-                    <div key={link.clientBeneficiaireId} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border">
+                    <div key={link.clientBeneficiaireId} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-300">
                       <div>
                         <p className="font-bold text-sm">{link.clientBeneficiaire?.libelle}</p>
                         <p className="text-xs text-gray-500">{link.clientBeneficiaire?.code}</p>
@@ -201,7 +201,7 @@ const ClientFactureFormPage = () => {
                   )}
                 </div>
 
-                <div className="border-t pt-6">
+                <div className="border-t border-gray-300 pt-6">
                   <div className="relative mb-4">
                     <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
@@ -209,7 +209,7 @@ const ClientFactureFormPage = () => {
                       placeholder="Rechercher..."
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border rounded-xl"
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-300"
                     />
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -217,7 +217,7 @@ const ClientFactureFormPage = () => {
                       <button
                         key={ben.id}
                         onClick={() => handleAddBeneficiaire(ben.id)}
-                        className="w-full text-left p-4 hover:bg-indigo-50 rounded-xl flex justify-between items-center"
+                        className="w-full text-left p-4 hover:bg-indigo-50 flex justify-between items-center"
                       >
                         <div>
                           <p className="font-medium">{ben.libelle}</p>

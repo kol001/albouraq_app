@@ -5,7 +5,12 @@ export interface TransactionType {
   id: string;
   transactionType: string;
   event: string;
-  executionMode: string;
+  approbation_BC_Client: string;
+  creation_Facture_Client: string;
+  creation_BC_Fournisseur: string;
+  approbation_BC_Fournisseur: string;
+  creation_BR_Fournisseur: string;
+  creation_Facture_Fournisseur: string;
   status: string;
   dateActivation: string;
   dateDesactivation: string | null;
@@ -51,7 +56,16 @@ export const fetchTransactionTypes = createAsyncThunk<
 // Thunk : Créer un nouveau type de transaction
 export const createTransactionType = createAsyncThunk<
   { success: boolean; data: TransactionType },
-  { transactionType: string; event: string; executionMode: string },
+  { 
+    transactionType: string; 
+    event: string; 
+    approbation_BC_Client: string; 
+    creation_Facture_Client: string; 
+    creation_BC_Fournisseur: string; 
+    approbation_BC_Fournisseur: string; 
+    creation_BR_Fournisseur: string; 
+    creation_Facture_Fournisseur: string 
+  },
   { state: { auth: { token: string } } }
 >('transactionTypes/createTransactionType', async (payload, { getState, rejectWithValue, dispatch }) => {
   try {
@@ -65,6 +79,9 @@ export const createTransactionType = createAsyncThunk<
       },
     });
 
+    console.log("Payload sent:", payload);
+    console.log("Response:", response.data);
+    
     if (response.data.success) {
       // Re-fetch pour avoir la liste à jour
       dispatch(fetchTransactionTypes());

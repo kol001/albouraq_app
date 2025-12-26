@@ -5,7 +5,12 @@ export interface TransactionType {
   id: string;
   transactionType: string;
   event: string;
-  executionMode: string;
+  approbation_BC_Client: string;
+  creation_Facture_Client: string;
+  creation_BC_Fournisseur: string;
+  approbation_BC_Fournisseur: string;
+  creation_BR_Fournisseur: string;
+  creation_Facture_Fournisseur: string;
   status: string;
   dateActivation: string;
   dateDesactivation: string | null;

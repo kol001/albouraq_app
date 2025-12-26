@@ -13,7 +13,7 @@ import type { User } from '../../app/usersSlice';
 import AuditModal from '../../components/AuditModal';
 import { 
   FiUserPlus, FiX, FiCheckCircle, FiAlertCircle, 
-  FiLoader, FiUserCheck, FiMail, FiMapPin, FiArrowLeft
+  FiLoader, FiUserCheck, FiMail, FiMapPin, FiArrowLeft, FiEyeOff, FiEye, FiPlus, FiUsers
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,6 +25,8 @@ const Utilisateur = () => {
 
   const { data: users, error: globalError } = useSelector((state: RootState) => state.users);
   const { data: profiles } = useSelector((state: RootState) => state.profiles);
+
+  const [showPassword, setShowPassword] = useState(false);
 
   // UI States
   const [activeModal, setActiveModal] = useState<'none' | 'create' | 'assign' | 'edit'>('none');
@@ -132,7 +134,7 @@ const Utilisateur = () => {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+          <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-xl hover:bg-gray-200 transition-all">
             <FiArrowLeft size={20} />
           </button>
           <div>
@@ -143,12 +145,6 @@ const Utilisateur = () => {
           </div>
         </div>
         <div className="flex gap-4">
-          {/* <button
-            onClick={() => setActiveModal('assign')}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-2xl font-black transition-all shadow-lg shadow-emerald-100 flex items-center gap-2"
-          >
-            🔑 Assigner Profil
-          </button> */}
           <button
             onClick={() => setActiveModal('create')}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3.5 rounded-2xl font-black transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
@@ -165,7 +161,7 @@ const Utilisateur = () => {
       )}
 
       {/* TABLEAU */}
-      <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
@@ -235,13 +231,30 @@ const Utilisateur = () => {
 
       {/* MODALS UNIFIÉS */}
       {activeModal !== 'none' && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all animate-in zoom-in-95">
-            <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-2xl font-black text-gray-800">
-                {activeModal === 'create' ? 'Nouveau Membre' : activeModal === 'edit' ? 'Modifier Membre' : 'Assigner Profil'}
-              </h3>
-              <button onClick={closeModals} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="bg-white shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all animate-in zoom-in-95 duration-300">
+            
+            {/* HEADER STYLISÉ */}
+            <div className={`p-8 border-b border-gray-200 flex justify-between items-center ${
+              activeModal === 'assign' ? 'bg-emerald-50/30' : 'bg-indigo-50/30'
+            }`}>
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-2xl ${
+                  activeModal === 'assign' ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600'
+                }`}>
+                  {activeModal === 'create' ? <FiPlus size={24} /> : activeModal === 'edit' ? <FiLoader size={24} /> : <FiUsers size={24} />}
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-gray-900 tracking-tight">
+                    {activeModal === 'create' ? 'Nouveau Membre' : activeModal === 'edit' ? 'Modifier Membre' : 'Assigner Profil'}
+                  </h3>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Portail Administration</p>
+                </div>
+              </div>
+              <button 
+                onClick={closeModals} 
+                className="p-3 hover:bg-white hover:shadow-md rounded-2xl transition-all text-gray-400 hover:text-red-500"
+              >
                 <FiX size={24} />
               </button>
             </div>
@@ -252,38 +265,75 @@ const Utilisateur = () => {
             >
               {activeModal === 'assign' ? (
                 <div className="space-y-6 py-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Utilisateur</label>
-                    <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all" required>
-                      <option value="">Sélectionner un utilisateur</option>
-                      {users.map(u => <option key={u.id} value={u.id}>{u.prenom} {u.nom} ({u.email})</option>)}
+                  <div className="group">
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 ml-1">Sélection de l'utilisateur</label>
+                    <select 
+                      value={selectedUserId} 
+                      onChange={(e) => setSelectedUserId(e.target.value)} 
+                      className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-emerald-100 focus:bg-white rounded-2xl font-bold text-gray-700 outline-none transition-all appearance-none cursor-pointer" 
+                      required
+                    >
+                      <option value="">Choisir un membre...</option>
+                      {users.map(u => <option key={u.id} value={u.id}>{u.prenom} {u.nom} — {u.email}</option>)}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Profil à affecter</label>
-                    <select value={selectedProfileId} onChange={(e) => setSelectedProfileId(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all" required>
-                      <option value="">Sélectionner un profil</option>
+                  <div className="group">
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 ml-1">Rôle à attribuer</label>
+                    <select 
+                      value={selectedProfileId} 
+                      onChange={(e) => setSelectedProfileId(e.target.value)} 
+                      className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-emerald-100 focus:bg-white rounded-2xl font-bold text-gray-700 outline-none transition-all appearance-none cursor-pointer" 
+                      required
+                    >
+                      <option value="">Choisir un profil...</option>
                       {profiles.map(p => <option key={p.id} value={p.id}>{p.profil}</option>)}
                     </select>
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-4">
-                    <input type="text" placeholder="PRÉNOM" value={prenom} onChange={(e) => setPrenom(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" required />
-                    <input type="text" placeholder="NOM" value={nom} onChange={(e) => setNom(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" required />
-                    <input type="email" placeholder="EMAIL PROFESSIONNEL" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" required />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-5">
+                    <div className="relative">
+                      <input type="text" placeholder="PRÉNOM" value={prenom} onChange={(e) => setPrenom(e.target.value)} className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-2xl font-bold text-gray-800 outline-none transition-all" required />
+                    </div>
+                    <div className="relative">
+                      <input type="text" placeholder="NOM" value={nom} onChange={(e) => setNom(e.target.value)} className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-2xl font-bold text-gray-800 outline-none transition-all" required />
+                    </div>
+                    <div className="relative">
+                      <input type="email" placeholder="EMAIL PROFESSIONNEL" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-2xl font-bold text-gray-800 outline-none transition-all" required />
+                    </div>
                   </div>
-                  <div className="space-y-4">
+
+                  <div className="space-y-5">
                     {activeModal === 'create' && (
-                      <input type="password" placeholder="MOT DE PASSE" value={motDePasse} onChange={(e) => setMotDePasse(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" required />
+                      <div className="relative group">
+                        <input 
+                          type={showPassword ? "text" : "password"} 
+                          placeholder="MOT DE PASSE" 
+                          value={motDePasse} 
+                          onChange={(e) => setMotDePasse(e.target.value)} 
+                          className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-2xl font-bold text-gray-800 outline-none transition-all pr-12" 
+                          required 
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 transition-colors"
+                        >
+                          {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                        </button>
+                      </div>
                     )}
-                    <input type="text" placeholder="PSEUDO / IDENTIFIANT" value={pseudo} onChange={(e) => setPseudo(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" required />
-                    <input type="text" placeholder="DÉPARTEMENT" value={departement} onChange={(e) => setDepartement(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" required />
+                    <div className="relative">
+                      <input type="text" placeholder="PSEUDO / IDENTIFIANT" value={pseudo} onChange={(e) => setPseudo(e.target.value)} className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-2xl font-bold text-gray-800 outline-none transition-all" required />
+                    </div>
+                    <div className="relative">
+                      <input type="text" placeholder="DÉPARTEMENT" value={departement} onChange={(e) => setDepartement(e.target.value)} className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-2xl font-bold text-gray-800 outline-none transition-all" required />
+                    </div>
                     {activeModal === 'edit' && (
-                      <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all">
-                        <option value="ACTIF">ACTIF</option>
-                        <option value="INACTIF">INACTIF</option>
+                      <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-2xl font-bold text-gray-700 outline-none transition-all">
+                        <option value="ACTIF">🟢 &nbsp; COMPTE ACTIF</option>
+                        <option value="INACTIF">🔴 &nbsp; COMPTE INACTIF</option>
                       </select>
                     )}
                   </div>
@@ -291,21 +341,33 @@ const Utilisateur = () => {
               )}
 
               {message.text && (
-                <div className={`p-4 rounded-2xl flex items-center gap-3 font-bold text-xs ${message.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
-                  {message.isError ? <FiAlertCircle /> : <FiCheckCircle />} {message.text}
+                <div className={`p-4 rounded-2xl flex items-center gap-3 font-bold text-[11px] uppercase tracking-wider animate-bounce ${
+                  message.isError ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                }`}>
+                  {message.isError ? <FiAlertCircle size={16} /> : <FiCheckCircle size={16} />} 
+                  {message.text}
                 </div>
               )}
 
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={closeModals} className="flex-1 py-4 border border-gray-100 rounded-2xl font-bold text-gray-400">Annuler</button>
+              <div className="flex gap-4 pt-6">
+                <button 
+                  type="button" 
+                  onClick={closeModals} 
+                  className="flex-1 py-4 bg-white border-2 border-gray-100 hover:border-gray-200 rounded-2xl font-bold text-gray-400 hover:text-gray-600 transition-all"
+                >
+                  Annuler
+                </button>
                 <button 
                   type="submit" 
                   disabled={isSubmitting} 
-                  className={`flex-1 py-4 text-white rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 ${
-                    activeModal === 'assign' ? 'bg-emerald-600 shadow-emerald-100' : 'bg-indigo-600 shadow-indigo-100'
+                  className={`flex-1 py-4 text-white rounded-2xl font-black shadow-xl transform transition-all active:scale-95 flex items-center justify-center gap-3 ${
+                    activeModal === 'assign' 
+                    ? 'bg-emerald-600 shadow-emerald-200 hover:bg-emerald-700' 
+                    : 'bg-indigo-600 shadow-indigo-200 hover:bg-indigo-700'
                   }`}
                 >
-                  {isSubmitting ? <FiLoader className="animate-spin" /> : 'Confirmer'}
+                  {isSubmitting ? <FiLoader className="animate-spin" /> : <FiCheckCircle size={20} />}
+                  <span className="uppercase text-xs tracking-widest">Confirmer l'opération</span>
                 </button>
               </div>
             </form>

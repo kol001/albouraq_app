@@ -146,7 +146,7 @@ const CategoriePage = () => {
       <div className="mb-16">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+            <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-xl hover:bg-gray-200 transition-all">
               <FiArrowLeft size={20} />
             </button>
             <div>
@@ -160,7 +160,7 @@ const CategoriePage = () => {
           </button>
         </div>
 
-        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white border border-gray-100 overflow-hidden">
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
               <tr>
@@ -222,7 +222,7 @@ const CategoriePage = () => {
           </button>
         </div>
 
-        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white border border-gray-100 overflow-hidden">
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
               <tr>
@@ -288,20 +288,20 @@ const CategoriePage = () => {
       {/* Modal Catégorie */}
       {catModal === 'form' && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
+          <div className="bg-white  w-full max-w-lg overflow-hidden">
+            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h3 className="text-2xl font-black text-gray-800">Catégorie</h3>
               <button onClick={closeCatModal}><FiX size={24} /></button>
             </div>
             <form onSubmit={handleCatSubmit} className="p-8 space-y-8">
-              <select value={catModuleId} onChange={(e) => setCatModuleId(e.target.value)} required className="w-full p-4 bg-gray-50 border rounded-2xl">
+              <select value={catModuleId} onChange={(e) => setCatModuleId(e.target.value)} required className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl">
                 <option value="">Choisir un module</option>
                 {modules.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
               </select>
               <OuiNonButton value={catAchat} setValue={setCatAchat} label="Achat autorisé" />
               <OuiNonButton value={catVente} setValue={setCatVente} label="Vente autorisée" />
               <div className="flex gap-4">
-                <button type="button" onClick={closeCatModal} className="flex-1 py-4 border rounded-2xl">Annuler</button>
+                <button type="button" onClick={closeCatModal} className="flex-1 py-4 border border-gray-100  rounded-2xl">Annuler</button>
                 <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl">Confirmer</button>
               </div>
             </form>
@@ -312,8 +312,8 @@ const CategoriePage = () => {
       {/* Modal Sous-Catégorie */}
       {sousModal === 'form' && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
+          <div className="bg-white  w-full max-w-lg overflow-hidden">
+            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h3 className="text-2xl font-black text-gray-800">Sous-Catégorie</h3>
               <button onClick={closeSousModal}><FiX size={24} /></button>
             </div>
@@ -324,9 +324,9 @@ const CategoriePage = () => {
                 value={sousLibelle}
                 onChange={(e) => setSousLibelle(e.target.value)}
                 required
-                className="w-full p-4 bg-gray-50 border rounded-2xl"
+                className="w-full p-4 bg-gray-50 border  border-gray-100  rounded-2xl"
               />
-              <select value={sousCategorieId} onChange={(e) => setSousCategorieId(e.target.value)} required className="w-full p-4 bg-gray-50 border rounded-2xl">
+              <select value={sousCategorieId} onChange={(e) => setSousCategorieId(e.target.value)} required className="w-full p-4 bg-gray-50 border border-gray-100  rounded-2xl">
                 <option value="">Choisir une catégorie parente</option>
                 {categories.map(c => (
                   <option key={c.id} value={c.id}>
@@ -335,7 +335,7 @@ const CategoriePage = () => {
                 ))}
               </select>
               <div className="flex gap-4">
-                <button type="button" onClick={closeSousModal} className="flex-1 py-4 border rounded-2xl">Annuler</button>
+                <button type="button" onClick={closeSousModal} className="flex-1 py-4 border rounded-2xl border-gray-100 ">Annuler</button>
                 <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl">Confirmer</button>
               </div>
             </form>

@@ -10,13 +10,15 @@ import {
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Modele, ModuleRef } from '../../app/modelesSlice';
 import { API_URL } from '../../service/env';
-import { FiPlus, FiX, FiLoader, FiFileText, FiCalendar, FiExternalLink, FiAlertCircle } from 'react-icons/fi';
+import { FiPlus, FiX, FiLoader, FiFileText, FiCalendar, FiExternalLink, FiAlertCircle, FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
+import { useNavigate } from 'react-router-dom';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const ModelesPage = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { data: modeles, loading: modelesLoading } = useSelector((state: RootState) => state.modeles);
   const { data: modules } = useSelector((state: RootState) => state.modules);
 
@@ -33,6 +35,7 @@ const ModelesPage = () => {
   const [formData, setFormData] = useState({
     moduleId: '',
     fonctionnalite: '',
+    modeleIntroduction: '',
     dateApplication: '',
     pdf: null as File | null
   });
@@ -40,7 +43,7 @@ const ModelesPage = () => {
   const [error, setError] = useState('');
 
   const resetForm = () => {
-    setFormData({ moduleId: '', fonctionnalite: '', dateApplication: '', pdf: null });
+    setFormData({ moduleId: '', fonctionnalite: '', dateApplication: '', modeleIntroduction:'',pdf: null });
     setEditingModele(null);
     setError('');
     setActiveModal('none');
@@ -51,6 +54,7 @@ const ModelesPage = () => {
     setFormData({
       moduleId: mod.moduleId,
       fonctionnalite: mod.fonctionnalite,
+      modeleIntroduction: mod.modeleIntroduction || '',
       dateApplication: mod.dateApplication.slice(0, 10),
       pdf: null
     });
@@ -74,12 +78,14 @@ const ModelesPage = () => {
           moduleId: formData.moduleId,
           fonctionnalite: formData.fonctionnalite,
           dateApplication: new Date(formData.dateApplication).toISOString(),
+          modeleIntroduction: formData.modeleIntroduction,
           status: editingModele.status,
           pdf: formData.pdf || undefined
         })
       : createModele({
           moduleId: formData.moduleId,
           fonctionnalite: formData.fonctionnalite,
+          modeleIntroduction: formData.modeleIntroduction,
           dateApplication: new Date(formData.dateApplication).toISOString(),
           status: 'ACTIF',
           pdf: formData.pdf as File
@@ -115,11 +121,17 @@ const ModelesPage = () => {
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FiFileText className="text-indigo-600" /> Gestion des Modèles
-          </h2>
-          <p className="text-gray-500 font-medium italic">Gestion des documents PDF et conformité par module.</p>
+
+        <div className='flex items-center gap-4'>
+          <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-xl hover:bg-gray-200 transition-all">
+            <FiArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+              <FiFileText className="text-indigo-600" /> Gestion des Modèles
+            </h2>
+            <p className="text-gray-500 font-medium italic">Gestion des documents PDF et conformité par module.</p>
+          </div>
         </div>
         <button
           onClick={() => { resetForm(); setActiveModal('form'); }}
@@ -130,16 +142,17 @@ const ModelesPage = () => {
       </div>
 
       {/* Tableau Modernisé */}
-      <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white border border-gray-100 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-100">
           <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
             <tr>
               <th className="px-6 py-5 text-left">Module</th>
-              <th className="px-6 py-5 text-left">Introduction</th>
-              <th className="px-6 py-5 text-left">Document</th>
-              <th className="px-6 py-5 text-left">Application</th>
-              <th className="px-6 py-5 text-left">Statut</th>
-              <th className="px-6 py-5 text-right">Actions</th>
+              <th className="px-6 py-5 text-left">Fonctionnalité</th>
+              <th className="px-6 py-5 text-left">Modèle Document</th>
+              <th className="px-6 py-5 text-left">Modèle Introduction</th>
+              <th className="px-6 py-5 text-left">Date Application</th>
+              <th className="px-6 py-5 text-right">Statut</th>
+              <th className="px-6 py-5 text-center">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 bg-white font-medium">
@@ -161,6 +174,9 @@ const ModelesPage = () => {
                   >
                     <FiExternalLink /> Consulter PDF
                   </a>
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gray-600">
+                  {modele.modeleIntroduction || 'N/A'}
                 </td>
                 <td className="px-6 py-4">
                    <div className="flex items-center gap-2 text-[12px] font-bold text-gray-500 uppercase">
@@ -232,6 +248,17 @@ const ModelesPage = () => {
                   <input 
                     value={formData.fonctionnalite} 
                     onChange={(e) => setFormData({...formData, fonctionnalite: e.target.value})} 
+                    placeholder="Ex: CREATION_FACTURE_CLIENT" 
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all  placeholder:text-gray-300" 
+                    required 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Model D'introduction</label>
+                  <input 
+                    value={formData.modeleIntroduction} 
+                    onChange={(e) => setFormData({...formData, modeleIntroduction: e.target.value})} 
                     placeholder="Ex: Bonjour, voici le document..." 
                     className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all  placeholder:text-gray-300" 
                     required 

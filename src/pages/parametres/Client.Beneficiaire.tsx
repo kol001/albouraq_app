@@ -155,7 +155,7 @@ const ClientBeneficiairePage = () => {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+          <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-xl hover:bg-gray-200 transition-all">
             <FiArrowLeft size={20} />
           </button>
           <div>
@@ -180,15 +180,16 @@ const ClientBeneficiairePage = () => {
       )}
 
       {/* TABLEAU */}
-      <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white border border-gray-100 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-100">
           <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
             <tr>
-              <th className="px-6 py-5 text-left">Code</th>
+              <th className="px-6 py-5 text-left">Code client Bénéficiaire</th>
               <th className="px-6 py-5 text-left">Libellé</th>
-              <th className="px-6 py-5 text-left">Date Application</th>
-              <th className="px-6 py-5 text-left">Clients Factures Liés</th>
+              <th className="px-6 py-5 text-left">Code Client Facturé</th>
+              <th className="px-6 py-5 text-left">Libillé Client Facturé</th>
               <th className="px-6 py-5 text-left">Statut</th>
+              <th className="px-6 py-5 text-left">Date Application</th>
               <th className="px-6 py-5 text-right">Actions</th>
             </tr>
           </thead>
@@ -208,8 +209,16 @@ const ClientBeneficiairePage = () => {
                     <span className="text-gray-900 font-black text-sm">{client.libelle}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-xs text-gray-600">
-                  {new Date(client.dateApplication).toLocaleDateString('fr-FR')}
+                
+                <td className="px-6 py-4">
+                  <div className="flex flex-wrap gap-2">
+                    {client.factures.map((f) => (
+                      <span key={f.clientFacture.id} className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold">
+                        {f.clientFacture.code}
+                      </span>
+                    ))}
+                    {client.factures.length === 0 && <span className="text-gray-400 italic text-xs">Aucun</span>}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-2">
@@ -229,8 +238,11 @@ const ClientBeneficiairePage = () => {
                     {client.statut}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-4 text-[11px] font-black uppercase tracking-tighter">
+                <td className="px-6 py-4 text-xs text-gray-600">
+                  {new Date(client.dateApplication).toLocaleDateString('fr-FR')}
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="flex justify-center gap-4 text-[11px] font-black uppercase tracking-tighter">
                     <button 
                       onClick={() => navigate(`/parametre/client-beneficiaire/${client.id}`)}
                       className="text-blue-600 hover:underline"

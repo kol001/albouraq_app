@@ -28,15 +28,21 @@ const ClientBeneficiaireFormPage = () => {
   const [message, setMessage] = useState({ text: '', isError: false });
   const [searchFacture, setSearchFacture] = useState('');
 
-  const [libelle, setLibelle] = useState('');
-  const [statut, setStatut] = useState<'ACTIF' | 'INACTIF'>('ACTIF');
+  const [libelle, setLibelle] = useState(currentBeneficiaire?.libelle || '');
+  const [statut, setStatut] = useState<'ACTIF' | 'INACTIF'>(currentBeneficiaire?.statut || 'ACTIF');
 
   useEffect(() => {
     if (currentBeneficiaire) {
-    //   setLibelle(currentBeneficiaire.libelle);
-    //   setStatut(currentBeneficiaire.statut);
+      // On ne met à jour QUE si la valeur locale est différente de la valeur reçue
+      // Cela stoppe les rendus en cascade
+      if (libelle !== currentBeneficiaire.libelle && libelle === '') {
+        setTimeout(() => setLibelle(currentBeneficiaire.libelle), 0);
+      }
+      if (statut !== currentBeneficiaire.statut && statut === 'ACTIF') {
+        setTimeout(() => setStatut(currentBeneficiaire.statut), 0);
+      }
     }
-  }, [currentBeneficiaire]);
+  }, [currentBeneficiaire, libelle, statut]);
 
   const handleSubmit = async () => {
     if (!currentBeneficiaire) return;
@@ -96,7 +102,7 @@ const ClientBeneficiaireFormPage = () => {
     <div className="p-8 max-w-[1600px] mx-auto">
       {/* Header avec retour */}
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+        <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-xl hover:bg-gray-200 transition-all">
           <FiArrowLeft size={20} />
         </button>
         <div>
@@ -116,17 +122,18 @@ const ClientBeneficiaireFormPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         {/* Colonne gauche : Infos principales */}
         <div className="lg:col-span-5 space-y-8">
-          <section className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+          <section className="bg-white border border-gray-100 p-8">
             <h4 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-6">Informations Générales</h4>
             <div className="space-y-6">
-              <div>
-                <label className="block text-xs font-black text-gray-400 uppercase mb-2">Libellé</label>
+              <div className={`relative transition-all ${!libelle ? 'ring-2 ring-red-100' : ''}`}>
                 <input
                   type="text"
+                  placeholder="NOM DU BÉNÉFICIAIRE"
                   value={libelle}
-                  onChange={(e) => setLibelle(e.target.value)}
-                  className="w-full p-4 bg-gray-50 rounded-2xl border border-gray-100 font-black"
+                  onChange={(e) => setLibelle(e.target.value.toUpperCase())} // Force majuscule pour la cohérence
+                  className="w-full p-4 bg-gray-50 rounded-2xl border-none font-black text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
                 />
+                {!libelle && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-red-400">REQUIS</span>}
               </div>
               <div>
                 <label className="block text-xs font-black text-gray-400 uppercase mb-2">Statut</label>
@@ -145,12 +152,12 @@ const ClientBeneficiaireFormPage = () => {
 
         {/* Colonne droite : Clients Factures liés */}
         <div className="lg:col-span-7">
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 h-full flex flex-col">
+          <div className="bg-white border border-gray-100 p-8 h-full flex flex-col">
             <h4 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-6">Clients Factures Associés</h4>
 
             <div className="flex-1 space-y-3 mb-6 overflow-y-auto">
               {currentBeneficiaire.factures.map((f) => (
-                <div key={f.clientFacture.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border">
+                <div key={f.clientFacture.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
                   <div>
                     <p className="font-bold text-sm">{f.clientFacture.libelle}</p>
                     <p className="text-xs text-gray-500">{f.clientFacture.code}</p>
@@ -168,7 +175,7 @@ const ClientBeneficiaireFormPage = () => {
               )}
             </div>
 
-            <div className="border-t pt-6">
+            <div className="border-t pt-6 border-gray-100">
               <div className="relative mb-4">
                 <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
@@ -176,7 +183,7 @@ const ClientBeneficiaireFormPage = () => {
                   placeholder="Rechercher un client facture..."
                   value={searchFacture}
                   onChange={(e) => setSearchFacture(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border rounded-xl"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100"
                 />
               </div>
               <div className="max-h-64 overflow-y-auto space-y-2">

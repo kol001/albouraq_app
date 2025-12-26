@@ -7,10 +7,13 @@ import {
   resetAllDossiers,
 } from '../../app/numerotationSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import { FiPlus, FiHash, FiRefreshCw, FiX, FiLoader, FiAlertCircle } from 'react-icons/fi';
+import { FiPlus, FiHash, FiRefreshCw, FiX, FiLoader, FiAlertCircle, FiArrowLeft } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 const Numerotation = () => {
   const dispatch = useDispatch<AppDispatch>();
+
+  const navigate = useNavigate();
   const { data: dossiers, loading: globalLoading, error: globalError } = useSelector((state: RootState) => state.numerotation);
 
   // States UI
@@ -84,13 +87,18 @@ const Numerotation = () => {
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FiHash className="text-indigo-600" /> Numérotation
-          </h2>
-          <p className="text-gray-500 font-medium">Gérez les compteurs et les formats de dossiers par périmètre.</p>
-        </div>
         
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-xl hover:bg-gray-200 transition-all">
+            <FiArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+              <FiHash className="text-indigo-600" /> Numérotation
+            </h2>
+            <p className="text-gray-500 font-medium italic">Gérez les compteurs et les formats de dossiers par périmètre.</p>
+          </div>
+        </div>
         <div className="flex gap-3">
           <button
             onClick={handleResetAll}
@@ -114,7 +122,7 @@ const Numerotation = () => {
       )}
 
       {/* TABLEAU */}
-      <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white border border-gray-100 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-100">
           <thead className="bg-gray-50/50">
             <tr>

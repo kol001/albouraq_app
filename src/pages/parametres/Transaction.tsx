@@ -10,7 +10,7 @@ import {
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Transaction } from '../../app/transactionsSlice';
 import type { ModuleRef } from '../../app/commissionsSlice';
-import { FiPlus, FiCalendar, FiClock, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiLayers, FiArrowLeft } from 'react-icons/fi';
+import { FiPlus, FiCalendar,  FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiPower,FiTrash2, FiArrowLeft, FiEdit2,  } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
 import { useNavigate } from 'react-router-dom';
 
@@ -113,7 +113,7 @@ const TransactionPage = () => {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+          <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-xl hover:bg-gray-200 transition-all">
             <FiArrowLeft size={20} />
           </button>
           <div>
@@ -132,72 +132,95 @@ const TransactionPage = () => {
       </div>
 
       {/* TABLEAU */}
-      <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-100">
-          <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
-            <tr>
-              <th className="px-6 py-5 text-left">Flux & Événement</th>
-              <th className="px-6 py-5 text-left">Module Cible</th>
-              <th className="px-6 py-5 text-left">Exécution</th>
-              <th className="px-6 py-5 text-left">Planification</th>
-              <th className="px-6 py-5 text-left">Statut</th>
-              <th className="px-6 py-5 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50 bg-white font-medium">
-            {transactions.map((trans) => (
+      <div className="bg-white border border-gray-100 shadow-xl shadow-gray-100/50 overflow-hidden">
+        {/* Wrapper pour le scroll horizontal */}
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="min-w-full border-separate border-spacing-0">
+            <thead className="bg-gray-50/80 backdrop-blur-sm sticky top-0 z-10">
+              <tr className="uppercase text-[10px] font-black text-gray-400 tracking-[0.15em]">
+                <th className="px-6 py-5 text-left border-b border-gray-100 whitespace-nowrap">Code Prestation</th>
+                <th className="px-6 py-5 text-left border-b border-gray-100 whitespace-nowrap">Prestation</th>
+                <th className="px-6 py-5 text-left border-b border-gray-100 whitespace-nowrap">Statut</th>
+                <th className="px-6 py-5 text-left border-b border-gray-100 whitespace-nowrap">Date App.</th>
+                <th className="px-6 py-5 text-left border-b border-gray-100 whitespace-nowrap">Type Transaction</th>
+                <th className="px-6 py-5 text-left border-b border-gray-100 whitespace-nowrap">Evénement</th>
+                {/* Colonnes de processus groupées visuellement par une couleur de fond légère */}
+                <th className="px-4 py-5 text-center border-b border-gray-100 bg-indigo-50/30 whitespace-nowrap">Approb. BC Client</th>
+                <th className="px-4 py-5 text-center border-b border-gray-100 bg-indigo-50/30 whitespace-nowrap">Facture Client</th>
+                <th className="px-4 py-5 text-center border-b border-gray-100 bg-indigo-50/30 whitespace-nowrap">BC Fourn.</th>
+                <th className="px-4 py-5 text-center border-b border-gray-100 bg-indigo-50/30 whitespace-nowrap">Approb. BC Fourn.</th>
+                <th className="px-4 py-5 text-center border-b border-gray-100 bg-indigo-50/30 whitespace-nowrap">BR Fourn.</th>
+                <th className="px-4 py-5 text-center border-b border-gray-100 bg-indigo-50/30 whitespace-nowrap">Facture Fourn.</th>
+                {/* Colonne Actions FIGÉE à droite */}
+                <th className="px-4 py-5 text-center border-b border-gray-100 bg-indigo-50/30 whitespace-nowrap">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            
+            <tbody className="divide-y divide-gray-50 bg-white font-medium">
+              {transactions.map((trans) => (
               <tr key={trans.id} className="hover:bg-indigo-50/30 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl"><FiLayers size={18} /></div>
-                    <div className="flex flex-col">
-                      <span className="font-black text-gray-900 uppercase text-sm">{trans.transactiontype?.transactionType || 'N/A'}</span>
-                      <span className="text-[10px] text-gray-400 font-mono tracking-tighter">{trans.transactiontype?.event || ''}</span>
-                    </div>
-                  </div>
-                </td>
                 <td className="px-6 py-4 text-sm font-bold text-gray-700">
-                  {trans.module ? `${trans.module.nom}` : 'N/A'}
                   <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.module?.code}</span>
                 </td>
-                <td className="px-6 py-4">
-                  <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${
-                    trans.transactiontype?.executionMode === 'AUTOMATIQUE' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-orange-50 text-orange-600 border-orange-100'
-                  }`}>
-                    {trans.transactiontype?.executionMode || 'N/A'}
-                  </span>
+                <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.module?.nom}</span>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-800 font-bold tracking-tight">
-                    <FiClock className="text-indigo-300" />
-                    {new Date(trans.dateApplication).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                  </div>
+                <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.status}</span>
                 </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${trans.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${trans.status === 'ACTIF' ? 'bg-green-500' : 'bg-red-500'}`} />
-                    {trans.status}
-                  </span>
+                <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{new Date(trans.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.transactiontype.transactionType}</span>
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.transactiontype.event}</span>
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.transactiontype.approbation_BC_Client}</span>
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.transactiontype.creation_Facture_Client}</span>
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.transactiontype.creation_BC_Fournisseur}</span>
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.transactiontype.approbation_BC_Fournisseur}</span>
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.transactiontype.creation_BR_Fournisseur}</span>
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.transactiontype.creation_Facture_Fournisseur}</span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-4 text-[11px] font-black uppercase tracking-tighter">
-                    <button onClick={() => openEdit(trans)} className="text-blue-600 hover:underline">Modifier</button>
-                    <button
+                <div className="flex justify-end gap-4 text-[11px] font-black uppercase">
+                  <button onClick={() => openEdit(trans)} className="text-blue-600 hover:underline">Modifier</button>
+                  <button
                       onClick={() => handleAction(trans.status === 'ACTIF' ? deactivateTransaction : activateTransaction, trans.id)}
                       className={trans.status === 'ACTIF' ? 'text-amber-600 hover:underline' : 'text-emerald-600 hover:underline'}
-                    >
-                      {trans.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
-                    </button>
-                    <button onClick={() => { setAuditEntityId(trans.id); setAuditEntityName(trans.transactiontype?.transactionType || 'N/A'); }} className="text-purple-600 hover:underline">Historique</button>
-                    <button onClick={() => handleDelete(trans.id)} className="text-red-500 hover:underline border-l border-gray-100 pl-4">Supprimer</button>
-                  </div>
-                </td>
+                  >
+                    {trans.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
+                  </button>
+                  <button onClick={() => { setAuditEntityId(trans.id); setAuditEntityName(trans.transactiontype?.transactionType || 'N/A'); }} className="text-purple-600 hover:underline">Historique</button>
+                  <button onClick={() => handleDelete(trans.id)} className="text-red-500 hover:underline border-l border-gray-100 pl-4">Supprimer</button>
+                </div>
+              </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {loading && transactions.length === 0 && (
-          <div className="p-20 text-center"><FiLoader className="animate-spin mx-auto text-indigo-600" size={30} /></div>
+              ))}
+              </tbody>
+          </table>
+        </div>
+
+        {loading && (
+          <div className="p-12 flex flex-col items-center justify-center bg-white border-t border-gray-50">
+            <FiLoader className="animate-spin text-indigo-600 mb-3" size={24} />
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Chargement des données...</span>
+          </div>
         )}
       </div>
 

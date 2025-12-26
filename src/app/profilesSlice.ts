@@ -162,7 +162,7 @@ export const deactivatePrivilegeFromProfil = createAsyncThunk<
   try {
     const response = await axiosInstance.patch(`/profiles/${payload.profilId}/deactivate-privilege/${payload.privilegeId}`);
     if (response.data.success) {
-      dispatch(fetchProfiles());
+      dispatch(fetchProfiles());      
       return { success: true, data: response.data.data };
     }
     return rejectWithValue('Échec désactivation');

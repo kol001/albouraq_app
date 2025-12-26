@@ -60,7 +60,7 @@ export const fetchModeles = createAsyncThunk<
 // Créer un modèle (multipart avec fichier PDF)
 export const createModele = createAsyncThunk<
   { success: boolean; data: Modele },
-  { moduleId: string; fonctionnalite: string; dateApplication: string; status: string; pdf: File },
+  { moduleId: string; fonctionnalite: string; dateApplication: string; modeleIntroduction: string; status: string; pdf: File },
   { state: { auth: { token: string } } }
 >('modeles/createModele', async (payload, { getState, rejectWithValue, dispatch }) => {
   try {
@@ -70,6 +70,7 @@ export const createModele = createAsyncThunk<
     const formData = new FormData();
     formData.append('moduleId', payload.moduleId);
     formData.append('fonctionnalite', payload.fonctionnalite);
+    formData.append('modeleIntroduction', payload.modeleIntroduction);
     formData.append('dateApplication', payload.dateApplication);
     formData.append('status', payload.status);
     formData.append('pdf', payload.pdf);
@@ -118,7 +119,7 @@ export const deleteModele = createAsyncThunk<
 // Update (modification)
 export const updateModele = createAsyncThunk<
   { success: boolean; data: Modele },
-  { id: string; moduleId: string; fonctionnalite: string; dateApplication: string; status: string; pdf?: File },
+  { id: string; moduleId: string; fonctionnalite: string; modeleIntroduction: string; dateApplication: string; status: string; pdf?: File },
   { state: { auth: { token: string } } }
 >('modeles/updateModele', async (payload, { getState, rejectWithValue, dispatch }) => {
   try {
@@ -128,6 +129,7 @@ export const updateModele = createAsyncThunk<
     const formData = new FormData();
     formData.append('moduleId', payload.moduleId);
     formData.append('fonctionnalite', payload.fonctionnalite);
+    formData.append('modeleIntroduction', payload.modeleIntroduction);
     formData.append('dateApplication', payload.dateApplication);
     formData.append('status', payload.status);
     if (payload.pdf) {

@@ -17,6 +17,15 @@ export default function AppBar() {
   const [openUserMenu, setOpenUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  const segmentLabels: Record<string, string> = {
+    "parametre": "Paramètres",
+    "client-facture": "Clients Facturés",
+    "client-beneficiaire": "Bénéficiaires",
+    "profil": "Profils",
+    "utilisateur": "Utilisateurs",
+    "nouveau": "Création"
+  };
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -54,19 +63,38 @@ export default function AppBar() {
 
           {/* Breadcrumb amélioré */}
           <nav className="hidden md:flex items-center text-sm font-medium">
-            <div className="h-4 w-px bg-gray-200 mx-2" /> {/* Séparateur vertical */}
+            <div className="h-4 w-px bg-gray-200 mx-2" />
             <div className="flex items-center gap-2 text-gray-400">
-              {/* <Link to="/" className="hover:text-indigo-600 transition-colors">Menu</Link> */}
-              {paths.map((p, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Link to={`/${p}`} className="hover:text-indigo-600 transition-colors">
-                    <span className={`capitalize ${index === paths.length - 1 ? "text-indigo-600 font-semibold" : "hover:text-gray-600 transition-colors"}`}>
-                      {p.replace(/-/g, ' ')}
-                    </span>
-                    <span className="text-gray-300"> / </span>
-                  </Link>
-                </div>
-              ))}
+              {paths.map((p, index) => {
+                // Détection de l'ID : si c'est un ID, on le remplace par "Détails" ou on le saute
+                const isId = p.length > 15 || (/\d/.test(p) && p.length > 10);
+                
+                // Si c'est un ID, on peut choisir d'afficher "Détails" ou de ne rien afficher
+                // Ici, je vais mettre "Détails" pour que l'utilisateur sache qu'il consulte une fiche
+                const displayLabel = isId 
+                  ? "Fiche Détails" 
+                  : (segmentLabels[p] || p.replace(/-/g, ' '));
+
+                // Reconstitution de l'URL jusqu'à ce segment
+                const url = `/${paths.slice(0, index + 1).join("/")}`;
+
+                return (
+                  <div key={index} className="flex items-center gap-2">
+                    <Link 
+                      to={url} 
+                      className={`capitalize transition-colors ${
+                        index === paths.length - 1 
+                          ? "text-indigo-600 font-bold" 
+                          : "hover:text-gray-600"
+                      }`}
+                    >
+                      {displayLabel}
+                    </Link>
+                    {/* On affiche le séparateur seulement s'il y a un élément après et que ce n'est pas le dernier */}
+                    {index < paths.length - 1 && <span className="text-gray-300"> / </span>}
+                  </div>
+                );
+              })}
             </div>
           </nav>
         </div>

@@ -172,6 +172,22 @@ export const deactivateMiles = createAsyncThunk(
   }
 );
 
+export const deleteBorneMiles = createAsyncThunk(
+  'miles/deleteBorneMiles',
+  async (borneId: string, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.delete(`/miles/bornes/${borneId}`);
+      if (response.data.success) {
+        dispatch(fetchMiles());
+        return response.data.data;
+      }
+      return rejectWithValue('Échec suppression de la tranche');
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Erreur réseau');
+    }
+  }
+);
+
 const milesSlice = createSlice({
   name: 'miles',
   initialState,

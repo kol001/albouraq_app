@@ -10,13 +10,15 @@ import {
 } from '../../app/fournisseursSlice';
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Fournisseur } from '../../app/fournisseursSlice';
-import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiTag, FiTruck } from 'react-icons/fi';
+import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiTag, FiTruck,FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
+import { useNavigate } from 'react-router-dom';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const FournisseurPage = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { data: fournisseurs, loading, error: globalError } = useSelector((state: RootState) => state.fournisseurs);
 
   useEffect(() => {
@@ -92,12 +94,17 @@ const FournisseurPage = () => {
       )}
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FiTruck className="text-indigo-600" /> Fournisseurs
-          </h2>
-          <p className="text-gray-500 font-medium italic">Gestion des fournisseurs et prestataires.</p>
-        </div>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-xl hover:bg-gray-200 transition-all">
+            <FiArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+              <FiTruck className="text-indigo-600" /> Fournisseurs
+            </h2>
+            <p className="text-gray-500 font-medium italic">Gestion des fournisseurs et prestataires.</p>
+          </div>
+        </div>  
         <button
           onClick={() => setActiveModal('form')}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-3.5 rounded-2xl font-black transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
@@ -112,7 +119,7 @@ const FournisseurPage = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white border border-gray-100 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-100">
           <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
             <tr>
@@ -186,8 +193,8 @@ const FournisseurPage = () => {
       {/* MODALE */}
       {activeModal === 'form' && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
+          <div className="bg-white w-full max-w-lg overflow-hidden">
+            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h3 className="text-2xl font-black text-gray-800">
                 {editingFournisseur ? 'Modifier Fournisseur' : 'Nouveau Fournisseur'}
               </h3>

@@ -16,6 +16,8 @@ import { useNavigate } from 'react-router-dom';
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
 const TRANSACTION_TYPES = ['AUTOMATIQUE', 'SEMI_AUTOMATIQUE', 'MANUEL'] as const;
+const BC_TYPES = ['AUTOMATIQUE', 'MANUEL'] as const;
+
 const EVENTS = [
   'APPROBATION_BC_CLIENT',
   'CREATION_FACTURE_CLIENT',
@@ -24,6 +26,8 @@ const EVENTS = [
   'CREATION_BR_FOURNISSEUR',
   'CREATION_FACTURE_FOURNISSEUR',
 ] as const;
+
+
 
 const TypeTransaction = () => {
   const dispatch = useAppDispatch();
@@ -37,8 +41,16 @@ const TypeTransaction = () => {
 
   // Form states
   const [transactionType, setTransactionType] = useState<'AUTOMATIQUE' | 'SEMI_AUTOMATIQUE' | 'MANUEL'>('AUTOMATIQUE');
+  
   const [event, setEvent] = useState<typeof EVENTS[number]>(EVENTS[0]);
-  const [executionMode, setExecutionMode] = useState<'MANUEL' | 'AUTOMATIQUE'>('MANUEL');
+  // const [executionMode, setExecutionMode] = useState<'MANUEL' | 'AUTOMATIQUE'>('MANUEL');
+  
+  const [approbation_BC_Client, setApprobation_BC_Client] = useState<'AUTOMATIQUE' | 'MANUEL'>('AUTOMATIQUE');
+  const [creation_Facture_Client, setCreation_Facture_Client] = useState<'AUTOMATIQUE' | 'MANUEL'>('AUTOMATIQUE');
+  const [creation_BC_Fournisseur, setCreation_BC_Fournisseur] = useState<'AUTOMATIQUE' | 'MANUEL'>('AUTOMATIQUE');
+  const [approbation_BC_Fournisseur, setApprobation_BC_Fournisseur] = useState<'AUTOMATIQUE' | 'MANUEL'>('AUTOMATIQUE');
+  const [creation_BR_Fournisseur, setCreation_BR_Fournisseur] = useState<'AUTOMATIQUE' | 'MANUEL'>('AUTOMATIQUE');
+  const [creation_Facture_Fournisseur, setCreation_Facture_Fournisseur] = useState<'AUTOMATIQUE' | 'MANUEL'>('AUTOMATIQUE');
 
   const closeModals = () => {
     setIsModalOpen(false);
@@ -48,14 +60,28 @@ const TypeTransaction = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const result = await dispatch(createTransactionType({ transactionType, event, executionMode }));
+    const result = await dispatch(createTransactionType({ 
+      transactionType,
+      event,
+      approbation_BC_Client,
+      creation_Facture_Client,
+      creation_BC_Fournisseur,
+      approbation_BC_Fournisseur,
+      creation_BR_Fournisseur,
+      creation_Facture_Fournisseur
+    }));
 
     if (createTransactionType.fulfilled.match(result)) {
       setMessage({ text: 'Type de transaction créé !', isError: false });
       setTimeout(() => {
         setTransactionType('AUTOMATIQUE');
         setEvent(EVENTS[0]);
-        setExecutionMode('MANUEL');
+        setApprobation_BC_Client('AUTOMATIQUE');
+        setCreation_Facture_Client('AUTOMATIQUE');
+        setCreation_BC_Fournisseur('AUTOMATIQUE');
+        setApprobation_BC_Fournisseur('AUTOMATIQUE');
+        setCreation_BR_Fournisseur('AUTOMATIQUE');
+        setCreation_Facture_Fournisseur('AUTOMATIQUE');
         closeModals();
       }, 1500);
     } else {
@@ -93,7 +119,7 @@ const TypeTransaction = () => {
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+          <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-xl hover:bg-gray-200 transition-all">
             <FiArrowLeft size={20} />
           </button>
           <div>
@@ -118,14 +144,19 @@ const TypeTransaction = () => {
       )}
 
       {/* TABLEAU DES TYPES */}
-      <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50/50">
               <tr>
-                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Workflow</th>
-                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Événement Déclencheur</th>
-                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Mode d'exécution</th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Type de Transaction</th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Événement</th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Approbation BC Client</th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Création Facture Client</th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Création BC Fournisseur</th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Approbation BC Fournisseur</th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Création BR Fournisseur</th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Création Facture Fournisseur</th>
                 <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Statut</th>
                 <th className="px-6 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
               </tr>
@@ -147,12 +178,33 @@ const TypeTransaction = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${
-                      type.executionMode === 'AUTOMATIQUE' 
-                      ? 'text-purple-600 bg-purple-50 border-purple-100' 
-                      : 'text-amber-600 bg-amber-50 border-amber-100'
-                    }`}>
-                      {type.executionMode}
+                    <span className="text-xs text-indigo-700 font-mono bg-indigo-50/50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                      {type.approbation_BC_Client}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-xs text-indigo-700 font-mono bg-indigo-50/50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                      {type.creation_Facture_Client}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-xs text-indigo-700 font-mono bg-indigo-50/50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                      {type.creation_BC_Fournisseur}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-xs text-indigo-700 font-mono bg-indigo-50/50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                      {type.approbation_BC_Fournisseur}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-xs text-indigo-700 font-mono bg-indigo-50/50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                      {type.creation_BR_Fournisseur}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-xs text-indigo-700 font-mono bg-indigo-50/50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                      {type.creation_Facture_Fournisseur}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -186,85 +238,170 @@ const TypeTransaction = () => {
         </div>
       </div>
 
-      {/* MODALE DE CRÉATION */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
-            <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-2xl font-black text-gray-800">Nouveau Flux</h3>
-              <button onClick={closeModals} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          {/* Augmentation de max-w-xl à max-w-3xl pour le mode 2 colonnes */}
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl overflow-hidden transform transition-all animate-in zoom-in-95 duration-300">
+            
+            {/* HEADER FIXE */}
+            <div className="p-7 border-b flex justify-between items-center bg-gray-50/50">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-200">
+                  <FiPlus size={20} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-800 tracking-tight">Configuration Nouveau Flux</h3>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Paramétrage des règles de transaction</p>
+                </div>
+              </div>
+              <button onClick={closeModals} className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-gray-400">
                 <FiX size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Type de Flux</label>
-                  <select
-                    value={transactionType}
-                    onChange={(e) => setTransactionType(e.target.value as any)}
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold"
-                    required
-                  >
-                    {TRANSACTION_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
-                  </select>
-                </div>
+            {/* FORMULAIRE AVEC ZONE SCROLLABLE SI BESOIN */}
+            <form onSubmit={handleSubmit} className="p-8">
+              <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                
+                {/* GRILLE 2 COLONNES */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  
+                  {/* SECTION 1 : INFOS DE BASE */}
+                  <div className="col-span-full mb-2">
+                    <h4 className="text-[11px] font-black text-indigo-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                      <div className="w-1 h-4 bg-indigo-600 rounded-full"/> Identité du Flux
+                    </h4>
+                  </div>
 
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Événement Déclencheur</label>
-                  <select
-                    value={event}
-                    onChange={(e) => setEvent(e.target.value as any)}
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold"
-                    required
-                  >
-                    {EVENTS.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
-                  </select>
-                </div>
+                  <div className="group">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Type de Flux</label>
+                    <select
+                      value={transactionType}
+                      onChange={(e) => setTransactionType(e.target.value as any)}
+                      className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-2xl outline-none transition-all font-bold text-gray-700 appearance-none cursor-pointer"
+                      required
+                    >
+                      {TRANSACTION_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Mode d'Exécution</label>
-                  <div className="grid grid-cols-2 gap-4">
-                    {['MANUEL', 'AUTOMATIQUE'].map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => setExecutionMode(m as any)}
-                        className={`py-4 rounded-2xl text-xs font-black transition-all border-2 ${
-                          executionMode === m 
-                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100' 
-                          : 'bg-white border-gray-100 text-gray-400 hover:border-indigo-200'
-                        }`}
-                      >
-                        {m}
-                      </button>
-                    ))}
+                  <div className="group">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Événement Déclencheur</label>
+                    <select
+                      value={event}
+                      onChange={(e) => setEvent(e.target.value as any)}
+                      className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-2xl outline-none transition-all font-bold text-gray-700 appearance-none cursor-pointer"
+                      required
+                    >
+                      {EVENTS.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
+                    </select>
+                  </div>
+
+                  {/* SECTION 2 : PROCESSUS (LES 6 SELECTS RESTANTS) */}
+                  <div className="col-span-full mt-4 mb-2">
+                    <h4 className="text-[11px] font-black text-indigo-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                      <div className="w-1 h-4 bg-indigo-600 rounded-full"/> Workflow de validation
+                    </h4>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Approbation BC client</label>
+                    <select
+                      value={approbation_BC_Client}
+                      onChange={(e) => setApprobation_BC_Client(e.target.value as any)}
+                      className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 rounded-2xl font-bold text-gray-700"
+                      required
+                    >
+                      {BC_TYPES.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Creation Facture Client</label>
+                    <select
+                      value={creation_Facture_Client}
+                      onChange={(e) => setCreation_Facture_Client(e.target.value as any)}
+                      className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 rounded-2xl font-bold text-gray-700"
+                      required
+                    >
+                      {BC_TYPES.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Création BC fournisseur</label>
+                    <select
+                      value={creation_BC_Fournisseur}
+                      onChange={(e) => setCreation_BC_Fournisseur(e.target.value as any)}
+                      className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 rounded-2xl font-bold text-gray-700"
+                      required
+                    >
+                      {BC_TYPES.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Approbation BC Fournisseur</label>
+                    <select
+                      value={approbation_BC_Fournisseur}
+                      onChange={(e) => setApprobation_BC_Fournisseur(e.target.value as any)}
+                      className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 rounded-2xl font-bold text-gray-700"
+                      required
+                    >
+                      {BC_TYPES.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Création Br Fournisseur</label>
+                    <select
+                      value={creation_BR_Fournisseur}
+                      onChange={(e) => setCreation_BR_Fournisseur(e.target.value as any)}
+                      className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 rounded-2xl font-bold text-gray-700"
+                      required
+                    >
+                      {BC_TYPES.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Création Facture Fournisseur</label>
+                    <select
+                      value={creation_Facture_Fournisseur}
+                      onChange={(e) => setCreation_Facture_Fournisseur(e.target.value as any)}
+                      className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 rounded-2xl font-bold text-gray-700"
+                      required
+                    >
+                      {BC_TYPES.map((ev) => <option key={ev} value={ev}>{ev}</option>)}
+                    </select>
                   </div>
                 </div>
               </div>
 
+              {/* NOTIFICATION MESSAGE */}
               {message.text && (
-                <div className={`p-4 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top-2 ${message.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                <div className={`mt-6 p-4 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top-2 ${message.isError ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
                   {message.isError ? <FiAlertCircle /> : <FiCheckCircle />}
-                  <span className="text-xs font-black uppercase tracking-tight">{message.text}</span>
+                  <span className="text-[11px] font-black uppercase tracking-wide">{message.text}</span>
                 </div>
               )}
 
-              <div className="flex gap-4 pt-4">
+              {/* BOUTONS FIXES EN BAS */}
+              <div className="flex gap-4 pt-8 border-t border-gray-50 mt-6">
                 <button 
                   type="button" 
                   onClick={closeModals} 
-                  className="flex-1 py-4 border border-gray-100 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 transition-all"
+                  className="flex-1 py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-400 hover:text-gray-600 transition-all active:scale-95"
                 >
                   Annuler
                 </button>
                 <button 
                   type="submit" 
                   disabled={isSubmitting} 
-                  className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-3"
                 >
-                  {isSubmitting ? <FiLoader className="animate-spin" /> : 'Enregistrer'}
+                  {isSubmitting ? <FiLoader className="animate-spin" /> : <FiCheckCircle size={18} />}
+                  <span className="uppercase text-xs tracking-[0.1em]">Enregistrer le Flux</span>
                 </button>
               </div>
             </form>
