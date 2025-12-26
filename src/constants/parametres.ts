@@ -42,7 +42,7 @@ export const PARAMETRES: ParametreItem[] = [
   { label: "Paramétrage Devise Transaction", path: "devis-transaction", icon: FiCreditCard },
   { label: "Paramétrage Client Facturé", path: "client-facture", icon: FiUser },
   { label: "Paramétrage Client Bénéficiaire", path: "client-beneficiaire", icon: FiUsers },
-  { label: "Paramétrage Sous Catégorie Article", path: "categorie", icon: FiLayers },
+  { label: "Paramétrage Catégorie", path: "categorie", icon: FiLayers },
   { label: "Paramétrage Article", path: "article", icon: FiBox },
   { label: "Paramétrage Fournisseurs", path: "fournisseur", icon: FiBriefcase },
 ];
