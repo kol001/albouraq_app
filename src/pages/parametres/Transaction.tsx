@@ -10,7 +10,7 @@ import {
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Transaction } from '../../app/transactionsSlice';
 import type { ModuleRef } from '../../app/commissionsSlice';
-import { FiPlus, FiCalendar,  FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiPower,FiTrash2, FiArrowLeft, FiEdit2,  } from 'react-icons/fi';
+import { FiPlus, FiCalendar,  FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiArrowLeft  } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
 import { useNavigate } from 'react-router-dom';
 
