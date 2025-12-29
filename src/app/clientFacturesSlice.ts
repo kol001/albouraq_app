@@ -73,7 +73,7 @@ export const createClientFacture = createAsyncThunk<
   {
     code: string;
     libelle: string;
-    profilRisque: 'FAIBLE' | 'MOYEN' | 'ELEVE';
+    profilRisque: 'FAIBLE' | 'MOYEN' | 'ELEVE' | 'TRES_ELEVE';
     tauxBase: number;
     volDomestique: number;
     volRegional: number;
@@ -116,7 +116,7 @@ export const updateClientFacture = createAsyncThunk<
     id: string;
     code: string;
     libelle: string;
-    profilRisque: 'FAIBLE' | 'MOYEN' | 'ELEVE';
+    profilRisque: 'FAIBLE' | 'MOYEN' | 'ELEVE' | 'TRES_ELEVE';
     tauxBase: number;
     volDomestique: number;
     volRegional: number;
