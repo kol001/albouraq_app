@@ -5,7 +5,7 @@ export interface SousCategorie {
   id: string;
   codeSousCategorie: string;
   libelleSousCategorie: string;
-  status: 'ACTIF' | 'INACTIF';
+  status: string;
   dateActivation: string | null;
   dateDesactivation: string | null;
   createdAt: string;

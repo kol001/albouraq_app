@@ -24,7 +24,7 @@ export interface ParametreItem {
 }
 
 export const PARAMETRES: ParametreItem[] = [
-  { label: "Paramétrage Privilege", path: "privilege", icon: FiShield },
+  { label: "Paramétrage Privilège", path: "privilege", icon: FiShield },
   { label: "Paramétrage Utilisateur", path: "utilisateur", icon: FiUsers },
   { label: "Paramétrage Profil", path: "profil", icon: FiUser },
   { label: "Paramétrage Autorisation", path: "autorisation", icon: FiSettings },
@@ -42,7 +42,7 @@ export const PARAMETRES: ParametreItem[] = [
   { label: "Paramétrage Devise Transaction", path: "devis-transaction", icon: FiCreditCard },
   { label: "Paramétrage Client Facturé", path: "client-facture", icon: FiUser },
   { label: "Paramétrage Client Bénéficiaire", path: "client-beneficiaire", icon: FiUsers },
-  { label: "Paramétrage Catégorie", path: "categorie", icon: FiLayers },
+  { label: "Paramétrage Famille Article", path: "categorie", icon: FiLayers },
   { label: "Paramétrage Article", path: "article", icon: FiBox },
   { label: "Paramétrage Fournisseurs", path: "fournisseur", icon: FiBriefcase },
 ];

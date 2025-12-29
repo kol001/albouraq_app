@@ -9,7 +9,8 @@ import {
   fetchClientFactures,
 } from '../../../app/clientFacturesSlice';
 import type { RootState, AppDispatch } from '../../../app/store';
-import { FiArrowLeft, FiTrash2, FiSearch, FiUserPlus ,FiLoader } from 'react-icons/fi';
+import { FiArrowLeft, FiTrash2, FiSearch, FiUserPlus ,FiLoader, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { useRef } from 'react';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
@@ -23,6 +24,10 @@ const ClientFactureFormPage = () => {
 
   const isEdit = !!id;
   const currentClient = clients.find(c => c.id === id);
+
+  // On précise que la référence contiendra un HTMLDivElement
+  const scrollAssocRef = useRef<HTMLDivElement>(null);
+  const scrollAvailRef = useRef<HTMLDivElement>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ text: '', isError: false });
@@ -77,7 +82,7 @@ const ClientFactureFormPage = () => {
         await dispatch(createClientFacture({ ...formData, dateApplication: new Date().toISOString() }));
         setMessage({ text: 'Client Facture créé avec succès !', isError: false });
       }
-      setTimeout(() => navigate('/parametre/client-facture'), 1500);
+      setTimeout(() => navigate(-1), 1500);
     } catch {
       setMessage({ text: 'Erreur lors de l’enregistrement.', isError: true });
     } finally {
@@ -109,6 +114,35 @@ const ClientFactureFormPage = () => {
       (ben.libelle.toLowerCase().includes(searchTerm.toLowerCase()) || ben.code.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [allBeneficiaires, currentClient, searchTerm]);
+
+  const ScrollIndicator = ({ listRef }: { listRef: React.RefObject<HTMLDivElement | null> }) => {
+    const scroll = (direction: 'up' | 'down') => {
+      // Le point d'interrogation gère la sécurité si listRef.current est null
+      listRef.current?.scrollBy({ 
+        top: direction === 'up' ? -100 : 100, 
+        behavior: 'smooth' 
+      });
+    };
+
+    return (
+      <div className="flex gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100">
+        <button 
+          type="button" 
+          onClick={() => scroll('up')} 
+          className="p-1 hover:bg-white hover:shadow-sm rounded text-indigo-600 transition-all"
+        >
+          <FiChevronUp size={16} />
+        </button>
+        <button 
+          type="button" 
+          onClick={() => scroll('down')} 
+          className="p-1 hover:bg-white hover:shadow-sm rounded text-indigo-600 transition-all"
+        >
+          <FiChevronDown size={16} />
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto">
@@ -160,16 +194,26 @@ const ClientFactureFormPage = () => {
 
           {/* Conditions commerciales */}
           <section className="bg-white shadow-sm border border-gray-100 p-8">
-            <h4 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-6">Conditions Commerciales (%)</h4>
+            <h4 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-6">Conditions Commerciales</h4>
             <div className="grid grid-cols-3 gap-6">
-              {['tauxBase', 'volDomestique', 'volRegional', 'longCourrier', 'auComptant', 'credit15jrs', 'credit30jrs', 'credit60jrs', 'credit90jrs'].map(key => (
-                <div key={key}>
-                  <label className="block text-xs font-black text-gray-400 uppercase mb-2">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
+              {[
+                { id: 'tauxBase', label: 'Taux Base (%)' },
+                { id: 'volDomestique', label: 'Vol Domestique (%)' },
+                { id: 'volRegional', label: 'Vol Régional (%)' },
+                { id: 'longCourrier', label: 'Long Courrier (%)' },
+                { id: 'auComptant', label: 'Au Comptant (%)' },
+                { id: 'credit15jrs', label: 'Crédit 15j (%)' },
+                { id: 'credit30jrs', label: 'Crédit 30j (%)' },
+                { id: 'credit60jrs', label: 'Crédit 60j (%)' },
+                { id: 'credit90jrs', label: 'Crédit 90j (%)' },
+              ].map(field => (
+                <div key={field.id}>
+                  <label className="block text-xs font-black text-gray-400 uppercase mb-2">{field.label}</label>
                   <input
                     type="number"
                     step="0.01"
-                    value={(formData as any)[key]}
-                    onChange={e => setFormData({ ...formData, [key]: parseFloat(e.target.value) || 0 })}
+                    value={(formData as any)[field.id]} // Ici on utilise field.id qui correspond exactement à formData
+                    onChange={e => setFormData({ ...formData, [field.id]: parseFloat(e.target.value) || 0 })}
                     className="w-full p-4 bg-gray-50 rounded-2xl border border-gray-100 font-medium"
                   />
                 </div>
@@ -181,55 +225,76 @@ const ClientFactureFormPage = () => {
         {/* Colonne droite : Bénéficiaires */}
         <div className="lg:col-span-4">
           <div className="bg-white shadow-sm border border-gray-100 p-8 h-full flex flex-col">
-            <h4 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-6">Bénéficiaires Associés</h4>
+          <div className="flex justify-between items-center mb-6">
+            <h4 className="text-sm font-black text-indigo-600 uppercase tracking-widest">Bénéficiaires Associés</h4>
+            {/* Flèches pour la liste 1 */}
+            {currentClient?.beneficiaires && currentClient.beneficiaires.length > 3 && <ScrollIndicator listRef={scrollAssocRef} />}
+          </div>
 
-            {isEdit ? (
-              <>
-                <div className="flex-1 space-y-3 mb-6 overflow-y-auto max-h-96">
-                  {currentClient?.beneficiaires.map(link => (
-                    <div key={link.clientBeneficiaireId} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-300">
-                      <div>
-                        <p className="font-bold text-sm">{link.clientBeneficiaire?.libelle}</p>
-                        <p className="text-xs text-gray-500">{link.clientBeneficiaire?.code}</p>
-                      </div>
-                      <button onClick={() => handleRemoveBeneficiaire(link.clientBeneficiaireId)} className="text-red-500 hover:text-red-700">
-                        <FiTrash2 size={18} />
-                      </button>
+          {isEdit ? (
+            <>
+              {/* Liste 1 : Associés */}
+              <div 
+                ref={scrollAssocRef} 
+                className="flex-1 space-y-3 mb-6 overflow-y-auto max-h-96 custom-scrollbar scroll-smooth"
+              >
+                {currentClient?.beneficiaires.map(link => (
+                  <div key={link.clientBeneficiaireId} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-300 rounded-xl">
+                    <div>
+                      <p className="font-bold text-sm">{link.clientBeneficiaire?.libelle}</p>
+                      <p className="text-xs text-gray-500">{link.clientBeneficiaire?.code}</p>
                     </div>
-                  ))}
-                  {(!currentClient || currentClient.beneficiaires.length === 0) && (
-                    <p className="text-center text-gray-400 italic py-8">Aucun bénéficiaire</p>
+                    <button onClick={() => handleRemoveBeneficiaire(link.clientBeneficiaireId)} className="text-red-500 hover:text-red-700 p-2">
+                      <FiTrash2 size={18} />
+                    </button>
+                  </div>
+                ))}
+                {(!currentClient || currentClient.beneficiaires.length === 0) && (
+                  <p className="text-center text-gray-400 italic py-8">Aucun bénéficiaire</p>
+                )}
+              </div>
+
+              {/* Liste 2 : Disponibles */}
+              <div className="border-t border-gray-300 pt-6">
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-[10px] font-black text-gray-400 uppercase">Disponibles</p>
+                  {/* Flèches pour la liste 2 */}
+                  {availableBeneficiaires.length > 3 && (
+                    <ScrollIndicator listRef={scrollAvailRef} />
                   )}
                 </div>
-
-                <div className="border-t border-gray-300 pt-6">
-                  <div className="relative mb-4">
-                    <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                      type="text"
-                      placeholder="Rechercher..."
-                      value={searchTerm}
-                      onChange={e => setSearchTerm(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-300"
-                    />
-                  </div>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {availableBeneficiaires.map(ben => (
-                      <button
-                        key={ben.id}
-                        onClick={() => handleAddBeneficiaire(ben.id)}
-                        className="w-full text-left p-4 hover:bg-indigo-50 flex justify-between items-center"
-                      >
-                        <div>
-                          <p className="font-medium">{ben.libelle}</p>
-                          <p className="text-xs text-gray-500">{ben.code}</p>
-                        </div>
-                        <FiUserPlus className="text-indigo-600" />
-                      </button>
-                    ))}
-                  </div>
+                
+                <div className="relative mb-4">
+                  <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Rechercher..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl outline-none focus:border-indigo-500 transition-colors"
+                  />
                 </div>
-              </>
+
+                <div 
+                  ref={scrollAvailRef} 
+                  className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar scroll-smooth"
+                >
+                  {availableBeneficiaires.map(ben => (
+                    <button
+                      key={ben.id}
+                      onClick={() => handleAddBeneficiaire(ben.id)}
+                      className="w-full text-left p-4 hover:bg-indigo-50 flex justify-between items-center rounded-xl transition-colors border border-transparent hover:border-indigo-100"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">{ben.libelle}</p>
+                        <p className="text-xs text-gray-500">{ben.code}</p>
+                      </div>
+                      <FiUserPlus className="text-indigo-600" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
             ) : (
               <div className="flex-1 flex items-center justify-center text-center py-12 text-gray-500 italic">
                 Les bénéficiaires pourront être ajoutés après la création du client.

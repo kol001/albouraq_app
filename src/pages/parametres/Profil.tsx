@@ -197,7 +197,7 @@ const ProfilPage = () => {
                       onClick={() => { setAuditEntityId(prof.id); setAuditEntityName(prof.profil); }}
                       className="text-purple-600 hover:underline"
                     >
-                      Historique
+                      Tracer
                     </button> */}
                     {/* <button
                       onClick={() => window.confirm('Supprimer ce profil ?') && dispatch(deleteProfil(prof.id))}

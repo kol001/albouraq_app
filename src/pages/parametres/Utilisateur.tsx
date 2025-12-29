@@ -218,7 +218,7 @@ const Utilisateur = () => {
                       ) : (
                         <button onClick={() => handleAction(deactivateUser, { userId: user.id })} className="text-amber-600 hover:underline">Désactiver</button>
                       )}
-                      <button onClick={() => { setAuditEntityId(user.id); setAuditEntityName(`${user.prenom} ${user.nom}`); }} className="text-purple-600 hover:underline">Historique</button>
+                      <button onClick={() => { setAuditEntityId(user.id); setAuditEntityName(`${user.prenom} ${user.nom}`); }} className="text-purple-600 hover:underline">Tracer</button>
                       <button onClick={() => window.confirm('Supprimer ?') && handleAction(deleteUser, { userId: user.id })} className="text-red-500 hover:underline border-l border-gray-100 pl-4">Supprimer</button>
                     </div>
                   </td>

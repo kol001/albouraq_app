@@ -57,7 +57,7 @@ const ProfilFormPage = () => {
     if (updateProfil.fulfilled.match(result)) {
       setMessage({ text: 'Profil mis à jour avec succès !', isError: false });
       dispatch(fetchAutorisations());
-      setTimeout(() => navigate('/parametre/profil'), 1500);
+      setTimeout(() => navigate(-1), 1500);
     } else {
       setMessage({ text: 'Erreur lors de la sauvegarde.', isError: true });
     }

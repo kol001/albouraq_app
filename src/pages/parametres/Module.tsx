@@ -80,7 +80,7 @@ const ModulePage = () => {
       
       {/* Overlay global */}
       {isSubmitting && activeModal === 'none' && (
-        <div className="fixed inset-0 z-[60] bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
+        <div className="fixed inset-0 z-60 bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
           <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-3 border border-gray-100">
             <FiLoader className="text-indigo-600 animate-spin" size={32} />
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Mise à jour...</p>
@@ -96,7 +96,7 @@ const ModulePage = () => {
           </button>
           <div>
             <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-              <FiLayers className="text-indigo-600" /> Architecture Modules
+              <FiLayers className="text-indigo-600" /> Paramétrage des Modules
             </h2>
             <p className="text-gray-500 font-medium italic">Gérez les briques logicielles et l'organisation du système.</p>
           </div>
@@ -150,10 +150,18 @@ const ModulePage = () => {
                 </td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                    mod.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    mod.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 
+                    mod.status === 'CREER' ? 'bg-blue-100 text-blue-700' : 
+                    'bg-red-100 text-red-700'
                   }`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${mod.status === 'ACTIF' ? 'bg-green-500' : 'bg-red-500'}`} />
-                    {mod.status}
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      mod.status === 'ACTIF' ? 'bg-green-500' : 
+                      mod.status === 'CREER' ? 'bg-blue-500' : 
+                      'bg-red-500'
+                    }`} />
+                    
+                    {/* Affichage du texte : 'Créé' si le statut est 'CREER' */}
+                    {mod.status === 'CREER' ? 'Créé' : mod.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
@@ -169,7 +177,7 @@ const ModulePage = () => {
                       onClick={() => { setAuditEntityId(mod.id); setAuditEntityName(mod.nom); }}
                       className="text-purple-600 hover:underline"
                     >
-                      Historique
+                      Tracer
                     </button>
                     <button onClick={() => window.confirm('Supprimer ?') && handleAction(deleteModule, { id: mod.id })} className="text-red-500 hover:underline border-l border-gray-100 pl-4">
                       Supprimer
@@ -190,7 +198,7 @@ const ModulePage = () => {
 
       {/* MODALE FORMULAIRE */}
       {activeModal === 'form' && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden transform transition-all animate-in zoom-in-95">
             <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
               <h3 className="text-2xl font-black text-gray-800">

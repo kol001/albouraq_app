@@ -11,7 +11,7 @@ export interface DevisTransaction {
   bcClient: 'OUI' | 'NON';
   facturationClient: 'OUI' | 'NON';
   facturationPrestataire: 'OUI' | 'NON';
-  status: 'ACTIF' | 'INACTIF';
+  status: string;
   dateApplication: string;
   dateActivation: string | null;
   dateDesactivation: string | null;

@@ -43,7 +43,7 @@ export const useAudit = (entity: string, entityId: string | null) => {
         if (response.data.success) {
           setAuditData(response.data.data);
         } else {
-          setError('Impossible de charger l\'historique');
+          setError('Impossible de charger l\'Tracer');
         }
       } catch (err: any) {
         setError(err.response?.data?.message || 'Erreur réseau');

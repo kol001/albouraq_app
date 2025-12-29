@@ -179,7 +179,7 @@ const DevisTransactionPage = () => {
         
           <div>
             <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-              <FiFileText className="text-indigo-600" /> Devis & Transactions
+              <FiFileText className="text-indigo-600" /> Gestion de devise par transaction
             </h2>
             <p className="text-gray-500 font-medium italic">Configuration des devis, bons de commande et facturation par module.</p>
           </div>
@@ -198,7 +198,7 @@ const DevisTransactionPage = () => {
         </div>
       )}
 
-      <div className="bg-white border border-gray-100 overflow-hidden">
+      <div className="bg-white border border-gray-100 overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-100">
           <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
             <tr>
@@ -242,9 +242,18 @@ const DevisTransactionPage = () => {
                   </td>
                 ))}
                 <td className="px-6 py-4">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${item.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${item.status === 'ACTIF' ? 'bg-green-500' : 'bg-red-500'}`} />
-                    {item.status}
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                    item.status === 'ACTIF' ? 'bg-green-100 text-green-700' :
+                    item.status === 'CREER' ? 'bg-blue-100 text-blue-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      item.status === 'ACTIF' ? 'bg-green-500' :
+                      item.status === 'CREER' ? 'bg-blue-500' :
+                      'bg-red-500'
+                    }`} />
+                    {/* Affichage du texte : 'Créé' si le statut est 'CREER' */}
+                    {item.status === 'CREER' ? 'Créé' : item.status}
                   </span>
                 </td>
                 <td className="px-6 py-4">
@@ -260,7 +269,7 @@ const DevisTransactionPage = () => {
                       {item.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
                     </button>
                     <button onClick={() => { setAuditEntityId(item.id); setAuditEntityName(item.module.nom); }} className="text-purple-600 hover:underline">
-                      Historique
+                      Tracer
                     </button>
                     <button onClick={() => window.confirm('Supprimer ?') && dispatch(deleteDevisTransaction(item.id))} className="text-red-500 hover:underline border-l border-gray-100 pl-4">
                       Supprimer
@@ -282,9 +291,12 @@ const DevisTransactionPage = () => {
       {/* MODALE */}
       {activeModal === 'form' && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden">
-            <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-2xl font-black text-gray-800">
+          {/* Ajout de flex flex-col et max-h-full pour le responsive */}
+          <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in duration-300">
+            
+            {/* HEADER : Reste fixe en haut */}
+            <div className="p-6 md:p-8 border-b flex justify-between items-center bg-gray-50/50 shrink-0">
+              <h3 className="text-xl md:text-2xl font-black text-gray-800">
                 {editingItem ? 'Modifier Configuration Devis' : 'Nouvelle Configuration Devis'}
               </h3>
               <button onClick={closeModal} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400">
@@ -292,7 +304,11 @@ const DevisTransactionPage = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 space-y-8">
+            {/* FORMULAIRE : Devient scrollable si le contenu dépasse */}
+            <form 
+              onSubmit={handleSubmit} 
+              className="p-6 md:p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1"
+            >
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Module concerné</label>
                 <select
@@ -311,14 +327,14 @@ const DevisTransactionPage = () => {
               </div>
 
               <div className="space-y-6">
-                    <OuiNonButton value={multiDevise} setValue={setMultiDevise} label="Multi-devise autorisée" />
-                    <OuiNonButton value={devisPrestataire} setValue={setDevisPrestataire} label="Devis Prestataire" />
-                    <OuiNonButton value={devisClient} setValue={setDevisClient} label="Devis Client" />
-                    <OuiNonButton value={bcPrestataire} setValue={setBcPrestataire} label="Bon de Commande Prestataire" />
-                    <OuiNonButton value={bcClient} setValue={setBcClient} label="Bon de Commande Client" />
-                    <OuiNonButton value={facturationClient} setValue={setFacturationClient} label="Facturation Client" />
-                    <OuiNonButton value={facturationPrestataire} setValue={setFacturationPrestataire} label="Facturation Prestataire" />
-                </div>
+                <OuiNonButton value={multiDevise} setValue={setMultiDevise} label="Multi-devise autorisée" />
+                <OuiNonButton value={devisPrestataire} setValue={setDevisPrestataire} label="Devis Prestataire" />
+                <OuiNonButton value={devisClient} setValue={setDevisClient} label="Devis Client" />
+                <OuiNonButton value={bcPrestataire} setValue={setBcPrestataire} label="Bon de Commande Prestataire" />
+                <OuiNonButton value={bcClient} setValue={setBcClient} label="Bon de Commande Client" />
+                <OuiNonButton value={facturationClient} setValue={setFacturationClient} label="Facturation Client" />
+                <OuiNonButton value={facturationPrestataire} setValue={setFacturationPrestataire} label="Facturation Prestataire" />
+              </div>
 
               {message.text && (
                 <div className={`p-4 rounded-2xl flex items-center gap-3 font-bold text-xs ${message.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
@@ -326,8 +342,11 @@ const DevisTransactionPage = () => {
                   {message.text}
                 </div>
               )}
+            </form>
 
-              <div className="flex gap-4 pt-4">
+            {/* FOOTER : Les boutons restent fixes en bas */}
+            <div className="p-6 md:p-8 border-t bg-white shrink-0">
+              <div className="flex gap-4">
                 <button type="button" onClick={closeModal} className="flex-1 py-4 border border-gray-100 rounded-2xl font-black text-gray-400 uppercase text-xs tracking-widest hover:bg-gray-50 transition-all">
                   Annuler
                 </button>
@@ -339,7 +358,7 @@ const DevisTransactionPage = () => {
                   {isSubmitting ? <FiLoader className="animate-spin" /> : 'Confirmer'}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

@@ -132,10 +132,10 @@ const FournisseurPage = () => {
           <table className="min-w-full divide-y divide-gray-50">
             <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
               <tr>
-                <th className="px-6 py-6 text-left whitespace-nowrap">Code ID</th>
-                <th className="px-6 py-6 text-left whitespace-nowrap">Raison Sociale</th>
-                <th className="px-6 py-6 text-left whitespace-nowrap text-center">Date App.</th>
-                <th className="px-6 py-6 text-left whitespace-nowrap text-center">Statut</th>
+                <th className="px-6 py-6 text-left whitespace-nowrap">Code Fournisseur</th>
+                <th className="px-6 py-6 text-left whitespace-nowrap">Libellé Fournisseur / Prestataire</th>
+                <th className="px-6 py-6 text-center whitespace-nowrap">Date d'App.</th>
+                <th className="px-6 py-6 text-center whitespace-nowrap">Statut</th>
                 <th className="px-6 py-6 text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
@@ -158,10 +158,20 @@ const FournisseurPage = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-center text-[11px] font-bold text-gray-500">
                     {new Date(fourn.dateApplication).toLocaleDateString('fr-FR')}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-[10px] font-black border ${getStatusColor(fourn.status)}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${fourn.status === 'ACTIF' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                      {fourn.status}
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                      fourn.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 
+                      fourn.status === 'CREER' ? 'bg-blue-100 text-blue-700' : 
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        fourn.status === 'ACTIF' ? 'bg-green-500' : 
+                        fourn.status === 'CREER' ? 'bg-blue-500' : 
+                        'bg-red-500'
+                      }`} />
+                      
+                      {/* Affichage du texte : 'Créé' si le statut est 'CREER' */}
+                      {fourn.status === 'CREER' ? 'Créé' : fourn.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-[11px]">

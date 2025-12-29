@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -10,9 +10,29 @@ import {
   removeBeneficiaireFromClientFacture,
 } from '../../../app/clientFacturesSlice';
 import type { RootState, AppDispatch } from '../../../app/store';
-import { FiArrowLeft, FiTrash2, FiSearch, FiPlus, FiLoader } from 'react-icons/fi';
+import { FiArrowLeft, FiTrash2, FiSearch, FiPlus, FiLoader, FiChevronUp, FiChevronDown} from 'react-icons/fi';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
+
+const ScrollIndicator = ({ listRef }: { listRef: React.RefObject<HTMLDivElement | null> }) => {
+    const scroll = (direction: 'up' | 'down') => {
+      listRef.current?.scrollBy({ 
+        top: direction === 'up' ? -120 : 120, 
+        behavior: 'smooth' 
+      });
+    };
+
+    return (
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg border border-gray-200">
+        <button type="button" onClick={() => scroll('up')} className="p-1 hover:bg-white hover:shadow-sm rounded text-indigo-600 transition-all">
+          <FiChevronUp size={14} />
+        </button>
+        <button type="button" onClick={() => scroll('down')} className="p-1 hover:bg-white hover:shadow-sm rounded text-indigo-600 transition-all">
+          <FiChevronDown size={14} />
+        </button>
+      </div>
+    );
+  };
 
 const ClientBeneficiaireFormPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +42,9 @@ const ClientBeneficiaireFormPage = () => {
   const { data: beneficiaires } = useSelector((state: RootState) => state.clientBeneficiaires);
   const { data: clientFactures } = useSelector((state: RootState) => state.clientFactures);
 
+  const scrollAssocRef = useRef<HTMLDivElement>(null);
+  const scrollAvailRef = useRef<HTMLDivElement>(null);
+
   const currentBeneficiaire = beneficiaires.find(b => b.id === id);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,7 +52,9 @@ const ClientBeneficiaireFormPage = () => {
   const [searchFacture, setSearchFacture] = useState('');
 
   const [libelle, setLibelle] = useState(currentBeneficiaire?.libelle || '');
-  const [statut, setStatut] = useState<'ACTIF' | 'INACTIF'>(currentBeneficiaire?.statut || 'ACTIF');
+  const [statut, setStatut] = useState<'ACTIF' | 'INACTIF'>(
+    currentBeneficiaire?.statut === 'ACTIF' ? 'ACTIF' : 'INACTIF'
+  );
 
   useEffect(() => {
     if (currentBeneficiaire) {
@@ -39,7 +64,7 @@ const ClientBeneficiaireFormPage = () => {
         setTimeout(() => setLibelle(currentBeneficiaire.libelle), 0);
       }
       if (statut !== currentBeneficiaire.statut && statut === 'ACTIF') {
-        setTimeout(() => setStatut(currentBeneficiaire.statut), 0);
+        setTimeout(() => setStatut(currentBeneficiaire.statut as 'ACTIF' | 'INACTIF'), 0);
       }
     }
   }, [currentBeneficiaire, libelle, statut]);
@@ -58,7 +83,7 @@ const ClientBeneficiaireFormPage = () => {
 
     if (updateClientBeneficiaire.fulfilled.match(result)) {
       setMessage({ text: 'Modifications enregistrées avec succès !', isError: false });
-      setTimeout(() => navigate('/parametre/client-beneficiaire'), 1500);
+      setTimeout(() => navigate(-1), 1500);
     } else {
       setMessage({ text: 'Erreur lors de la sauvegarde.', isError: true });
     }
@@ -97,6 +122,10 @@ const ClientBeneficiaireFormPage = () => {
   if (!currentBeneficiaire) {
     return <div className="p-8 text-center text-gray-500">Chargement...</div>;
   }
+
+  
+
+  
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto">
@@ -148,78 +177,102 @@ const ClientBeneficiaireFormPage = () => {
               </div>
             </div>
           </section>
+
+          <div className="max-w-[1600px] mx-auto flex justify-end gap-4">
+            <button onClick={() => navigate(-1)} className="px-8 py-4 border border-gray-300 rounded-2xl font-black text-gray-600 uppercase text-xs tracking-widest">
+              Annuler
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="px-12 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-3 uppercase text-xs tracking-widest"
+            >
+              {isSubmitting && <FiLoader className="animate-spin" />}
+              Enregistrer
+            </button>
+          </div>
         </div>
 
         {/* Colonne droite : Clients Factures liés */}
         <div className="lg:col-span-7">
-          <div className="bg-white border border-gray-100 p-8 h-full flex flex-col">
-            <h4 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-6">Clients Factures Associés</h4>
+          <div className="bg-white border border-gray-100 p-8 h-full flex flex-col rounded-3xl">
+            
+            <div className="flex justify-between items-center mb-6">
+              <h4 className="text-sm font-black text-indigo-600 uppercase tracking-widest">Clients Facturés Associés</h4>
+              {/* Flèches pour la liste du haut (Associés) */}
+              {currentBeneficiaire.factures.length > 3 && <ScrollIndicator listRef={scrollAssocRef} />}
+            </div>
 
-            <div className="flex-1 space-y-3 mb-6 overflow-y-auto">
+            {/* Liste 1 : Associés */}
+            <div 
+              ref={scrollAssocRef}
+              className="flex-1 space-y-3 mb-6 overflow-y-auto max-h-[400px] scroll-smooth custom-scrollbar"
+            >
               {currentBeneficiaire.factures.map((f) => (
-                <div key={f.clientFacture.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <div key={f.clientFacture.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 transition-all hover:border-indigo-100">
                   <div>
-                    <p className="font-bold text-sm">{f.clientFacture.libelle}</p>
-                    <p className="text-xs text-gray-500">{f.clientFacture.code}</p>
+                    <p className="font-bold text-sm text-gray-800">{f.clientFacture.libelle}</p>
+                    <p className="text-xs text-gray-500 font-mono">CODE: {f.clientFacture.code}</p>
                   </div>
                   <button
                     onClick={() => handleRemoveClientFacture(f.clientFacture.id)}
-                    className="text-red-500 hover:text-red-700"
+                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                   >
                     <FiTrash2 size={18} />
                   </button>
                 </div>
               ))}
               {currentBeneficiaire.factures.length === 0 && (
-                <p className="text-center text-gray-400 italic py-12">Aucun client facture associé</p>
+                <div className="text-center py-12 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+                  <p className="text-gray-400 italic text-sm">Aucun client facturé associé</p>
+                </div>
               )}
             </div>
 
             <div className="border-t pt-6 border-gray-100">
+              <div className="flex justify-between items-center mb-4">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Disponibles pour association</p>
+                {/* Flèches pour la liste du bas (Disponibles) */}
+                {availableClientFactures.length > 3 && <ScrollIndicator listRef={scrollAvailRef} />}
+              </div>
+
               <div className="relative mb-4">
                 <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
-                  placeholder="Rechercher un client facture..."
+                  placeholder="Rechercher un client facturé..."
                   value={searchFacture}
                   onChange={(e) => setSearchFacture(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 />
               </div>
-              <div className="max-h-64 overflow-y-auto space-y-2">
+
+              {/* Liste 2 : Disponibles */}
+              <div 
+                ref={scrollAvailRef}
+                className="max-h-64 overflow-y-auto space-y-2 scroll-smooth custom-scrollbar"
+              >
                 {availableClientFactures.map((cf) => (
                   <button
                     key={cf.id}
                     onClick={() => handleAddClientFacture(cf.id)}
-                    className="w-full text-left p-4 hover:bg-indigo-50 rounded-xl flex justify-between items-center transition-all"
+                    className="w-full text-left p-4 hover:bg-indigo-50 rounded-2xl flex justify-between items-center transition-all border border-transparent hover:border-indigo-100 group"
                   >
                     <div>
-                      <p className="font-medium">{cf.libelle}</p>
-                      <p className="text-xs text-gray-500">{cf.code}</p>
+                      <p className="font-bold text-sm text-gray-700">{cf.libelle}</p>
+                      <p className="text-xs text-gray-400">{cf.code}</p>
                     </div>
-                    <FiPlus className="text-indigo-600" />
+                    <div className="bg-indigo-100 text-indigo-600 p-2 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                      <FiPlus size={16} />
+                    </div>
                   </button>
                 ))}
+                {availableClientFactures.length === 0 && searchFacture && (
+                  <p className="text-center text-xs text-gray-400 py-4 italic">Aucun résultat pour cette recherche</p>
+                )}
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Boutons fixes en bas */}
-      <div className="mt-6 p-6">
-        <div className="max-w-[1600px] mx-auto flex justify-end gap-4">
-          <button onClick={() => navigate(-1)} className="px-8 py-4 border border-gray-300 rounded-2xl font-black text-gray-600 uppercase text-xs tracking-widest">
-            Annuler
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="px-12 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-3 uppercase text-xs tracking-widest"
-          >
-            {isSubmitting && <FiLoader className="animate-spin" />}
-            Enregistrer
-          </button>
         </div>
       </div>
     </div>

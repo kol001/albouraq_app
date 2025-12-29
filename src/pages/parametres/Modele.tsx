@@ -199,7 +199,7 @@ const ModelesPage = () => {
                     ) : (
                       <button onClick={() => handleAction(activateModele, modele.id)} className="text-emerald-600 hover:underline">Activer</button>
                     )}
-                    <button onClick={() => { setAuditEntityId(modele.id); setAuditEntityName(modele.module.nom); }} className="text-purple-600 hover:underline">Historique</button>
+                    <button onClick={() => { setAuditEntityId(modele.id); setAuditEntityName(modele.module.nom); }} className="text-purple-600 hover:underline">Tracer</button>
                     <button onClick={() => window.confirm('Supprimer ?') && handleAction(deleteModele, modele.id)} className="text-red-500 hover:underline border-l border-gray-100 pl-4">Supprimer</button>
                   </div>
                 </td>

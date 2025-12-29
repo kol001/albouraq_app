@@ -48,6 +48,20 @@ const ClientBeneficiairePage = () => {
   const [auditEntityId, setAuditEntityId] = useState<string | null>(null);
   const [auditEntityName, setAuditEntityName] = useState('');
 
+  // États pour la recherche globale
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [searchFilters, setSearchFilters] = useState({
+    codeBen: true,
+    libelleBen: true,
+    codeFact: false,
+    libelleFact: false,
+  });
+
+  // Fonction pour basculer les filtres
+  const toggleFilter = (filter: keyof typeof searchFilters) => {
+    setSearchFilters(prev => ({ ...prev, [filter]: !prev[filter] }));
+  };
+
   const closeModals = () => {
     setActiveModal('none');
     setEditingClient(null);
@@ -140,6 +154,29 @@ const ClientBeneficiairePage = () => {
     }
   };
 
+
+  const filteredBeneficiaires = useMemo(() => {
+    if (!globalSearch) return beneficiaires;
+
+    const search = globalSearch.toLowerCase();
+    
+    return beneficiaires.filter((ben) => {
+      // Vérification Bénéficiaire
+      const matchCodeBen = searchFilters.codeBen && ben.code.toLowerCase().includes(search);
+      const matchLibelleBen = searchFilters.libelleBen && ben.libelle.toLowerCase().includes(search);
+
+      // Vérification Client Facturé (dans la liste des factures liées)
+      const matchCodeFact = searchFilters.codeFact && ben.factures.some(f => 
+        f.clientFacture.code.toLowerCase().includes(search)
+      );
+      const matchLibelleFact = searchFilters.libelleFact && ben.factures.some(f => 
+        f.clientFacture.libelle.toLowerCase().includes(search)
+      );
+
+      return matchCodeBen || matchLibelleBen || matchCodeFact || matchLibelleFact;
+    });
+  }, [beneficiaires, globalSearch, searchFilters]);
+
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
       {/* Overlay loading */}
@@ -179,22 +216,69 @@ const ClientBeneficiairePage = () => {
         </div>
       )}
 
+      {/* BARRE DE RECHERCHE AVANCÉE */}
+      <div className="bg-white border border-gray-100 p-6 mb-8 shadow-sm space-y-4">
+        <div className="relative">
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500" size={20} />
+          <input
+            type="text"
+            placeholder="Recherche globale avancée..."
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
+            className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
+          />
+        </div>
+        
+        <div className="flex flex-wrap gap-4 items-center">
+          <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest mr-2">Chercher dans :</span>
+          
+          {[
+            { id: 'codeBen', label: 'Code Bénéficiaire', color: 'blue' },
+            { id: 'libelleBen', label: 'Libélle Bénéficiaire', color: 'blue' },
+            { id: 'codeFact', label: 'Code Facturé', color: 'emerald' },
+            { id: 'libelleFact', label: 'Libélle Facturé', color: 'emerald' },
+          ].map((filter) => (
+            <label 
+              key={filter.id} 
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border cursor-pointer transition-all ${
+                searchFilters[filter.id as keyof typeof searchFilters] 
+                ? `bg-${filter.color}-50 border-${filter.color}-200 text-${filter.color}-700 shadow-sm` 
+                : 'bg-white border-gray-100 text-gray-400 hover:bg-gray-50'
+              }`}
+            >
+              <input
+                type="checkbox"
+                className="hidden"
+                checked={searchFilters[filter.id as keyof typeof searchFilters]}
+                onChange={() => toggleFilter(filter.id as keyof typeof searchFilters)}
+              />
+              <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
+                searchFilters[filter.id as keyof typeof searchFilters] ? `bg-${filter.color}-500 border-transparent` : 'border-gray-300'
+              }`}>
+                {searchFilters[filter.id as keyof typeof searchFilters] && <FiCheckCircle className="text-white" size={10} />}
+              </div>
+              <span className="text-xs font-black uppercase tracking-tighter">{filter.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       {/* TABLEAU */}
-      <div className="bg-white border border-gray-100 overflow-hidden">
+      <div className="bg-white border border-gray-100 overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-100">
           <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
             <tr>
               <th className="px-6 py-5 text-left">Code client Bénéficiaire</th>
-              <th className="px-6 py-5 text-left">Libellé</th>
+              <th className="px-6 py-5 text-left">Libellé client Bénéficiaire</th>
               <th className="px-6 py-5 text-left">Code Client Facturé</th>
-              <th className="px-6 py-5 text-left">Libillé Client Facturé</th>
+              <th className="px-6 py-5 text-left">Libellé Client Facturé</th>
               <th className="px-6 py-5 text-left">Statut</th>
               <th className="px-6 py-5 text-left">Date Application</th>
               <th className="px-6 py-5 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 bg-white font-medium">
-            {beneficiaires.map((client) => (
+            {filteredBeneficiaires.map((client) => (
               <tr key={client.id} className="hover:bg-indigo-50/30 transition-colors">
                 <td className="px-6 py-4">
                   <span className="inline-flex items-center gap-2 text-xs font-mono font-black bg-gray-50 text-indigo-600 px-3 py-1 rounded-lg border border-gray-100">
@@ -232,10 +316,17 @@ const ClientBeneficiairePage = () => {
                 </td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                    client.statut === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    client.statut === 'ACTIF' ? 'bg-green-100 text-green-700' : 
+                    client.statut === 'CREER' ? 'bg-blue-100 text-blue-700' : 
+                    'bg-red-100 text-red-700'
                   }`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${client.statut === 'ACTIF' ? 'bg-green-500' : 'bg-red-500'}`} />
-                    {client.statut}
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      client.statut === 'ACTIF' ? 'bg-green-500' : 
+                      client.statut === 'CREER' ? 'bg-blue-500' : 
+                      'bg-red-500'
+                    }`} />
+                    {/* Affichage du texte : 'Créé' si le statut est 'CREER' */}
+                    {client.statut === 'CREER' ? 'Créé' : client.statut}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-xs text-gray-600">
@@ -259,7 +350,7 @@ const ClientBeneficiairePage = () => {
                       onClick={() => { setAuditEntityId(client.id); setAuditEntityName(client.libelle); }}
                       className="text-purple-600 hover:underline"
                     >
-                      Historique
+                      Tracer
                     </button>
                     <button onClick={() => window.confirm('Supprimer ?') && handleAction(deleteClientBeneficiaire, { id: client.id })} className="text-red-500 hover:underline border-l border-gray-100 pl-4">
                       Supprimer
@@ -275,6 +366,14 @@ const ClientBeneficiairePage = () => {
             <FiLoader className="animate-spin text-indigo-600" size={32} />
             <p className="text-[10px] font-black uppercase tracking-widest">Chargement des clients bénéficiaires...</p>
           </div>
+        )}
+
+        {filteredBeneficiaires.length === 0 && !loading && (
+          <tr>
+            <td colSpan={7} className="p-20 text-center">
+              <p className="text-gray-400 font-medium italic">Aucun résultat ne correspond à votre recherche.</p>
+            </td>
+          </tr>
         )}
       </div>
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAutorisations } from '../../app/autorisationsSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import { FiArrowLeft, FiClock } from 'react-icons/fi';
+import { FiArrowLeft, FiClock, FiList, FiX, FiLayers } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
@@ -14,6 +14,7 @@ const AutorisationPage = () => {
   const { data: profiles } = useSelector((state: RootState) => state.profiles);
 
   const [activeTab, setActiveTab] = useState<'modules' | 'users'>('modules');
+  const [showHistory, setShowHistory] = useState(false);
 
   // Dans AutorisationPage.tsx
   useEffect(() => {
@@ -27,14 +28,20 @@ const AutorisationPage = () => {
   const firstAuth = autorisations.length > 0 ? autorisations[0] : null;
 
   return (
-    <div className="p-8 max-w-[1400px] mx-auto min-h-screen">
+    <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
       
       {/* Retour et Titre */}
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => navigate(-1)} className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm">
-          <FiArrowLeft size={18} className="text-gray-600" />
+        <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-xl hover:bg-gray-200 transition-all">
+          <FiArrowLeft size={18} />
         </button>
-        <h2 className="text-2xl font-bold text-gray-800">Paramètres d'Autorisation</h2>
+        <div>
+          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+            <FiLayers className="text-indigo-600" /> Paramètre d'Autorisation
+          </h2>
+          {/* <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">Paramètre d'Autorisation</h2> */}
+        </div>
+        
       </div>
 
       {/* PANNEAU : Première Autorisation (Design Simple) */}
@@ -67,36 +74,45 @@ const AutorisationPage = () => {
             }`}>
               Statut : {firstAuth.status}
             </span>
+
+            {/* BOUTON POUR OUVRIR LA MODAL */}
+            <button 
+              onClick={() => setShowHistory(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg text-xs font-bold hover:bg-gray-800 transition-all shadow-md"
+            >
+              <FiList size={16} />
+              VOIR L'HISTORIQUE ({autorisations.length})
+            </button>
           </div>
         </div>
       )}
 
       {/* SÉLECTEUR DE VUE (Design Onglets simple) */}
-      <div className="flex gap-6 mb-0">
+      <div className="flex gap-2">
         <button
           onClick={() => setActiveTab('modules')}
-          className={`p-3 mb-5 bg-white text-sm font-bold transition-all rounded-tr-md border-b-2 ${
+          className={`p-3 bg-white text-sm font-bold transition-all rounded-tr-md border-b-2 ${
             activeTab === 'modules' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'
           }`}
         >
-          Profils Modules
+        Profile / Module
         </button>
         <button
           onClick={() => setActiveTab('users')}
-          className={`p-3 mb-5 bg-white text-sm font-bold transition-all rounded-tr-md border-b-2 ${
+          className={`p-3 bg-white text-sm font-bold transition-all rounded-tr-md border-b-2 ${
             activeTab === 'users' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'
           }`}
         >
-          Profils Utilisateurs
+          Profile / Utilisateur
         </button>
       </div>
 
       {/* TABLEAU DES PROFILS */}
-      <div className="bg-white  border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white  overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 text-left">
           <thead className="bg-gray-50">
             <tr className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-              <th className="px-6 py-4 text-indigo-600">Nom du profil</th>
+              <th className="px-6 py-4 text-indigo-600">Profil</th>
               {activeTab === 'modules' ? (
                 <>
                   <th className="px-6 py-4">Module</th>
@@ -176,6 +192,59 @@ const AutorisationPage = () => {
           </div>
         )}
       </div>
+
+      {/* MODAL HISTORIQUE DES AUTORISATIONS */}
+      {showHistory && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setShowHistory(false)} />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <FiClock className="text-indigo-600" /> Historique des Autorisations
+              </h3>
+              <button onClick={() => setShowHistory(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+              {autorisations.map((auth, index) => (
+                <div key={auth.id} className={`p-4 rounded-xl border transition-all ${index === 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-gray-100 hover:bg-gray-50'}`}>
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">N° {auth.numero}</span>
+                      <p className="text-sm font-bold text-gray-900">
+                        Activée le : {new Date(auth.date).toLocaleDateString('fr-FR')} à {new Date(auth.date).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${auth.status === 'CREER' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+                      {auth.status}
+                    </span>
+                  </div>
+                  {auth.dateDesactivation && (
+                    <p className="text-xs text-gray-500 italic">
+                      Désactivée le : {new Date(auth.dateDesactivation).toLocaleDateString('fr-FR')}
+                    </p>
+                  )}
+                  {index === 0 && <span className="text-[9px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded mt-2 inline-block">ACTUEL</span>}
+                </div>
+              ))}
+            </div>
+
+            <div className="p-4 border-t border-gray-100 bg-gray-50 text-center">
+              <button 
+                onClick={() => setShowHistory(false)}
+                className="px-6 py-2 bg-white border border-gray-300 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-100 transition-all"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

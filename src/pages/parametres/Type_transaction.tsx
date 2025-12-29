@@ -9,7 +9,7 @@ import {
 import type { RootState, AppDispatch } from '../../app/store';
 import { 
   FiSettings, FiPlus, FiX, FiCheckCircle, 
-  FiAlertCircle, FiActivity, FiLoader , FiArrowLeft
+  FiAlertCircle, FiActivity, FiLoader , FiArrowLeft, FiChevronDown
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
@@ -209,10 +209,18 @@ const TypeTransaction = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                      type.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      type.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 
+                      type.status === 'CREER' ? 'bg-blue-100 text-blue-700' : 
+                      'bg-red-100 text-red-700'
                     }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${type.status === 'ACTIF' ? 'bg-green-500' : 'bg-red-500'}`} />
-                      {type.status}
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        type.status === 'ACTIF' ? 'bg-green-500' : 
+                        type.status === 'CREER' ? 'bg-blue-500' : 
+                        'bg-red-500'
+                      }`} />
+                      
+                      {/* Affichage du texte : 'Créé' si le statut est 'CREER' */}
+                      {type.status === 'CREER' ? 'Créé' : type.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -239,19 +247,18 @@ const TypeTransaction = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-          {/* Augmentation de max-w-xl à max-w-3xl pour le mode 2 colonnes */}
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl overflow-hidden transform transition-all animate-in zoom-in-95 duration-300">
-            
-            {/* HEADER FIXE */}
-            <div className="p-7 border-b flex justify-between items-center bg-gray-50/50">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-200">
+       <div className="fixed inset-0 z-[70] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-0 md:p-4 animate-in fade-in duration-300">
+          {/* Ajustement : h-full sur mobile pour éviter les bugs de scroll, max-h-screen sur PC */}
+          <div className="bg-white shadow-2xl w-full h-full md:h-auto md:max-h-[95vh] md:max-w-3xl overflow-hidden transform transition-all animate-in zoom-in-95 duration-300 flex flex-col">
+            {/* HEADER FIXE - Reste en haut */}
+            <div className="p-5 md:p-7 border-b flex justify-between items-center bg-gray-50/50">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="p-2 md:p-3 bg-indigo-600 rounded-xl md:rounded-2xl text-white shadow-lg shadow-indigo-200">
                   <FiPlus size={20} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-gray-800 tracking-tight">Configuration Nouveau Flux</h3>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Paramétrage des règles de transaction</p>
+                  <h3 className="text-lg md:text-xl font-black text-gray-800 tracking-tight">Configuration Flux</h3>
+                  <p className="hidden md:block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Paramétrage des règles</p>
                 </div>
               </div>
               <button onClick={closeModals} className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-gray-400">
@@ -259,30 +266,35 @@ const TypeTransaction = () => {
               </button>
             </div>
 
-            {/* FORMULAIRE AVEC ZONE SCROLLABLE SI BESOIN */}
-            <form onSubmit={handleSubmit} className="p-8">
-              <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            {/* FORMULAIRE - Zone scrollable optimisée */}
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
                 
-                {/* GRILLE 2 COLONNES */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                {/* GRILLE : 1 colonne mobile, 2 colonnes PC */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 md:gap-y-6">
                   
-                  {/* SECTION 1 : INFOS DE BASE */}
-                  <div className="col-span-full mb-2">
+                  <div className="col-span-full mb-1">
                     <h4 className="text-[11px] font-black text-indigo-600 uppercase tracking-[0.2em] flex items-center gap-2">
                       <div className="w-1 h-4 bg-indigo-600 rounded-full"/> Identité du Flux
                     </h4>
                   </div>
 
-                  <div className="group">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Type de Flux</label>
-                    <select
-                      value={transactionType}
-                      onChange={(e) => setTransactionType(e.target.value as any)}
-                      className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-2xl outline-none transition-all font-bold text-gray-700 appearance-none cursor-pointer"
-                      required
-                    >
-                      {TRANSACTION_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
-                    </select>
+                  {/* Type de Flux */}
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Type de Flux</label>
+                    <div className="relative">
+                      <select
+                        value={transactionType}
+                        onChange={(e) => setTransactionType(e.target.value as any)}
+                        className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-xl md:rounded-2xl outline-none transition-all font-bold text-gray-700 appearance-none cursor-pointer text-sm"
+                        required
+                      >
+                        {TRANSACTION_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <FiChevronDown />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="group">
@@ -386,23 +398,25 @@ const TypeTransaction = () => {
                 </div>
               )}
 
-              {/* BOUTONS FIXES EN BAS */}
-              <div className="flex gap-4 pt-8 border-t border-gray-50 mt-6">
-                <button 
-                  type="button" 
-                  onClick={closeModals} 
-                  className="flex-1 py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-400 hover:text-gray-600 transition-all active:scale-95"
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting} 
-                  className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-3"
-                >
-                  {isSubmitting ? <FiLoader className="animate-spin" /> : <FiCheckCircle size={18} />}
-                  <span className="uppercase text-xs tracking-[0.1em]">Enregistrer le Flux</span>
-                </button>
+              {/* FOOTER FIXE EN BAS - Boutons toujours visibles */}
+              <div className="p-6 md:p-8 border-t border-gray-100 bg-white">
+                <div className="flex flex-col-reverse md:flex-row gap-3 md:gap-4">
+                  <button 
+                    type="button" 
+                    onClick={closeModals} 
+                    className="w-full md:flex-1 py-4 bg-gray-50 text-gray-400 rounded-2xl font-bold hover:text-gray-600 transition-all text-sm uppercase tracking-widest"
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={isSubmitting} 
+                    className="w-full md:flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-widest"
+                  >
+                    {isSubmitting ? <FiLoader className="animate-spin" /> : <FiCheckCircle size={18} />}
+                    Enregistrer
+                  </button>
+                </div>
               </div>
             </form>
           </div>

@@ -105,7 +105,7 @@ const PrivilegeComponent = () => {
       
       {/* Overlay global */}
       {isSubmitting && activeModal === 'none' && (
-        <div className="fixed inset-0 z-[60] bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
+        <div className="fixed inset-0 z-60 bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
           <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-3 border border-gray-100">
             <FiLoader className="text-indigo-600 animate-spin" size={32} />
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Action en cours...</p>
@@ -183,10 +183,18 @@ const PrivilegeComponent = () => {
 
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                    p.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    p.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 
+                    p.status === 'CREER' ? 'bg-blue-100 text-blue-700' : // Couleur bleue pour le statut "Créé"
+                    'bg-red-100 text-red-700'
                   }`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${p.status === 'ACTIF' ? 'bg-green-500' : 'bg-red-500'}`} />
-                    {p.status}
+                    <span className={`h-1.5 w-1.5 rounded-full ${
+                      p.status === 'ACTIF' ? 'bg-green-500' : 
+                      p.status === 'CREER' ? 'bg-blue-500' : 
+                      'bg-red-500'
+                    }`} />
+                    
+                    {/* Traduction du statut pour l'affichage */}
+                    {p.status === 'CREER' ? 'Créé' : p.status === 'ACTIF' ? 'Actif' : p.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
@@ -213,7 +221,7 @@ const PrivilegeComponent = () => {
 
       {/* MODALE FORMULAIRE */}
       {(activeModal === 'create' || activeModal === 'edit') && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-in zoom-in-95">
             <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
               <h3 className="text-2xl font-black text-gray-800">
@@ -226,13 +234,13 @@ const PrivilegeComponent = () => {
             
             <form onSubmit={activeModal === 'create' ? handleCreateSubmit : handleEditSubmit} className="p-8 space-y-6">
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Privilège</label>
+                <label className="block text-[10px] font-black text-gray-400 tracking-widest mb-2 ml-1">Privilège</label>
                 <input
                   type="text"
                   placeholder="ex: LECTURE_TOTALE"
                   value={privilegeName}
                   onChange={(e) => setPrivilegeName(e.target.value)}
-                  className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase"
+                  className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
                   required
                 />
               </div>

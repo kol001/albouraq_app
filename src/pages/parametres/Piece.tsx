@@ -193,7 +193,7 @@ const PiecePage = () => {
                     >
                       {piece.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
                     </button>
-                    <button onClick={() => { setAuditEntityId(piece.id); setAuditEntityName(piece.document); }} className="text-purple-600 hover:underline">Historique</button>
+                    <button onClick={() => { setAuditEntityId(piece.id); setAuditEntityName(piece.document); }} className="text-purple-600 hover:underline">Tracer</button>
                     <button onClick={() => window.confirm('Supprimer ?') && handleAction(deletePiece, { id: piece.id })} className="text-red-500 hover:underline border-l border-gray-100 pl-4">Supprimer</button>
                   </div>
                 </td>

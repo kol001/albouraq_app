@@ -163,7 +163,7 @@ const CategoriePage = () => {
               <FiArrowLeft size={20} />
             </button>
             <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-              Catégories
+              Famille Articles
             </h2>
           </div>
           <button onClick={() => setCatModal('form')} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black transition-all shadow-xl shadow-indigo-100 flex items-center gap-3 text-sm">
@@ -176,9 +176,9 @@ const CategoriePage = () => {
             <table className="min-w-full divide-y divide-gray-50">
               <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
                 <tr>
-                  <th className="px-6 py-6 text-left">Module / Service</th>
-                  <th className="px-6 py-6 text-center">Flux Achat</th>
-                  <th className="px-6 py-6 text-center">Flux Vente</th>
+                  <th className="px-6 py-6 text-left">Catégorie</th>
+                  <th className="px-6 py-6 text-center">Achat</th>
+                  <th className="px-6 py-6 text-center">Vente</th>
                   <th className="px-6 py-6 text-right">Actions</th>
                 </tr>
               </thead>
@@ -209,7 +209,7 @@ const CategoriePage = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex justify-end gap-4 text-[11px] font-black uppercase tracking-tighter">
                         <button onClick={() => openCatEdit(cat)} className="text-blue-600 hover:underline">Modifier</button>
-                        <button onClick={() => { setAuditEntityId(cat.id); setAuditEntityName(cat.module.nom); }} className="text-purple-600 hover:underline">Historique</button>
+                        <button onClick={() => { setAuditEntityId(cat.id); setAuditEntityName(cat.module.nom); }} className="text-purple-600 hover:underline">Tracer</button>
                         <button onClick={() => window.confirm('Supprimer ?') && dispatch(deleteCategorie(cat.id))} className="text-red-500 hover:underline">Supprimer</button>
                       </div>
                     </td>
@@ -243,10 +243,11 @@ const CategoriePage = () => {
             <table className="min-w-full divide-y divide-gray-50">
               <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
                 <tr>
-                  <th className="px-6 py-6 text-left">Code</th>
-                  <th className="px-6 py-6 text-left">Désignation</th>
-                  <th className="px-6 py-6 text-left">Catégorie Parente</th>
+                  <th className="px-6 py-6 text-left">Code Sous-Catégorie</th>
+                  <th className="px-6 py-6 text-left">Libellé Sous-Catégorie</th>
+                  <th className="px-6 py-6 text-left">Catégorie</th>
                   <th className="px-6 py-6 text-center">Statut</th>
+                  <th className="px-6 py-6 text-center">Date d'Application</th>
                   <th className="px-6 py-6 text-right">Actions</th>
                 </tr>
               </thead>
@@ -264,16 +265,29 @@ const CategoriePage = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-xs font-bold text-gray-500">
                         {sous.categorie.module.nom}
-                        <span className="ml-2 text-[9px] bg-gray-100 px-2 py-0.5 rounded uppercase font-black">
+                        {/* <span className="ml-2 text-[9px] bg-gray-100 px-2 py-0.5 rounded uppercase font-black">
                           {sous.categorie.achat}/{sous.categorie.vente}
-                        </span>
+                        </span> */}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black border ${sous.status === 'ACTIF' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${sous.status === 'ACTIF' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                        {sous.status}
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                        sous.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 
+                        sous.status === 'CREER' ? 'bg-blue-100 text-blue-700' : 
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          sous.status === 'ACTIF' ? 'bg-green-500' : 
+                          sous.status === 'CREER' ? 'bg-blue-500' : 
+                          'bg-red-500'
+                        }`} />
+                        
+                        {/* Affichage du texte : 'Créé' si le statut est 'CREER' */}
+                        {sous.status === 'CREER' ? 'Créé' : sous.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-[10px] font-mono text-gray-500">
+                      {sous.createdAt ? new Date(sous.createdAt).toLocaleDateString('fr-FR') : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex justify-end gap-4 text-[11px] font-black uppercase tracking-tighter">

@@ -136,11 +136,10 @@ const CommissionPage = () => {
           </button>
           <div>
             <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-              <FiPercent className="text-indigo-600" /> Types de Transaction
+              <FiPercent className="text-indigo-600" /> Gestion des Commissions
             </h2>
-            <p className="text-gray-500 font-medium italic">Définissez les règles d'automatisation de vos flux de documents.</p>
           </div>
-        </div>  
+        </div>
         <button
           onClick={() => { resetForm(); setIsModalOpen(true); }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
@@ -199,7 +198,7 @@ const CommissionPage = () => {
                       onClick={() => openAudit(comm)}
                       className="text-purple-600 hover:text-purple-800"
                     >
-                      Historique
+                      Tracer
                     </button>
                     <button onClick={() => handleDelete(comm.id)} className="text-red-600 hover:underline">Supprimer</button>
                   </div>

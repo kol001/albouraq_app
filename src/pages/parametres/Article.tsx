@@ -118,13 +118,15 @@ const ArticlePage = () => {
       </div>
 
       {/* TABLEAU */}
-      <div className="bg-white border border-gray-100 overflow-hidden">
+      <div className="bg-white border border-gray-100 overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-100">
           <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
             <tr>
-              <th className="px-6 py-5 text-left">Code</th>
-              <th className="px-6 py-5 text-left">Libellé Arcticle</th>
-              <th className="px-6 py-5 text-left">Catégorie (Achat/Vente)</th>
+              <th className="px-6 py-5 text-left">Code Famille Article</th>
+              <th className="px-6 py-5 text-left">Libellé Famille Article</th>
+              <th className="px-6 py-5 text-left">Catégorie</th>
+              <th className="px-6 py-5 text-left">Transaction Achat</th>
+              <th className="px-6 py-5 text-left">Transaction Vente</th>
               <th className="px-6 py-5 text-left">Code Sous-Catégorie</th>
               <th className="px-6 py-5 text-left">Libellé Sous-Catégorie</th>
               <th className="px-6 py-5 text-left">Statut</th>
@@ -141,7 +143,13 @@ const ArticlePage = () => {
                 </td>
                 <td className="px-6 py-4 font-black text-sm">{art.libelleArticle}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">
-                  {art.sousCategorie.categorie.module.nom} {art.sousCategorie.categorie.achat}/{art.sousCategorie.categorie.vente}
+                  {art.sousCategorie.categorie.module.nom}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {art.sousCategorie.categorie.achat}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {art.sousCategorie.categorie.vente}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600">{art.sousCategorie.codeSousCategorie}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{art.sousCategorie.libelleSousCategorie}</td>
@@ -165,7 +173,7 @@ const ArticlePage = () => {
                       onClick={() => { setAuditEntityId(art.id); setAuditEntityName(art.libelleArticle); }}
                       className="text-purple-600 hover:underline"
                     >
-                      Historique
+                      Tracer
                     </button>
                     <button
                       onClick={() => window.confirm('Supprimer cet article ?') && dispatch(deleteArticle(art.id))}

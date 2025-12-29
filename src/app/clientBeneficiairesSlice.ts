@@ -18,7 +18,7 @@ export interface factures{
     credit30jrs: number;
     credit60jrs: number;
     credit90jrs: number;
-    statut: 'ACTIF' | 'INACTIF';
+    statut: string;
     dateApplication: string;
   };
 }
@@ -27,7 +27,7 @@ export interface ClientBeneficiaire {
   id: string;
   code: string;
   libelle: string;
-  statut: 'ACTIF' | 'INACTIF';
+  statut: string;
   dateApplication: string;
   dateCreation: string;
   updatedAt: string;
@@ -72,7 +72,7 @@ export const fetchClientBeneficiaires = createAsyncThunk<
 // Créer un client bénéficiaire
 export const createClientBeneficiaire = createAsyncThunk<
   { success: boolean; data: ClientBeneficiaire },
-  { libelle: string; statut: 'ACTIF' | 'INACTIF'; dateApplication: string },
+  { libelle: string; statut: string; dateApplication: string },
   { state: { auth: { token: string } } }
 >('clientBeneficiaires/createClientBeneficiaire', async (payload, { getState, rejectWithValue, dispatch }) => {
   try {
@@ -99,7 +99,7 @@ export const createClientBeneficiaire = createAsyncThunk<
 // Update (PATCH)
 export const updateClientBeneficiaire = createAsyncThunk<
   { success: boolean; data: ClientBeneficiaire },
-  { id: string; libelle: string; statut: 'ACTIF' | 'INACTIF' },
+  { id: string; libelle: string; statut: string },
   { state: { auth: { token: string } } }
 >('clientBeneficiaires/updateClientBeneficiaire', async (payload, { getState, rejectWithValue, dispatch }) => {
   try {

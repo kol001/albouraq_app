@@ -127,7 +127,7 @@ const TransactionPage = () => {
           onClick={() => { closeModals(); setIsModalOpen(true); }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-3.5 rounded-2xl font-black transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
         >
-          <FiPlus size={20} /> Programmer un flux
+          <FiPlus size={20} /> Nouvel Transaction
         </button>
       </div>
 
@@ -167,8 +167,21 @@ const TransactionPage = () => {
                 <td className="px-6 py-4 text-sm font-bold text-gray-700">
                   <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.module?.nom}</span>
                 </td>
-                <td className="px-6 py-4 text-sm font-bold text-gray-700">
-                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.status}</span>
+                <td className="px-6 py-4">
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                    trans.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 
+                    trans.status === 'CREER' ? 'bg-blue-100 text-blue-700' : 
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      trans.status === 'ACTIF' ? 'bg-green-500' : 
+                      trans.status === 'CREER' ? 'bg-blue-500' : 
+                      'bg-red-500'
+                    }`} />
+                    
+                    {/* Affichage du texte : 'Créé' si le statut est 'CREER' */}
+                    {trans.status === 'CREER' ? 'Créé' : trans.status}
+                  </span>
                 </td>
                 <td className="px-6 py-4 text-sm font-bold text-gray-700">
                   <span className="block text-[10px] text-indigo-500 font-mono uppercase">{new Date(trans.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
@@ -206,7 +219,7 @@ const TransactionPage = () => {
                   >
                     {trans.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
                   </button>
-                  <button onClick={() => { setAuditEntityId(trans.id); setAuditEntityName(trans.transactiontype?.transactionType || 'N/A'); }} className="text-purple-600 hover:underline">Historique</button>
+                  <button onClick={() => { setAuditEntityId(trans.id); setAuditEntityName(trans.transactiontype?.transactionType || 'N/A'); }} className="text-purple-600 hover:underline">Tracer</button>
                   <button onClick={() => handleDelete(trans.id)} className="text-red-500 hover:underline border-l border-gray-100 pl-4">Supprimer</button>
                 </div>
               </td>

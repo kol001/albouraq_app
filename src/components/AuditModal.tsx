@@ -25,18 +25,18 @@ const AuditModal = ({ entity, entityId, entityName, isOpen, onClose }: AuditModa
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col transform transition-all animate-in zoom-in-95">
         
         {/* Header Dynamique */}
-        <div className="p-6 border-b bg-white flex justify-between items-center relative">
+        <div className="p-6 border-b border-gray-200 bg-white flex justify-between items-center relative">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
               <FiClock size={24} />
             </div>
             <div>
               <h3 className="text-xl font-black text-gray-800 leading-tight">Journal d'Audit</h3>
-              <p className="text-sm text-gray-500 font-medium">Historique des modifications : <span className="text-indigo-600 font-bold">{entityName}</span></p>
+              <p className="text-sm text-gray-500 font-medium">Tracer des modifications : <span className="text-indigo-600 font-bold">{entityName}</span></p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
@@ -128,7 +128,7 @@ const AuditModal = ({ entity, entityId, entityName, isOpen, onClose }: AuditModa
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t bg-white flex justify-end">
+        <div className="p-6 border-t border-gray-200 bg-white flex justify-end">
           <button
             onClick={onClose}
             className="px-8 py-3 bg-gray-800 text-white rounded-2xl font-bold hover:bg-gray-900 transition-all shadow-lg shadow-gray-200 active:scale-95"
