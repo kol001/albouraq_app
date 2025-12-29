@@ -10,7 +10,7 @@ import {
 } from '../../app/fournisseursSlice';
 import type { RootState, AppDispatch } from '../../app/store';
 import type { Fournisseur } from '../../app/fournisseursSlice';
-import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiTag, FiTruck, FiArrowLeft, FiActivity, FiPower, FiTrash2, FiEdit3 } from 'react-icons/fi';
+import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiTag, FiTruck, FiArrowLeft} from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
 import { useNavigate } from 'react-router-dom';
 
@@ -164,31 +164,31 @@ const FournisseurPage = () => {
                       {fourn.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-[11px]">
                     <div className="flex justify-end gap-2">
                       <button onClick={() => openEdit(fourn)} title="Modifier" className="p-2.5 text-blue-500 hover:bg-blue-50 rounded-xl transition-all">
-                        <FiEdit3 size={18} />
+                        Modifier
                       </button>
                       <button
                         onClick={() => handleAction(fourn.status === 'ACTIF' ? deactivateFournisseur : activateFournisseur, fourn.id)}
                         title={fourn.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
                         className={`p-2.5 rounded-xl transition-all ${fourn.status === 'ACTIF' ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'}`}
                       >
-                        <FiPower size={18} />
+                        {fourn.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
                       </button>
                       <button
                         onClick={() => { setAuditEntityId(fourn.id); setAuditEntityName(fourn.libelle); }}
                         title="Historique"
                         className="p-2.5 text-purple-500 hover:bg-purple-50 rounded-xl transition-all"
                       >
-                        <FiActivity size={18} />
+                        Historique
                       </button>
                       <button
                         onClick={() => window.confirm('Supprimer ce fournisseur ?') && handleAction(deleteFournisseur, fourn.id)}
                         title="Supprimer"
                         className="p-2.5 text-rose-400 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all"
                       >
-                        <FiTrash2 size={18} />
+                        Supprimer
                       </button>
                     </div>
                   </td>

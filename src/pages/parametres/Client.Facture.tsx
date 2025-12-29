@@ -53,7 +53,7 @@ const ClientFacturePage = () => {
       
       {/* OVERLAY DE CHARGEMENT ACTION */}
       {isSubmitting && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/40 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/40 backdrop-blur-[2px]">
           <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-4 border border-gray-100">
             <FiLoader className="text-indigo-600 animate-spin" size={40} />
             <p className="text-xs font-black uppercase tracking-widest text-gray-500">Traitement en cours...</p>

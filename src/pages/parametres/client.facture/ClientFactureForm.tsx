@@ -31,7 +31,7 @@ const ClientFactureFormPage = () => {
   const [formData, setFormData] = useState({
     code: 'CLT-001',
     libelle: '',
-    profilRisque: 'FAIBLE' as 'FAIBLE' | 'MOYEN' | 'ELEVE',
+    profilRisque: 'FAIBLE' as 'FAIBLE' | 'MOYEN' | 'ELEVE' | 'TRES_ELEVE',
     tauxBase: 0,
     volDomestique: 3,
     volRegional: 2,
@@ -152,6 +152,7 @@ const ClientFactureFormPage = () => {
                   <option value="FAIBLE">FAIBLE</option>
                   <option value="MOYEN">MOYEN</option>
                   <option value="ELEVE">ELEVE</option>
+                  <option value="TRES_ELEVE">TRES ELEVE</option>
                 </select>
               </div>
             </div>

@@ -211,6 +211,7 @@ const DevisTransactionPage = () => {
               <th className="px-6 py-5 text-left">Fact. Client</th>
               <th className="px-6 py-5 text-left">Fact. Prest.</th>
               <th className="px-6 py-5 text-left">Statut</th>
+              <th className="px-6 py-5 text-left">Date Application</th>
               <th className="px-6 py-5 text-right">Actions</th>
             </tr>
           </thead>
@@ -245,6 +246,9 @@ const DevisTransactionPage = () => {
                     <span className={`h-1.5 w-1.5 rounded-full ${item.status === 'ACTIF' ? 'bg-green-500' : 'bg-red-500'}`} />
                     {item.status}
                   </span>
+                </td>
+                <td className="px-6 py-4">
+                  <span className="text-xs text-gray-500">{new Date(item.dateApplication).toLocaleDateString('fr-FR')}</span>
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-4 text-[11px] font-black uppercase tracking-tighter">

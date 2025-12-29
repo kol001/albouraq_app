@@ -13,6 +13,7 @@ import {
 } from '../../../app/profilesSlice';
 import type { RootState, AppDispatch } from '../../../app/store';
 import { FiArrowLeft,  FiSearch, FiPlus, FiLoader, FiCheckCircle } from 'react-icons/fi';
+import { fetchAutorisations } from '../../../app/autorisationsSlice';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
@@ -55,6 +56,7 @@ const ProfilFormPage = () => {
     const result = await dispatch(updateProfil({ id: currentProfil.id, profil: nomProfil || currentProfil.profil, status: statut }));
     if (updateProfil.fulfilled.match(result)) {
       setMessage({ text: 'Profil mis à jour avec succès !', isError: false });
+      dispatch(fetchAutorisations());
       setTimeout(() => navigate('/parametre/profil'), 1500);
     } else {
       setMessage({ text: 'Erreur lors de la sauvegarde.', isError: true });

@@ -44,11 +44,22 @@ function LoginPage() {
     setError('');
     setIsLoading(true);
 
+    // Utilisation de .trim() pour nettoyer l'email et le mot de passe
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
+
     try {
-      const response = await axiosInstance.post('/auth/login', { email, motDePasse: password });
+      // On envoie les versions "clean" au serveur
+      const response = await axiosInstance.post('/auth/login', { 
+        email: cleanEmail, 
+        motDePasse: cleanPassword 
+      });
+      
       if (response.data.success) {
         const { access_token, refresh_token, expiresIn } = response.data.data;
-        login({ token: access_token, user: { id: 'unknown', email } });
+        // On utilise aussi le cleanEmail ici pour le state global
+        login({ token: access_token, user: { id: 'unknown', email: cleanEmail } });
+        
         localStorage.setItem('refresh_token', refresh_token);
         localStorage.setItem('token_expiresIn', expiresIn.toString());
         navigate('/parametre');
@@ -117,13 +128,13 @@ function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Nom</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-5 py-3 border border-gray-200 rounded-xl outline-none focus:border-gray-400 transition-all"
-                required
-              />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value.replace(/\s/g, ''))} // Supprime instantanément tout espace
+                  className="w-full px-5 py-3 border border-gray-200 rounded-xl outline-none focus:border-gray-400 transition-all"
+                  required
+                />
             </div>
 
             <div className="relative">

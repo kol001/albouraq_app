@@ -15,9 +15,13 @@ const AutorisationPage = () => {
 
   const [activeTab, setActiveTab] = useState<'modules' | 'users'>('modules');
 
+  // Dans AutorisationPage.tsx
   useEffect(() => {
-    dispatch(fetchAutorisations());
-  }, [dispatch]);
+    // On ne lance le chargement QUE si on n'a pas encore de données
+    if (autorisations.length === 0 && !loading) {
+      dispatch(fetchAutorisations());
+    }
+  }, [dispatch, autorisations.length, loading]);
 
   // On récupère le PREMIER élément du tableau pour le panneau
   const firstAuth = autorisations.length > 0 ? autorisations[0] : null;
