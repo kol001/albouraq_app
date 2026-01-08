@@ -7,9 +7,11 @@ import {
   activateFournisseur,
   deactivateFournisseur,
   deleteFournisseur,
-} from '../../app/fournisseursSlice';
+  updateFournisseurTransactions,
+  removeFournisseurTransactions,
+} from '../../app/back_office/fournisseursSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { Fournisseur } from '../../app/fournisseursSlice';
+import type { Fournisseur } from '../../app/back_office/fournisseursSlice';
 import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiTag, FiTruck, FiArrowLeft} from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +22,7 @@ const FournisseurPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { data: fournisseurs, loading, error: globalError } = useSelector((state: RootState) => state.fournisseurs);
+  const { data: transactions } = useSelector((state: RootState) => state.transactions);
 
   useEffect(() => {
     dispatch(fetchFournisseurs());
@@ -33,14 +36,15 @@ const FournisseurPage = () => {
   const [libelle, setLibelle] = useState('');
   const [auditEntityId, setAuditEntityId] = useState<string | null>(null);
   const [auditEntityName, setAuditEntityName] = useState('');
+  const [selectedTransactionIds, setSelectedTransactionIds] = useState<string[]>([]);
 
   const closeModal = () => {
     setActiveModal('none');
     setEditingFournisseur(null);
     setLibelle('');
+    setSelectedTransactionIds([]);
     setMessage({ text: '', isError: false });
   };
-
   // Fonction générique pour gérer le chargement lors des actions de ligne (Activer/Supprimer/etc)
   const handleAction = async (actionFn: any, id: string) => {
     setIsSubmitting(true);
@@ -52,46 +56,88 @@ const FournisseurPage = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (editingFournisseur) {
-      const result = await dispatch(updateFournisseur({ id: editingFournisseur.id, libelle }));
-      if (updateFournisseur.fulfilled.match(result)) {
-        setMessage({ text: 'Fournisseur mis à jour !', isError: false });
-        setTimeout(closeModal, 1500);
+    try {
+      if (editingFournisseur) {
+        // 1. Mise à jour du libellé (si changé)
+        if (libelle.trim() !== editingFournisseur.libelle.trim()) {
+          const updateResult = await dispatch(updateFournisseur({ id: editingFournisseur.id, libelle }));
+          if (!updateFournisseur.fulfilled.match(updateResult)) {
+            setMessage({ text: 'Erreur lors de la mise à jour du libellé.', isError: true });
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
+        // 2. Gestion des transactions : calcul des ajouts et suppressions
+        const currentTransactionIds = editingFournisseur.transactions ? editingFournisseur.transactions.map(t => t.id) : [];
+
+        const toAdd = selectedTransactionIds.filter(id => !currentTransactionIds.includes(id));
+        const toRemove = currentTransactionIds.filter(id => !selectedTransactionIds.includes(id));
+
+        let transactionsOk = true;
+
+        if (toAdd.length > 0) {
+          const addResult = await dispatch(updateFournisseurTransactions({
+            fournisseurId: editingFournisseur.id,
+            transactionIds: toAdd,
+          }));
+          if (!updateFournisseurTransactions.fulfilled.match(addResult)) {
+            transactionsOk = false;
+          }
+        }
+
+        if (toRemove.length > 0) {
+          const removeResult = await dispatch(removeFournisseurTransactions({
+            fournisseurId: editingFournisseur.id,
+            transactionIds: toRemove,
+          }));
+          if (!removeFournisseurTransactions.fulfilled.match(removeResult)) {
+            transactionsOk = false;
+          }
+        }
+
+        if (!transactionsOk) {
+          setMessage({ text: 'Libellé mis à jour, mais erreur sur certaines transactions.', isError: true });
+          setIsSubmitting(false);
+          return;
+        }
+
+        setMessage({ text: 'Fournisseur mis à jour avec succès !', isError: false });
       } else {
-        setMessage({ text: 'Erreur lors de la mise à jour.', isError: true });
+        // Création (inchangée)
+        const result = await dispatch(createFournisseur({
+          libelle,
+          transactionIds: selectedTransactionIds.length > 0 ? selectedTransactionIds : undefined,
+        }));
+        if (createFournisseur.fulfilled.match(result)) {
+          setMessage({ text: 'Fournisseur créé avec succès !', isError: false });
+        } else {
+          setMessage({ text: 'Erreur lors de la création.', isError: true });
+          setIsSubmitting(false);
+          return;
+        }
       }
-    } else {
-      const result = await dispatch(createFournisseur({ libelle }));
-      if (createFournisseur.fulfilled.match(result)) {
-        setMessage({ text: 'Fournisseur créé !', isError: false });
-        setTimeout(closeModal, 1500);
-      } else {
-        setMessage({ text: 'Erreur lors de la création.', isError: true });
-      }
+
+      setTimeout(closeModal, 1500);
+    } catch (err) {
+      setMessage({ text: 'Une erreur inattendue est survenue.', isError: true });
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   const openEdit = (fourn: Fournisseur) => {
     setEditingFournisseur(fourn);
     setLibelle(fourn.libelle);
+    setSelectedTransactionIds(fourn.transactions ? fourn.transactions.map(t => t.id) : []); // Pré-cocher les transactions associées
     setActiveModal('form');
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIF': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
-      case 'INACTIF': return 'bg-rose-50 text-rose-700 border-rose-100';
-      default: return 'bg-blue-50 text-blue-700 border-blue-100';
-    }
   };
 
   return (
     <div className="p-4 md:p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
-      
       {/* OVERLAY DE CHARGEMENT GLOBAL */}
       {isSubmitting && (
-        <div className="fixed inset-0 z-[100] bg-gray-900/40 backdrop-blur-sm flex items-center justify-center">
+        <div className="fixed inset-0 z-100 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-white p-8 flex flex-col items-center gap-4">
             <FiLoader className="text-indigo-600 animate-spin" size={40} />
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Mise à jour en cours...</p>
@@ -134,6 +180,7 @@ const FournisseurPage = () => {
               <tr>
                 <th className="px-6 py-6 text-left whitespace-nowrap">Code Fournisseur</th>
                 <th className="px-6 py-6 text-left whitespace-nowrap">Libellé Fournisseur / Prestataire</th>
+                <th className="px-6 py-6 text-left whitespace-nowrap">Prestation / Transaction</th>
                 <th className="px-6 py-6 text-center whitespace-nowrap">Date d'App.</th>
                 <th className="px-6 py-6 text-center whitespace-nowrap">Statut</th>
                 <th className="px-6 py-6 text-right whitespace-nowrap">Actions</th>
@@ -153,6 +200,24 @@ const FournisseurPage = () => {
                         <FiTruck size={18} />
                       </div>
                       <span className="text-gray-900 font-bold text-sm uppercase tracking-tight">{fourn.libelle}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      {/* <div className="p-2.5 bg-indigo-50 text-blue-600 rounded-xl border border-indigo-100 group-hover:bg-white group-hover:shadow-sm transition-all">
+                        <FiTruck size={18} />
+                      </div> */}
+                      <span className="text-gray-900 font-bold text-sm uppercase tracking-tight">
+                      {fourn.transactions && fourn.transactions.length > 0 ? (
+                        <ul className="space-y-1 list-disc">
+                          {fourn.transactions.map((transaction) => (
+                            <li key={transaction.id} className="text-xs text-gray-700">{transaction.module?.nom || 'Module inconnu'}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span className="italic text-gray-500 text-sm">Aucune transaction associée</span>
+                      )}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center text-[11px] font-bold text-gray-500">
@@ -207,7 +272,6 @@ const FournisseurPage = () => {
             </tbody>
           </table>
         </div>
-        
         {loading && (
           <div className="p-20 flex flex-col items-center justify-center bg-gray-50/30 gap-4">
             <FiLoader className="animate-spin text-indigo-600" size={40} />
@@ -218,7 +282,7 @@ const FournisseurPage = () => {
 
       {/* MODALE DE FORMULAIRE */}
       {activeModal === 'form' && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-120 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
           <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <div>
@@ -234,15 +298,81 @@ const FournisseurPage = () => {
 
             <form onSubmit={handleSubmit} className="p-8 space-y-8">
               <div className="group">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1 group-focus-within:text-indigo-600 transition-colors">Nom du Fournisseur / Libellé</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1 group-focus-within:text-indigo-600 transition-colors">
+                  Nom du Fournisseur / Libellé
+                </label>
                 <input
                   type="text"
-                  placeholder="ex: AIR FRANCE - KLM"
+                  placeholder="ex: AIR MAD - KLM"
                   value={libelle}
                   onChange={(e) => setLibelle(e.target.value.toUpperCase())}
                   className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-2xl font-bold text-gray-700 outline-none transition-all placeholder:text-gray-300 uppercase"
                   required
                 />
+              </div>
+
+              {/* Sélecteur de transactions */}
+              <div className="group">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">
+                  Transactions associées
+                </label>
+                <div className="max-h-64 overflow-y-auto border-2 border-gray-100 rounded-2xl bg-gray-50 p-4">
+                  {transactions.length === 0 ? (
+                    <p className="text-gray-500 text-center py-4">Aucune transaction disponible</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {transactions.map((trans) => {
+                        // Déclaration correcte ici
+                        const isCurrentlyAssociated = editingFournisseur 
+                          ? editingFournisseur.transactions?.some(t => t.id === trans.id)
+                          : false;
+
+                        return (
+                          <label
+                            key={trans.id}
+                            className="flex items-center gap-3 p-3 bg-white rounded-xl hover:bg-indigo-50 cursor-pointer transition-all border border-gray-100"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedTransactionIds.includes(trans.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedTransactionIds([...selectedTransactionIds, trans.id]);
+                                } else {
+                                  setSelectedTransactionIds(selectedTransactionIds.filter(id => id !== trans.id));
+                                }
+                              }}
+                              className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                            />
+                            <div className="flex-1">
+                              <p className="font-bold text-sm text-gray-800">
+                                {trans.module?.nom || 'Sans module'}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {trans.transactiontype.transactionType} • {trans.transactiontype.event}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className={`text-[10px] font-black px-2 py-1 rounded-full ${
+                                trans.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {trans.status}
+                              </span>
+                              {isCurrentlyAssociated && (
+                                <span className="text-[9px] font-black text-indigo-600 uppercase tracking-wider">
+                                  Déjà associé
+                                </span>
+                              )}
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {selectedTransactionIds.length} transaction{selectedTransactionIds.length > 1 ? 's' : ''} sélectionnée{selectedTransactionIds.length > 1 ? 's' : ''}
+                </p>
               </div>
 
               {message.text && (
@@ -262,7 +392,7 @@ const FournisseurPage = () => {
                   className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 uppercase text-[10px] tracking-widest disabled:opacity-50"
                 >
                   {isSubmitting ? <FiLoader className="animate-spin" /> : <FiCheckCircle />}
-                  Confirmer
+                  {editingFournisseur ? 'Mettre à jour' : 'Créer'}
                 </button>
               </div>
             </form>

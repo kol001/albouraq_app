@@ -8,9 +8,9 @@ import {
   updateBorneMiles,
   deleteBorneMiles,
   activateMiles, deactivateMiles
-} from '../../app/milesSlice';
+} from '../../app/back_office/milesSlice';
 // Add this import at the top with other imports
-import type { BorneMiles, Miles } from '../../app/milesSlice';
+import type { BorneMiles, Miles } from '../../app/back_office/milesSlice';
 import { FiArrowLeft, FiXCircle, FiPlus, FiClock, FiX, FiCheckCircle, FiTrash2, FiPower, FiTag, FiCalendar, FiCheck} from 'react-icons/fi';
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '../../app/store';

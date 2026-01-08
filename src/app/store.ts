@@ -1,28 +1,30 @@
-import { configureStore} from '@reduxjs/toolkit'; // Ajout de ThunkDispatch et Action
+import { configureStore} from '@reduxjs/toolkit'; 
 import type { ThunkDispatch, Action }from '@reduxjs/toolkit'; 
 import authReducer from './authSlice';
-import privilegesReducer from './privilegesSlice';
+import privilegesReducer from './back_office/privilegesSlice';
 import { combineReducers } from 'redux';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
-import profilesReducer from './profilesSlice';
-import autorisationsReducer from './autorisationsSlice';
-import usersReducer from './usersSlice';
-import transactionTypesReducer from './transactionTypesSlice';
-import transactionsReducer from './transactionsSlice';
-import modulesReducer from './modulesSlice';
-import modelesReducer from './modelesSlice';
-import commissionsReducer from './commissionsSlice';
-import numerotationReducer from './numerotationSlice';
-import milesReducer from './milesSlice';
-import piecesReducer from './piecesSlice';
-import clientBeneficiairesReducer from './clientBeneficiairesSlice';
-import clientFacturesReducer from './clientFacturesSlice';
-import devisTransactionsReducer from './devisTransactionsSlice';
-import categoriesReducer from './categoriesSlice';
-import sousCategoriesReducer from './sousCategoriesSlice';
-import articlesReducer from './articlesSlice';
-import fournisseursReducer from './fournisseursSlice';
+import profilesReducer from './back_office/profilesSlice';
+import autorisationsReducer from './back_office/autorisationsSlice';
+import usersReducer from './back_office/usersSlice';
+import transactionTypesReducer from './back_office/transactionTypesSlice';
+import transactionsReducer from './back_office/transactionsSlice';
+import modulesReducer from './back_office/modulesSlice';
+import modelesReducer from './back_office/modelesSlice';
+import commissionsReducer from './back_office/commissionsSlice';
+import numerotationReducer from './back_office/numerotationSlice';
+import milesReducer from './back_office/milesSlice';
+import piecesReducer from './back_office/piecesSlice';
+import clientBeneficiairesReducer from './back_office/clientBeneficiairesSlice';
+import clientFacturesReducer from './back_office/clientFacturesSlice';
+import devisTransactionsReducer from './back_office/devisTransactionsSlice';
+import categoriesReducer from './back_office/categoriesSlice';
+import sousCategoriesReducer from './back_office/sousCategoriesSlice';
+import articlesReducer from './back_office/articlesSlice';
+import fournisseursReducer from './back_office/fournisseursSlice';
+import dossierCommunReducer from './front_office/dossierCommunSlice';
+import clientBeneficiaireInfosReducer from './portail_client/clientBeneficiaireInfosSlice';
 
 import {
   FLUSH,
@@ -35,6 +37,8 @@ import {
 
 const appReducer = combineReducers({
   auth: authReducer,
+
+  // Back-Office
   privileges: privilegesReducer,
   profiles: profilesReducer,
   autorisations: autorisationsReducer,
@@ -54,6 +58,12 @@ const appReducer = combineReducers({
   sousCategories: sousCategoriesReducer,
   articles: articlesReducer,
   fournisseurs: fournisseursReducer,
+
+  // Front-Office
+  dossierCommun: dossierCommunReducer,
+
+  // Portail-client
+  clientBeneficiaireInfos: clientBeneficiaireInfosReducer,
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

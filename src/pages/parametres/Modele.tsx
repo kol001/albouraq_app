@@ -6,9 +6,9 @@ import {
   deleteModele,
   activateModele,
   deactivateModele
-} from '../../app/modelesSlice';
+} from '../../app/back_office/modelesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { Modele, ModuleRef } from '../../app/modelesSlice';
+import type { Modele, ModuleRef } from '../../app/back_office/modelesSlice';
 import { API_URL } from '../../service/env';
 import { FiPlus, FiX, FiLoader, FiFileText, FiCalendar, FiExternalLink, FiAlertCircle, FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
@@ -86,8 +86,8 @@ const ModelesPage = () => {
           moduleId: formData.moduleId,
           fonctionnalite: formData.fonctionnalite,
           modeleIntroduction: formData.modeleIntroduction,
-          dateApplication: new Date(formData.dateApplication).toISOString(),
-          status: 'ACTIF',
+          dateApplication: new Date().toISOString(),
+          status: 'CREER',
           pdf: formData.pdf as File
         });
 
@@ -111,7 +111,7 @@ const ModelesPage = () => {
       
       {/* Overlay de chargement global */}
       {isSubmitting && activeModal === 'none' && (
-        <div className="fixed inset-0 z-[60] bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
+        <div className="fixed inset-0 z-60 bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
           <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-3 border border-gray-100">
             <FiLoader className="text-indigo-600 animate-spin" size={32} />
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Traitement en cours...</p>
@@ -265,7 +265,7 @@ const ModelesPage = () => {
                   />
                 </div>
 
-                <div>
+                {/* <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Date d'application</label>
                   <input 
                     type="date"
@@ -274,7 +274,7 @@ const ModelesPage = () => {
                     className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-black outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all text-gray-700" 
                     required 
                   />
-                </div>
+                </div> */}
 
                 <div className="md:col-span-2">
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">

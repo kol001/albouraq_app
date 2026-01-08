@@ -5,7 +5,7 @@ import {
   activateTransactionType,
   deactivateTransactionType,
   deleteTransactionType,
-} from '../../app/transactionTypesSlice';
+} from '../../app/back_office/transactionTypesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
 import { 
   FiSettings, FiPlus, FiX, FiCheckCircle, 

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../service/Axios';
+import axiosInstance from '../../service/Axios';
 
 export interface TransactionType {
   id: string;
@@ -28,17 +28,29 @@ export interface Module {
   dateDesactivation: string;
 }
 
+export interface Fournisseur {
+  id: string;
+  code: string;
+  libelle: string;
+  dateApplication: string;
+  status: string;
+  dateActivation: string | null;
+  dateDesactivation: string;
+}
+
 export interface Transaction {
   id: string;
   moduleId: string;
   transactionId: string;
   dateApplication: string;
   status: string;
+  fournisseurId: string;
   dateActivation: string;
   dateDesactivation: string | null;
   createdAt: string;
   updatedAt: string;
   module: Module;
+  fournisseur: Fournisseur | null;
   transactiontype: TransactionType;
 }
 
@@ -75,23 +87,44 @@ export const fetchTransactions = createAsyncThunk<
   }
 });
 
-// Créer une transaction
+// Créer une transaction (avec fournisseur optionnel)
 export const createTransaction = createAsyncThunk<
   { success: boolean; data: Transaction },
-  { moduleId: string; transactionId: string; dateApplication: string; status?: string },
+  { 
+    moduleId: string; 
+    transactionId: string; 
+    dateApplication: string; 
+    fournisseurId?: string;  // Nouveau champ optionnel
+    status?: string 
+  },
   { state: { auth: { token: string } } }
 >('transactions/createTransaction', async (payload, { getState, rejectWithValue, dispatch }) => {
   try {
     const { auth } = getState();
     if (!auth.token) return rejectWithValue('Token manquant');
-    const response = await axiosInstance.post('/transactions', payload, {
+
+    // On construit le body proprement : on n'envoie fournisseurId que s'il est défini
+    const body: any = {
+      moduleId: payload.moduleId,
+      transactionId: payload.transactionId,
+      dateApplication: payload.dateApplication,
+    };
+    if (payload.fournisseurId) {
+      body.fournisseurId = payload.fournisseurId;
+    }
+    if (payload.status) {
+      body.status = payload.status;
+    }
+
+    const response = await axiosInstance.post('/transactions', body, {
       headers: {
         Authorization: `Bearer ${auth.token}`,
         'Content-Type': 'application/json',
       },
     });
+
     if (response.data.success) {
-      dispatch(fetchTransactions()); // Re-fetch pour cohérence
+      dispatch(fetchTransactions());
       return { success: true, data: response.data.data };
     }
     return rejectWithValue('Échec création de la transaction');
@@ -100,26 +133,40 @@ export const createTransaction = createAsyncThunk<
   }
 });
 
-// Update (modification)
+// Update (modification) - maintenant avec fournisseurId optionnel
 export const updateTransaction = createAsyncThunk<
   { success: boolean; data: Transaction },
-  { id: string; moduleId: string; transactionId: string; dateApplication: string; status?: string },
+  { 
+    id: string; 
+    moduleId?: string; 
+    transactionId?: string; 
+    dateApplication?: string; 
+    fournisseurId?: string;  // ← Nouveau : on peut changer le fournisseur
+    status?: string 
+  },
   { state: { auth: { token: string } } }
 >('transactions/updateTransaction', async (payload, { getState, rejectWithValue, dispatch }) => {
   try {
     const { auth } = getState();
     if (!auth.token) return rejectWithValue('Token manquant');
-    const response = await axiosInstance.put(`/transactions/${payload.id}`, {
-      moduleId: payload.moduleId,
-      transactionId: payload.transactionId,
-      dateApplication: payload.dateApplication,
-      status: payload.status,
-    }, {
+
+    const { id, ...updates } = payload;
+
+    // On construit le body uniquement avec les champs fournis
+    const body: any = {};
+    if (updates.moduleId !== undefined) body.moduleId = updates.moduleId;
+    if (updates.transactionId !== undefined) body.transactionId = updates.transactionId;
+    if (updates.dateApplication !== undefined) body.dateApplication = updates.dateApplication;
+    if (updates.fournisseurId !== undefined) body.fournisseurId = updates.fournisseurId; // ← Envoi même si vide (pour désassocier)
+    if (updates.status !== undefined) body.status = updates.status;
+
+    const response = await axiosInstance.put(`/transactions/${id}`, body, {
       headers: {
         Authorization: `Bearer ${auth.token}`,
         'Content-Type': 'application/json',
       },
     });
+
     if (response.data.success) {
       dispatch(fetchTransactions());
       return { success: true, data: response.data.data };

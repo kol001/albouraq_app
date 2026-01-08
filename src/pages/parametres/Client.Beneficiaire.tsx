@@ -7,13 +7,13 @@ import {
   activateClientBeneficiaire,
   deactivateClientBeneficiaire,
   deleteClientBeneficiaire,
-} from '../../app/clientBeneficiairesSlice';
+} from '../../app/back_office/clientBeneficiairesSlice';
 import {
   addBeneficiaireToClientFacture,
   removeBeneficiaireFromClientFacture,
-} from '../../app/clientFacturesSlice'; // ← Ajout important
+} from '../../app/back_office/clientFacturesSlice'; // ← Ajout important
 import type { RootState, AppDispatch } from '../../app/store';
-import type { ClientBeneficiaire } from '../../app/clientBeneficiairesSlice';
+import type { ClientBeneficiaire } from '../../app/back_office/clientBeneficiairesSlice';
 import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiUserCheck, FiTag, FiSearch, FiTrash2, FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
 import { useNavigate } from 'react-router-dom';

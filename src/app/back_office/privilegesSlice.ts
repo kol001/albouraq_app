@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit'; 
-import axiosInstance from '../service/Axios'; // Assure-toi que baseURL est '/api' pour le proxy
+import axiosInstance from '../../service/Axios'; // Assure-toi que baseURL est '/api' pour le proxy
 
 // Types (basés sur ta réponse API)
 // export interface Autorisation {

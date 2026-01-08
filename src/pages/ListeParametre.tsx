@@ -1,23 +1,23 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchPrivileges } from '../app/privilegesSlice';
-import { fetchProfiles } from '../app/profilesSlice';
-import { fetchAutorisations } from '../app/autorisationsSlice';
-import { fetchUsers } from '../app/usersSlice';
-import { fetchTransactionTypes } from '../app/transactionTypesSlice';
-import { fetchTransactions } from '../app/transactionsSlice';
-import { fetchModules } from '../app/modulesSlice';
-import { fetchModeles} from '../app/modelesSlice';
-import { fetchCommissions } from '../app/commissionsSlice';
-import { fetchDossiers } from '../app/numerotationSlice';
-import { fetchMiles } from '../app/milesSlice';
-import { fetchPieces } from '../app/piecesSlice';
-import { fetchClientBeneficiaires } from '../app/clientBeneficiairesSlice';
-import { fetchDevisTransactions } from '../app/devisTransactionsSlice';
-import { fetchClientFactures } from '../app/clientFacturesSlice';
-import { fetchArticles } from '../app/articlesSlice';
-import { fetchFournisseurs } from '../app/fournisseursSlice';
+import { fetchPrivileges } from '../app/back_office/privilegesSlice';
+import { fetchProfiles } from '../app/back_office/profilesSlice';
+import { fetchAutorisations } from '../app/back_office/autorisationsSlice';
+import { fetchUsers } from '../app/back_office/usersSlice';
+import { fetchTransactionTypes } from '../app/back_office/transactionTypesSlice';
+import { fetchTransactions } from '../app/back_office/transactionsSlice';
+import { fetchModules } from '../app/back_office/modulesSlice';
+import { fetchModeles} from '../app/back_office/modelesSlice';
+import { fetchCommissions } from '../app/back_office/commissionsSlice';
+import { fetchDossiers } from '../app/back_office/numerotationSlice';
+import { fetchMiles } from '../app/back_office/milesSlice';
+import { fetchPieces } from '../app/back_office/piecesSlice';
+import { fetchClientBeneficiaires } from '../app/back_office/clientBeneficiairesSlice';
+import { fetchDevisTransactions } from '../app/back_office/devisTransactionsSlice';
+import { fetchClientFactures } from '../app/back_office/clientFacturesSlice';
+import { fetchArticles } from '../app/back_office/articlesSlice';
+import { fetchFournisseurs } from '../app/back_office/fournisseursSlice';
 import { PARAMETRES } from '../constants/parametres';
 import type { RootState, AppDispatch } from '../app/store';
 import { FiRefreshCw, FiChevronRight, FiActivity } from 'react-icons/fi';
@@ -136,12 +136,7 @@ function ListeParametre() {
                 <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
                   <Icon size={28} />
                 </div>
-                {/* <div className="text-right font-mono">
-                  <span className="block text-2xl font-black text-gray-800 group-hover:text-indigo-600 transition-colors">
-                    {count}
-                  </span>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Éléments</span>
-                </div> */}
+
               </div>
 
               <div className="mt-6">

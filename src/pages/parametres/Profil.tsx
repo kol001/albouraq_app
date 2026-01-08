@@ -5,9 +5,9 @@ import {
   createProfil,
   updateProfil,
   // deleteProfil,
-} from '../../app/profilesSlice';
+} from '../../app/back_office/profilesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { Profil } from '../../app/profilesSlice';
+import type { Profil } from '../../app/back_office/profilesSlice';
 import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiShield, FiArrowLeft} from 'react-icons/fi';
 // import AuditModal from '../../components/AuditModal';
 // import type { User } from '../../app/usersSlice';
@@ -31,7 +31,7 @@ const ProfilPage = () => {
 
   // Form states
   const [nomProfil, setNomProfil] = useState('');
-  const [statut, setStatut] = useState<'ACTIF' | 'INACTIF'>('ACTIF');
+  // const [statut, setStatut] = useState('');
 
   // const [auditEntityId, setAuditEntityId] = useState<string | null>(null);
   // const [auditEntityName, setAuditEntityName] = useState('');
@@ -40,7 +40,7 @@ const ProfilPage = () => {
     setActiveModal('none');
     setEditingProfil(null);
     setNomProfil('');
-    setStatut('ACTIF');
+    // setStatut('ACTIF');
     setMessage({ text: '', isError: false });
   };
 
@@ -48,7 +48,7 @@ const ProfilPage = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const payload = { profil: nomProfil, status: statut };
+    const payload = { profil: nomProfil };
 
     if (editingProfil) {
       const result = await dispatch(updateProfil({ id: editingProfil.id, ...payload }));
@@ -116,7 +116,7 @@ const ProfilPage = () => {
 
       {/* TABLEAU PROFILS */}
 
-      <div className="bg-white shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white shadow-sm border border-gray-100 overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-100">
           <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
             <tr>
@@ -247,7 +247,7 @@ const ProfilPage = () => {
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Statut</label>
                 <select
                   value={statut}
@@ -257,7 +257,7 @@ const ProfilPage = () => {
                   <option value="ACTIF">ACTIF</option>
                   <option value="INACTIF">INACTIF</option>
                 </select>
-              </div>
+              </div> */}
 
               {message.text && (
                 <div className={`p-4 rounded-2xl flex items-center gap-3 font-bold text-xs ${message.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>

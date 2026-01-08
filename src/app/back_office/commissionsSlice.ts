@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../service/Axios';
+import axiosInstance from '../../service/Axios';
 
 export interface ModuleRef {
   id: string;
@@ -64,7 +64,7 @@ export const fetchCommissions = createAsyncThunk<
 // Créer une commission
 export const createCommission = createAsyncThunk<
   { success: boolean; data: Commission },
-  { moduleId: string; dateApplication: string; status: string; provenantOdoo: string; librePrixModule: string; forfaitUnite: string; DifPrixClientPrixModule: string; libre: string },
+  { moduleId: string; dateApplication: string; provenantOdoo: string; librePrixModule: string; forfaitUnite: string; DifPrixClientPrixModule: string; libre: string },
   { state: { auth: { token: string } } }
 >('commissions/createCommission', async (payload, { getState, rejectWithValue, dispatch }) => {
   try {

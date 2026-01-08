@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAutorisations } from '../../app/autorisationsSlice';
+import { fetchAutorisations } from '../../app/back_office/autorisationsSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import { FiArrowLeft, FiClock, FiList, FiX, FiLayers } from 'react-icons/fi';
+import { FiArrowLeft, FiClock, FiList, FiX, FiLayers, FiLoader} from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
@@ -18,17 +18,24 @@ const AutorisationPage = () => {
 
   // Dans AutorisationPage.tsx
   useEffect(() => {
-    // On ne lance le chargement QUE si on n'a pas encore de données
-    if (autorisations.length === 0 && !loading) {
-      dispatch(fetchAutorisations());
-    }
-  }, [dispatch, autorisations.length, loading]);
+    // On lance systématiquement le fetch pour synchroniser les données
+    // sans bloquer l'affichage des données déjà présentes dans le store.
+    dispatch(fetchAutorisations());
+  }, [dispatch]);
 
   // On récupère le PREMIER élément du tableau pour le panneau
   const firstAuth = autorisations.length > 0 ? autorisations[0] : null;
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
+
+
+      {loading && autorisations.length > 0 && (
+        <div className="fixed top-4 right-8 flex items-center gap-2 bg-indigo-600 text-white px-3 py-1.5 rounded-full shadow-lg z-[100] animate-bounce">
+          <FiLoader className="animate-spin" size={12} />
+          <span className="text-[10px] font-black uppercase tracking-tighter">Mise à jour...</span>
+        </div>
+      )}
       
       {/* Retour et Titre */}
       <div className="flex items-center gap-4 mb-8">
@@ -135,7 +142,6 @@ const AutorisationPage = () => {
                 {/* Mode Modules */}
                 {activeTab === 'modules' && (
                   <>
-                    
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
                         {prof.modules?.map((m) => (
@@ -186,16 +192,20 @@ const AutorisationPage = () => {
           </tbody>
         </table>
 
-        {loading && (
-          <div className="p-10 text-center text-gray-400 text-xs font-bold animate-pulse">
-            CHARGEMENT DES DONNÉES...
+        {/* Remplacer l'ancien bloc {loading && ...} par celui-ci */}
+        {loading && autorisations.length === 0 && (
+          <div className="p-20 text-center flex flex-col items-center gap-4">
+            <div className="w-10 h-10 border-4 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin"></div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+              Premier chargement en cours...
+            </p>
           </div>
         )}
       </div>
 
       {/* MODAL HISTORIQUE DES AUTORISATIONS */}
       {showHistory && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
           {/* Overlay */}
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setShowHistory(false)} />
           

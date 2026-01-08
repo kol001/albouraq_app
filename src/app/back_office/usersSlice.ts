@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction }from '@reduxjs/toolkit';
-import axiosInstance from '../service/Axios';
+import axiosInstance from '../../service/Axios';
 
 // Types basés sur la réponse API
 export interface Profile {

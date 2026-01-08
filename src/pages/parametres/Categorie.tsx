@@ -5,7 +5,7 @@ import {
   createCategorie,
   updateCategorie,
   deleteCategorie,
-} from '../../app/categoriesSlice';
+} from '../../app/back_office/categoriesSlice';
 import {
   fetchSousCategories,
   createSousCategorie,
@@ -13,10 +13,10 @@ import {
   activateSousCategorie,
   deactivateSousCategorie,
   deleteSousCategorie,
-} from '../../app/sousCategoriesSlice';
+} from '../../app/back_office/sousCategoriesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { Categorie } from '../../app/categoriesSlice';
-import type { SousCategorie } from '../../app/sousCategoriesSlice';
+import type { Categorie } from '../../app/back_office/categoriesSlice';
+import type { SousCategorie } from '../../app/back_office/sousCategoriesSlice';
 import { FiPlus, FiX, FiLoader, FiTag, FiPackage, FiArrowLeft, FiCheck } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
 import { useNavigate } from 'react-router-dom';
@@ -163,7 +163,7 @@ const CategoriePage = () => {
               <FiArrowLeft size={20} />
             </button>
             <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-              Famille Articles
+              Catégorie
             </h2>
           </div>
           <button onClick={() => setCatModal('form')} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black transition-all shadow-xl shadow-indigo-100 flex items-center gap-3 text-sm">
@@ -231,7 +231,7 @@ const CategoriePage = () => {
       <div className="mb-10">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
           <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            Sous-Catégories
+            Famille Article
           </h2>
           <button onClick={() => setSousModal('form')} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black transition-all shadow-xl shadow-indigo-100 flex items-center gap-3 text-sm">
             <FiPlus size={20} /> Nouvelle Sous-Catégorie
@@ -243,8 +243,8 @@ const CategoriePage = () => {
             <table className="min-w-full divide-y divide-gray-50">
               <thead className="bg-gray-50/50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
                 <tr>
-                  <th className="px-6 py-6 text-left">Code Sous-Catégorie</th>
-                  <th className="px-6 py-6 text-left">Libellé Sous-Catégorie</th>
+                  <th className="px-6 py-6 text-left">Code famille article</th>
+                  <th className="px-6 py-6 text-left">Libellé famille article</th>
                   <th className="px-6 py-6 text-left">Catégorie</th>
                   <th className="px-6 py-6 text-center">Statut</th>
                   <th className="px-6 py-6 text-center">Date d'Application</th>
@@ -281,7 +281,6 @@ const CategoriePage = () => {
                           sous.status === 'CREER' ? 'bg-blue-500' : 
                           'bg-red-500'
                         }`} />
-                        
                         {/* Affichage du texte : 'Créé' si le statut est 'CREER' */}
                         {sous.status === 'CREER' ? 'Créé' : sous.status}
                       </span>

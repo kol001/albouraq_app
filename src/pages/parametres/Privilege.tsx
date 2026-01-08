@@ -7,9 +7,9 @@ import {
   activatePrivilege, 
   deactivatePrivilege, 
   // fetchAutorisationsByPrivilege 
-} from '../../app/privilegesSlice';
+} from '../../app/back_office/privilegesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { Privilege } from '../../app/privilegesSlice';
+import type { Privilege } from '../../app/back_office/privilegesSlice';
 import { 
   FiPlus, FiX, FiCheckCircle, FiAlertCircle, 
   FiLoader, FiKey, FiActivity,  FiArrowLeft

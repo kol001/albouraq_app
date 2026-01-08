@@ -6,9 +6,9 @@ import {
   deleteCommission,
   activateCommission,
   deactivateCommission,
-} from '../../app/commissionsSlice';
+} from '../../app/back_office/commissionsSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { Commission, ModuleRef } from '../../app/commissionsSlice';
+import type { Commission, ModuleRef } from '../../app/back_office/commissionsSlice';
 import { FiPlus, FiX, FiLoader, FiPercent, FiAlertCircle, FiCheckCircle, FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
 import { useNavigate } from 'react-router-dom';
@@ -34,7 +34,6 @@ const CommissionPage = () => {
   // Form State initial
   const initialState = {
     moduleId: '',
-    status: 'ACTIF',
     provenantOdoo: 'OUI',
     librePrixModule: 'NON',
     forfaitUnite: 'OUI',
@@ -56,7 +55,6 @@ const CommissionPage = () => {
     setEditingCommission(comm);
     setFormData({
       moduleId: comm.moduleId,
-      status: comm.status,
       provenantOdoo: comm.provenantOdoo,
       librePrixModule: comm.librePrixModule,
       forfaitUnite: comm.forfaitUnite,
@@ -121,7 +119,7 @@ const CommissionPage = () => {
       
       {/* Overlay global pour actions rapides */}
       {isSubmitting && !isModalOpen && (
-        <div className="fixed inset-0 z-[60] bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
+        <div className="fixed inset-0 z-60 bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
           <FiLoader className="text-indigo-600 animate-spin" size={40} />
         </div>
       )}
@@ -212,7 +210,7 @@ const CommissionPage = () => {
 
       {/* Modale */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl overflow-hidden animate-in zoom-in-95">
             <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
               <h3 className="text-2xl font-black text-gray-800">{editingCommission ? 'Modifier Commission' : 'Nouvelle Commission'}</h3>

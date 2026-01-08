@@ -6,11 +6,11 @@ import {
   activateTransaction,
   deactivateTransaction,
   deleteTransaction,
-} from '../../app/transactionsSlice';
+} from '../../app/back_office/transactionsSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { Transaction } from '../../app/transactionsSlice';
-import type { ModuleRef } from '../../app/commissionsSlice';
-import { FiPlus, FiCalendar,  FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiArrowLeft  } from 'react-icons/fi';
+import type { Transaction } from '../../app/back_office/transactionsSlice';
+import type { ModuleRef } from '../../app/back_office/commissionsSlice';
+import { FiPlus, FiCalendar,  FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiArrowLeft} from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,6 +23,7 @@ const TransactionPage = () => {
   const { data: transactions, loading: transLoading } = useSelector((state: RootState) => state.transactions);
   const { data: modules, loading: modulesLoading } = useSelector((state: RootState) => state.modules);
   const { data: types, loading: typesLoading } = useSelector((state: RootState) => state.transactionTypes);
+  const { data: fournisseurs } = useSelector((state: RootState) => state.fournisseurs);
 
   // UI States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,20 +34,23 @@ const TransactionPage = () => {
   // Form states
   const [selectedModuleId, setSelectedModuleId] = useState('');
   const [selectedTypeId, setSelectedTypeId] = useState('');
-  const [dateApplication, setDateApplication] = useState('');
+  // const [dateApplication, setDateApplication] = useState('');
 
   // Audit
   const [auditEntityId, setAuditEntityId] = useState<string | null>(null);
   const [auditEntityName, setAuditEntityName] = useState('');
 
   const loading = transLoading || modulesLoading || typesLoading;
+  const [selectedFournisseurId, setSelectedFournisseurId] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const closeModals = () => {
     setIsModalOpen(false);
     setEditingTrans(null);
     setSelectedModuleId('');
     setSelectedTypeId('');
-    setDateApplication('');
+    // setDateApplication('');
+    setSelectedFournisseurId('');
     setMessage({ text: '', isError: false });
   };
 
@@ -55,20 +59,30 @@ const TransactionPage = () => {
     setIsSubmitting(true);
     setMessage({ text: '', isError: false });
 
-    const payload = {
+    // Date du jour au format ISO (ex: 2026-01-05T10:30:00.000Z)
+    const today = new Date().toISOString();
+
+    const basePayload = {
       moduleId: selectedModuleId,
       transactionId: selectedTypeId,
-      dateApplication: new Date(dateApplication).toISOString(),
+      dateApplication: today, // ← Automatique !
+      fournisseurId: selectedFournisseurId || undefined,
     };
 
-    const action = editingTrans 
-      ? updateTransaction({ id: editingTrans.id, ...payload })
-      : createTransaction(payload);
+    let action;
+    if (editingTrans) {
+      action = updateTransaction({
+        id: editingTrans.id,
+        ...basePayload,
+      });
+    } else {
+      action = createTransaction(basePayload);
+    }
 
     const result = await dispatch(action);
 
     if (createTransaction.fulfilled.match(result) || updateTransaction.fulfilled.match(result)) {
-      setMessage({ text: editingTrans ? 'Mise à jour réussie !' : 'Transaction planifiée !', isError: false });
+      setMessage({ text: editingTrans ? 'Transaction mise à jour !' : 'Transaction planifiée !', isError: false });
       setTimeout(closeModals, 1500);
     } else {
       setMessage({ text: 'Une erreur est survenue.', isError: true });
@@ -93,7 +107,8 @@ const TransactionPage = () => {
     setEditingTrans(trans);
     setSelectedModuleId(trans.moduleId || '');
     setSelectedTypeId(trans.transactionId || trans.transactiontype?.id || '');
-    setDateApplication(trans.dateApplication.slice(0, 16));
+    // setDateApplication(trans.dateApplication.slice(0, 16));
+    setSelectedFournisseurId(trans.fournisseur?.id || ''); // ← Pré-sélection
     setIsModalOpen(true);
   };
 
@@ -102,13 +117,37 @@ const TransactionPage = () => {
       
       {/* Overlay global pour actions rapides */}
       {isSubmitting && !isModalOpen && (
-        <div className="fixed inset-0 z-[60] bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
+        <div className="fixed inset-0 z-60 bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
           <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-3 border border-gray-100">
             <FiLoader className="text-indigo-600 animate-spin" size={32} />
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Mise à jour...</p>
           </div>
         </div>
       )}
+
+      {/* BARRE DE RECHERCHE GLOBALE */}
+      <div className="mb-8">
+        <div className="relative max-w-md">
+          <input
+            type="text"
+            placeholder="Rechercher une transaction, un module, un fournisseur..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
+            className="w-full pl-12 pr-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl font-medium text-gray-700 outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all placeholder:text-gray-400"
+          />
+          <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <FiX size={20} />
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
@@ -140,6 +179,7 @@ const TransactionPage = () => {
               <tr className="uppercase text-[10px] font-black text-gray-400 tracking-[0.15em]">
                 <th className="px-6 py-5 text-left border-b border-gray-100 whitespace-nowrap">Code Prestation</th>
                 <th className="px-6 py-5 text-left border-b border-gray-100 whitespace-nowrap">Prestation</th>
+                <th className="px-6 py-5 text-left border-b border-gray-100 whitespace-nowrap">Fournisseur</th>
                 <th className="px-6 py-5 text-left border-b border-gray-100 whitespace-nowrap">Statut</th>
                 <th className="px-6 py-5 text-left border-b border-gray-100 whitespace-nowrap">Date App.</th>
                 <th className="px-6 py-5 text-left border-b border-gray-100 whitespace-nowrap">Type Transaction</th>
@@ -157,9 +197,23 @@ const TransactionPage = () => {
                 </th>
               </tr>
             </thead>
-            
             <tbody className="divide-y divide-gray-50 bg-white font-medium">
-              {transactions.map((trans) => (
+              {transactions
+              .filter((trans) => {
+                if (!searchQuery) return true;
+
+                const query = searchQuery.toLowerCase();
+                return (
+                  trans.module?.nom.toLowerCase().includes(query) ||
+                  trans.module?.code.toLowerCase().includes(query) ||
+                  trans.transactiontype?.transactionType.toLowerCase().includes(query) ||
+                  trans.transactiontype?.event.toLowerCase().includes(query) ||
+                  trans.fournisseur?.libelle.toLowerCase().includes(query) ||
+                  trans.fournisseur?.code.toLowerCase().includes(query) ||
+                  trans.status.toLowerCase().includes(query)
+                );
+              })
+              .map((trans) => (
               <tr key={trans.id} className="hover:bg-indigo-50/30 transition-colors">
                 <td className="px-6 py-4 text-sm font-bold text-gray-700">
                   <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.module?.code}</span>
@@ -167,18 +221,20 @@ const TransactionPage = () => {
                 <td className="px-6 py-4 text-sm font-bold text-gray-700">
                   <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.module?.nom}</span>
                 </td>
+                <td className="px-6 py-4 text-sm font-bold text-gray-700">
+                  <span className="block text-[10px] text-indigo-500 font-mono uppercase">{trans.fournisseur?.libelle}</span>
+                </td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                    trans.status === 'ACTIF' ? 'bg-green-100 text-green-700' : 
-                    trans.status === 'CREER' ? 'bg-blue-100 text-blue-700' : 
+                    trans.status === 'ACTIF' ? 'bg-green-100 text-green-700' :
+                    trans.status === 'CREER' ? 'bg-blue-100 text-blue-700' :
                     'bg-red-100 text-red-700'
                   }`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${
-                      trans.status === 'ACTIF' ? 'bg-green-500' : 
-                      trans.status === 'CREER' ? 'bg-blue-500' : 
+                      trans.status === 'ACTIF' ? 'bg-green-500' :
+                      trans.status === 'CREER' ? 'bg-blue-500' :
                       'bg-red-500'
                     }`} />
-                    
                     {/* Affichage du texte : 'Créé' si le statut est 'CREER' */}
                     {trans.status === 'CREER' ? 'Créé' : trans.status}
                   </span>
@@ -239,7 +295,7 @@ const TransactionPage = () => {
 
       {/* MODALE */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden transform transition-all animate-in zoom-in-95">
             <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
               <h3 className="text-2xl font-black text-gray-800">
@@ -280,6 +336,31 @@ const TransactionPage = () => {
               </div>
 
               <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                  Fournisseur associé
+                </label>
+                <select
+                  value={selectedFournisseurId}
+                  onChange={(e) => setSelectedFournisseurId(e.target.value)}
+                  className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                >
+                  <option value="">Aucun fournisseur (désassocier)</option>
+                  {fournisseurs
+                    .filter(f => f.status === 'ACTIF' || f.status === 'CREER')
+                    .map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.libelle} ({f.code})
+                      </option>
+                    ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-2 ml-1">
+                  {selectedFournisseurId 
+                    ? 'Ce prestataire sera lié à cette transaction.' 
+                    : 'Aucun prestataire spécifique pour cette transaction.'}
+                </p>
+              </div>
+
+              {/* <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Date d'application</label>
                 <input
                   type="datetime-local"
@@ -288,7 +369,7 @@ const TransactionPage = () => {
                   className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
                   required
                 />
-              </div>
+              </div> */}
 
               {message.text && (
                 <div className={`p-4 rounded-2xl flex items-center gap-3 font-bold text-xs ${message.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>

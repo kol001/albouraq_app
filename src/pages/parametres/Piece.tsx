@@ -8,9 +8,9 @@ import {
   // addModuleToPiece,
   // removeModuleFromPiece,
   createPiece,
-} from '../../app/piecesSlice';
+} from '../../app/back_office/piecesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { Piece } from '../../app/piecesSlice';
+import type { Piece } from '../../app/back_office/piecesSlice';
 import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiTag, FiFileText, FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
 import { useNavigate } from 'react-router-dom';

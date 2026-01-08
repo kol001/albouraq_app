@@ -1,6 +1,6 @@
 // src/app/milesSlice.ts
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../service/Axios';
+import axiosInstance from '../../service/Axios';
 
 export interface BorneMiles {
   id?: string;

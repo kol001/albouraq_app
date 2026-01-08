@@ -10,10 +10,10 @@ import {
   assignUserToProfil,
   deactivateUserFromProfil,
   fetchProfiles,
-} from '../../../app/profilesSlice';
+} from '../../../app/back_office/profilesSlice';
 import type { RootState, AppDispatch } from '../../../app/store';
 import { FiArrowLeft,  FiSearch, FiPlus, FiLoader, FiCheckCircle } from 'react-icons/fi';
-import { fetchAutorisations } from '../../../app/autorisationsSlice';
+import { fetchAutorisations } from '../../../app/back_office/autorisationsSlice';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
@@ -49,6 +49,15 @@ const ProfilFormPage = () => {
 //         setStatut(currentProfil.status);
 //     }
 //     }, [id, currentProfil]);
+  const hasChanges = useMemo(() => {
+    if (!currentProfil) return false;
+    // On compare avec les valeurs initiales du profil
+    const nameChanged = nomProfil !== '' && nomProfil !== currentProfil.profil;
+    const statusChanged = statut !== currentProfil.status;
+    return nameChanged || statusChanged;
+  }, [nomProfil, statut, currentProfil]);
+
+  const isFormInvalid = nomProfil.trim() === '' && currentProfil?.profil === '';
 
   const handleSave = async () => {
     if (!currentProfil) return;
@@ -67,7 +76,11 @@ const ProfilFormPage = () => {
   // Gestion des attributions
   const handleAssignPrivilege = async (privilegeId: string) => {
     setIsSubmitting(true);
-    await dispatch(assignPrivilegeToProfil({ profilId: id!, privilegeId }));
+    const result = await dispatch(assignPrivilegeToProfil({ profilId: id!, privilegeId }));
+    if (assignPrivilegeToProfil.fulfilled.match(result)) {
+      setMessage({ text: 'Privilège accordé avec succès !', isError: false });
+      setTimeout(() => setMessage({ text: '', isError: false }), 2000); // Notification éphémère
+    }
     await dispatch(fetchProfiles());
     setIsSubmitting(false);
   };
@@ -155,8 +168,13 @@ const ProfilFormPage = () => {
       </div>
 
       {message.text && (
-        <div className={`mb-6 p-4 rounded-2xl flex items-center gap-2 ${message.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
-          {message.text}
+        <div className="fixed top-6 right-6 z-100 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border ${
+            message.isError ? 'bg-red-600 border-red-500 text-white' : 'bg-emerald-600 border-emerald-500 text-white'
+          }`}>
+            {message.isError ? <FiPlus className="rotate-45" /> : <FiCheckCircle />}
+            <span className="font-bold text-sm tracking-wide">{message.text}</span>
+          </div>
         </div>
       )}
 
@@ -213,19 +231,23 @@ const ProfilFormPage = () => {
           </div>
 
           {/* BOUTONS D'ACTION : Design flottant et moderne */}
-          <div className="bg-gray-50/50 p-4 border border-dashed border-gray-200">
+          <div className="bg-gray-50/50 p-4 border border-dashed border-gray-200 rounded-3xl">
             <div className="flex flex-col gap-3">
               <button
                 onClick={handleSave}
-                disabled={isSubmitting}
-                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-indigo-100 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100"
+                disabled={isSubmitting || !hasChanges || isFormInvalid}
+                className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 shadow-lg font-black uppercase tracking-[0.15em] text-xs ${
+                  hasChanges && !isFormInvalid
+                    ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200 active:scale-[0.98]'
+                    : 'bg-gray-200 text-gray-400 shadow-none cursor-not-allowed opacity-60'
+                }`}
               >
                 {isSubmitting ? (
                   <FiLoader className="animate-spin" size={20} />
                 ) : (
                   <FiCheckCircle size={20} />
                 )}
-                <span className="text-xs font-black uppercase tracking-[0.15em]">Enregistrer les modifications</span>
+                {hasChanges ? 'Enregistrer le profil' : 'Aucun changement'}
               </button>
 
               <button 

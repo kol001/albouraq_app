@@ -1,16 +1,16 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   updateClientBeneficiaire,
   fetchClientBeneficiaires,
-} from '../../../app/clientBeneficiairesSlice';
+} from '../../../app/back_office/clientBeneficiairesSlice';
 import {
   addBeneficiaireToClientFacture,
   removeBeneficiaireFromClientFacture,
-} from '../../../app/clientFacturesSlice';
+} from '../../../app/back_office/clientFacturesSlice';
 import type { RootState, AppDispatch } from '../../../app/store';
-import { FiArrowLeft, FiTrash2, FiSearch, FiPlus, FiLoader, FiChevronUp, FiChevronDown} from 'react-icons/fi';
+import { FiArrowLeft, FiTrash2, FiSearch, FiPlus, FiLoader, FiChevronUp, FiChevronDown, FiUserPlus} from 'react-icons/fi';
 
 const useAppDispatch = () => useDispatch<AppDispatch>();
 
@@ -51,23 +51,13 @@ const ClientBeneficiaireFormPage = () => {
   const [message, setMessage] = useState({ text: '', isError: false });
   const [searchFacture, setSearchFacture] = useState('');
 
-  const [libelle, setLibelle] = useState(currentBeneficiaire?.libelle || '');
+  const [libelle, setLibelle] = useState(currentBeneficiaire?.libelle ?? '');
+
   const [statut, setStatut] = useState<'ACTIF' | 'INACTIF'>(
-    currentBeneficiaire?.statut === 'ACTIF' ? 'ACTIF' : 'INACTIF'
+    (currentBeneficiaire?.statut as 'ACTIF' | 'INACTIF') ?? 'ACTIF'
   );
 
-  useEffect(() => {
-    if (currentBeneficiaire) {
-      // On ne met à jour QUE si la valeur locale est différente de la valeur reçue
-      // Cela stoppe les rendus en cascade
-      if (libelle !== currentBeneficiaire.libelle && libelle === '') {
-        setTimeout(() => setLibelle(currentBeneficiaire.libelle), 0);
-      }
-      if (statut !== currentBeneficiaire.statut && statut === 'ACTIF') {
-        setTimeout(() => setStatut(currentBeneficiaire.statut as 'ACTIF' | 'INACTIF'), 0);
-      }
-    }
-  }, [currentBeneficiaire, libelle, statut]);
+  const isFormInvalid = !libelle.trim();
 
   const handleSubmit = async () => {
     if (!currentBeneficiaire) return;
@@ -92,16 +82,34 @@ const ClientBeneficiaireFormPage = () => {
 
   const handleAddClientFacture = async (clientFactureId: string) => {
     setIsSubmitting(true);
-    await dispatch(addBeneficiaireToClientFacture({
+    const result = await dispatch(addBeneficiaireToClientFacture({
       id: clientFactureId,
       beneficiaireId: id!
     }));
+    
+    if (addBeneficiaireToClientFacture.fulfilled.match(result)) {
+      setMessage({ text: 'Association réussie !', isError: false });
+      // On efface le message après 2 secondes pour ne pas polluer l'écran
+      setTimeout(() => setMessage({ text: '', isError: false }), 2000);
+    }
+    
     await dispatch(fetchClientBeneficiaires());
     setIsSubmitting(false);
   };
 
   const handleRemoveClientFacture = async (clientFactureId: string) => {
     setIsSubmitting(true);
+
+    const result = await dispatch(removeBeneficiaireFromClientFacture({
+      id: clientFactureId,
+      beneficiaireId: id!
+    }));
+    
+    if (removeBeneficiaireFromClientFacture.fulfilled.match(result)) {
+      setMessage({ text: 'Association supprimée !', isError: false });
+      // On efface le message après 2 secondes pour ne pas polluer l'écran
+      setTimeout(() => setMessage({ text: '', isError: false }), 2000);
+    }
     await dispatch(removeBeneficiaireFromClientFacture({
       id: clientFactureId,
       beneficiaireId: id!
@@ -109,6 +117,12 @@ const ClientBeneficiaireFormPage = () => {
     await dispatch(fetchClientBeneficiaires());
     setIsSubmitting(false);
   };
+
+
+  const hasChanges = useMemo(() => {
+    if (!currentBeneficiaire) return false;
+    return libelle !== currentBeneficiaire.libelle || statut !== currentBeneficiaire.statut;
+  }, [libelle, statut, currentBeneficiaire]);
 
   const availableClientFactures = useMemo(() => {
     const linkedIds = currentBeneficiaire?.factures.map(f => f.clientFacture.id) || [];
@@ -123,9 +137,6 @@ const ClientBeneficiaireFormPage = () => {
     return <div className="p-8 text-center text-gray-500">Chargement...</div>;
   }
 
-  
-
-  
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto">
@@ -143,8 +154,11 @@ const ClientBeneficiaireFormPage = () => {
       </div>
 
       {message.text && (
-        <div className={`mb-6 p-4 rounded-2xl ${message.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
-          {message.text}
+        <div className={`fixed top-20 right-20 z-100 p-8 rounded-lg shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
+          message.isError ? 'bg-red-600 text-white' : 'bg-green-600 text-white'
+        }`}>
+          {message.isError ? <FiTrash2 /> : <FiUserPlus />}
+          <span className="font-bold">{message.text}</span>
         </div>
       )}
 
@@ -178,17 +192,35 @@ const ClientBeneficiaireFormPage = () => {
             </div>
           </section>
 
-          <div className="max-w-[1600px] mx-auto flex justify-end gap-4">
-            <button onClick={() => navigate(-1)} className="px-8 py-4 border border-gray-300 rounded-2xl font-black text-gray-600 uppercase text-xs tracking-widest">
+          {/* Boutons d'action en bas */}
+          <div className="max-w-[1600px] mx-auto flex justify-end gap-4 mt-12">
+            {/* <button 
+              onClick={() => navigate(-1)} 
+              className="px-8 py-4 border border-gray-300 rounded-2xl font-black text-gray-600 uppercase text-xs tracking-widest hover:bg-gray-50 transition-all"
+            >
               Annuler
+            </button> */}
+
+            {/* Nouveau bouton : Informations complémentaires */}
+            <button
+              onClick={() => navigate(`infos`)}
+              className="px-10 py-4 bg-linear-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-black shadow-lg hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center gap-3 uppercase text-xs tracking-widest"
+            >
+              <FiUserPlus size={18} />
+              Informations Complémentaires
             </button>
+
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="px-12 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-3 uppercase text-xs tracking-widest"
+              disabled={isSubmitting || !hasChanges || isFormInvalid}
+              className={`px-12 py-4 rounded-2xl font-black shadow-lg flex items-center gap-3 uppercase text-xs tracking-widest transition-all ${
+                hasChanges && !isFormInvalid
+                  ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+              }`}
             >
               {isSubmitting && <FiLoader className="animate-spin" />}
-              Enregistrer
+              {hasChanges ? 'Enregistrer les modifications' : 'Aucune modification'}
             </button>
           </div>
         </div>

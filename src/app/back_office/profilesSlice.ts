@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../service/Axios';
+import axiosInstance from '../../service/Axios';
 import type { Action } from '@reduxjs/toolkit';
 
 // Interfaces détaillées
@@ -52,7 +52,7 @@ export interface Profil {
   dateCreation: string;
   dateActivation: string | null;
   dateDesactivation: string | null;
-  status: 'ACTIF' | 'INACTIF';
+  status: string;
   privileges: PrivilegeAttribution[];
   modules: ModuleAttribution[];
   users: UserAttribution[];
@@ -89,7 +89,7 @@ export const fetchProfiles = createAsyncThunk<
 // Créer un profil
 export const createProfil = createAsyncThunk<
   { success: boolean; data: Profil },
-  { profil: string; status?: 'ACTIF' | 'INACTIF' }
+  { profil: string }
 >('profiles/createProfil', async (payload, { dispatch, rejectWithValue }) => {
   try {
     const response = await axiosInstance.post('/profiles', payload);
@@ -106,7 +106,7 @@ export const createProfil = createAsyncThunk<
 // Update (PATCH)
 export const updateProfil = createAsyncThunk<
   { success: boolean; data: Profil },
-  { id: string; profil: string; status?: 'ACTIF' | 'INACTIF' }
+  { id: string; profil: string; status?: string }
 >('profiles/updateProfil', async (payload, { dispatch, rejectWithValue }) => {
   try {
     const { id, ...data } = payload;

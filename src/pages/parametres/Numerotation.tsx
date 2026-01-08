@@ -5,7 +5,7 @@ import {
   fetchDossiers,
   resetDossier,
   resetAllDossiers,
-} from '../../app/numerotationSlice';
+} from '../../app/back_office/numerotationSlice';
 import type { RootState, AppDispatch } from '../../app/store';
 import { FiPlus, FiHash, FiRefreshCw, FiX, FiLoader, FiAlertCircle, FiArrowLeft } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';

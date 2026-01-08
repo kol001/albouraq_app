@@ -6,9 +6,9 @@ import {
   activateModule,
   deactivateModule,
   deleteModule,
-} from '../../app/modulesSlice';
+} from '../../app/back_office/modulesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { Module } from '../../app/modulesSlice';
+import type { Module } from '../../app/back_office/modulesSlice';
 import { FiPackage, FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLayers, FiLoader, FiTag, FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
 import { useNavigate } from 'react-router-dom';
@@ -54,7 +54,7 @@ const ModulePage = () => {
     
     const action = editingModule 
       ? updateModule({ id: editingModule.id, code, nom, description })
-      : createModule({ code, nom, description, status: 'ACTIF' });
+      : createModule({ code, nom, description });
 
     const result = await dispatch(action);
     

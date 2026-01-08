@@ -7,9 +7,9 @@ import {
   activateDevisTransaction,
   deactivateDevisTransaction,
   deleteDevisTransaction,
-} from '../../app/devisTransactionsSlice';
+} from '../../app/back_office/devisTransactionsSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { DevisTransaction } from '../../app/devisTransactionsSlice';
+import type { DevisTransaction } from '../../app/back_office/devisTransactionsSlice';
 import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiFileText, FiPackage, FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
 import { useNavigate } from 'react-router-dom';
@@ -140,30 +140,10 @@ const DevisTransactionPage = () => {
     setActiveModal('form');
   };
 
-//   const OuiNonButton = ({ value, setValue, label }: { value: 'OUI' | 'NON'; setValue: (v: 'OUI' | 'NON') => void; label: string }) => (
-//     <div className="flex gap-3">
-//       <button
-//         type="button"
-//         onClick={() => setValue('OUI')}
-//         className={`px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${value === 'OUI' ? 'bg-green-100 text-green-700 border-2 border-green-300' : 'bg-gray-100 text-gray-500 border-2 border-transparent'}`}
-//       >
-//         Oui
-//       </button>
-//       <button
-//         type="button"
-//         onClick={() => setValue('NON')}
-//         className={`px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${value === 'NON' ? 'bg-red-100 text-red-700 border-2 border-red-300' : 'bg-gray-100 text-gray-500 border-2 border-transparent'}`}
-//       >
-//         Non
-//       </button>
-//       <span className="self-center text-sm font-medium text-gray-600">{label}</span>
-//     </div>
-//   );
-
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
       {isSubmitting && (
-        <div className="fixed inset-0 z-[60] bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
+        <div className="fixed inset-0 z-60 bg-white/20 backdrop-blur-[1px] flex items-center justify-center">
           <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-3 border border-gray-100">
             <FiLoader className="text-indigo-600 animate-spin" size={32} />
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Traitement...</p>
@@ -306,6 +286,7 @@ const DevisTransactionPage = () => {
 
             {/* FORMULAIRE : Devient scrollable si le contenu dépasse */}
             <form 
+              id="devis-form"
               onSubmit={handleSubmit} 
               className="p-6 md:p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1"
             >
@@ -352,6 +333,7 @@ const DevisTransactionPage = () => {
                 </button>
                 <button
                   type="submit"
+                  form="devis-form"
                   disabled={isSubmitting || !moduleId}
                   className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest disabled:opacity-50"
                 >

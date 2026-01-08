@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../service/Axios';
+import axiosInstance from '../../service/Axios';
 
 // Modifiez l'interface pour correspondre exactement à la réponse JSON de votre serveur
 export interface BeneficiaireLink {

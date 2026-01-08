@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import axiosInstance from '../service/Axios';
@@ -27,45 +27,108 @@ function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+  const [selectedInterface, setSelectedInterface] = useState<'front' | 'back'>('front'); // Par défaut front
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Slider Automatique
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
+  // Slider automatique reste identique
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    // Utilisation de .trim() pour nettoyer l'email et le mot de passe
     const cleanEmail = email.trim();
     const cleanPassword = password.trim();
 
+    // LOG 1 : Vérifie quel choix est sélectionné au moment du submit
+    console.log('Choix d\'interface au submit :', selectedInterface);
+
     try {
-      // On envoie les versions "clean" au serveur
-      const response = await axiosInstance.post('/auth/login', { 
-        email: cleanEmail, 
-        motDePasse: cleanPassword 
+      // 1. Login
+      const loginResponse = await axiosInstance.post('/auth/login', {
+        email: cleanEmail,
+        motDePasse: cleanPassword,
       });
-      
-      if (response.data.success) {
-        const { access_token, refresh_token, expiresIn } = response.data.data;
-        // On utilise aussi le cleanEmail ici pour le state global
-        login({ token: access_token, user: { id: 'unknown', email: cleanEmail } });
-        
-        localStorage.setItem('refresh_token', refresh_token);
-        localStorage.setItem('token_expiresIn', expiresIn.toString());
-        navigate('/parametre');
+
+      if (!loginResponse.data.success) {
+        throw new Error(loginResponse.data.message || 'Login échoué');
       }
+
+      const { access_token, refresh_token, expiresIn } = loginResponse.data.data;
+
+      // 2. Dispatch temporaire pour le token (intercepteur)
+      login({
+        token: access_token,
+        user: { id: 'temp', email: cleanEmail, nom: '', prenom: '', profiles: [], pseudo: '', departement: '', dateCreation: '', dateActivation: null, dateDesactivation: null, status: '', autorisation: [] },
+      });
+
+      localStorage.setItem('refresh_token', refresh_token);
+      localStorage.setItem('token_expiresIn', expiresIn.toString());
+
+      // 3. Récupération du profil complet
+      const userResponse = await axiosInstance.get('/users/me');
+      if (!userResponse.data.success) {
+        throw new Error('Impossible de charger le profil');
+      }
+
+      const userData = userResponse.data.data;
+
+      // LOG 2 : Affiche les profils récupérés
+      console.log('Profils de l\'utilisateur :', userData.profiles.map((p: any) => p.profile.profil));
+
+      const hasAdminProfile = userData.profiles.some(
+        (p: any) => p.profile?.profil === 'ADMIN'
+      );
+
+      // LOG 3 : Vérifie la condition d'accès back
+      console.log('A le profil ADMIN ?', hasAdminProfile);
+      console.log('Interface sélectionnée (encore) :', selectedInterface);
+
+      // 4. Vérification des droits SEULEMENT si choix Back Office
+      if (selectedInterface === 'back' && !hasAdminProfile) {
+        throw new Error('Accès refusé : vous n\'avez pas les droits d\'administrateur pour le Back Office.');
+      }
+
+      // 5. Mise à jour finale de l'utilisateur dans Redux
+      login({
+        token: access_token,
+        user: {
+          id: userData.id,
+          email: userData.email,
+          nom: userData.nom || '',
+          prenom: userData.prenom || '',
+          profiles: userData.profiles,
+          pseudo: userData.pseudo || '',
+          departement: userData.departement || '',
+          dateCreation: userData.dateCreation || '',
+          dateActivation: userData.dateActivation || null,
+          dateDesactivation: userData.dateDesactivation || null,
+          status: userData.status || '',
+          autorisation: userData.autorisation || [],
+        },
+      });
+
+      // 6. REDIRECTION STRICTEMENT SELON LE CHOIX DE L'UTILISATEUR
+      if (selectedInterface === 'back') {
+        console.log('→ Redirection vers Back Office (/parametre)');
+        navigate('/parametre');
+      } else {
+        console.log('→ Redirection vers Front Office (/)');
+        navigate('/');
+      }
+
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Identifiants incorrects');
+      setError(
+        err.message ||
+        err.response?.data?.message ||
+        'Erreur lors de la connexion'
+      );
+
+      // Nettoyage
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('token_expiresIn');
     } finally {
       setIsLoading(false);
     }
@@ -158,6 +221,39 @@ function LoginPage() {
               <div className="text-right mt-2">
                 <button type="button" className="text-xs text-gray-400 hover:underline font-medium">Mots de pass oublier ?</button>
               </div>
+            </div>
+
+            {/* Choix d'interface */}
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              <label className={`flex flex-col items-center p-6 border-2 rounded-2xl cursor-pointer transition-all ${
+                selectedInterface === 'front' ? 'border-black bg-black/5' : 'border-gray-300'
+              }`}>
+                <input
+                  type="radio"
+                  name="interface" // Important : même name pour groupe radio
+                  value="front"
+                  checked={selectedInterface === 'front'}
+                  onChange={(e) => setSelectedInterface('front')}
+                  className="mb-3"
+                />
+                <span className="font-bold text-lg">Front Office</span>
+                <span className="text-sm text-gray-600">Site client / public</span>
+              </label>
+
+              <label className={`flex flex-col items-center p-6 border-2 rounded-2xl cursor-pointer transition-all ${
+                selectedInterface === 'back' ? 'border-black bg-black/5' : 'border-gray-300'
+              }`}>
+                <input
+                  type="radio"
+                  name="interface"
+                  value="back"
+                  checked={selectedInterface === 'back'}
+                  onChange={(e) => setSelectedInterface('back')}
+                  className="mb-3"
+                />
+                <span className="font-bold text-lg">Back Office</span>
+                <span className="text-sm text-gray-600">Administration</span>
+              </label>
             </div>
 
             {error && (

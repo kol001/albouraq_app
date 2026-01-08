@@ -1,22 +1,26 @@
-import type { ReactNode } from 'react';
-import { Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import type { RootState } from '../app/store'; // Make sure to import your RootState type
+import { Navigate, Outlet } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../app/store';
 
-interface ProtectedRouteProps {
-  children: ReactNode;
-}
+function ProtectedRoute() {
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated
-  );
-
+  // Si pas connecté → login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
-};
+  // Si connecté mais n'a pas le profile "ADMIN" → redirige vers front office
+  const hasAdminProfile = user?.profiles?.some(
+    (p: any) => p.profile?.profil === 'ADMIN'
+  );
+
+  if (!hasAdminProfile) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Sinon, laisse passer (affiche le layout + Outlet)
+  return <Outlet />;
+}
 
 export default ProtectedRoute;

@@ -7,12 +7,12 @@ import {
   activateArticle,
   deactivateArticle,
   deleteArticle,
-} from '../../app/articlesSlice';
+} from '../../app/back_office/articlesSlice';
 import {
   fetchSousCategories, // Pour le select dans le formulaire
-} from '../../app/sousCategoriesSlice';
+} from '../../app/back_office/sousCategoriesSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { Article } from '../../app/articlesSlice';
+import type { Article } from '../../app/back_office/articlesSlice';
 import { FiPlus, FiX, FiCheckCircle, FiAlertCircle, FiLoader, FiTag, FiBox,FiArrowLeft } from 'react-icons/fi';
 import AuditModal from '../../components/AuditModal';
 import { useNavigate } from 'react-router-dom';

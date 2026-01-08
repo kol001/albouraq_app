@@ -7,7 +7,7 @@ import {
   addBeneficiaireToClientFacture,
   removeBeneficiaireFromClientFacture,
   fetchClientFactures,
-} from '../../../app/clientFacturesSlice';
+} from '../../../app/back_office/clientFacturesSlice';
 import type { RootState, AppDispatch } from '../../../app/store';
 import { FiArrowLeft, FiTrash2, FiSearch, FiUserPlus ,FiLoader, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { useRef } from 'react';
@@ -48,6 +48,30 @@ const ClientFactureFormPage = () => {
     credit90jrs: 3,
     statut: 'ACTIF' as 'ACTIF' | 'INACTIF'
   });
+
+  const hasChanges = useMemo(() => {
+    if (!isEdit || !currentClient) return true; // En mode création, on considère qu'il y a toujours un changement
+
+    // On compare les champs clés pour voir s'il y a une différence
+    return (
+      formData.code !== currentClient.code ||
+      formData.libelle !== currentClient.libelle ||
+      formData.profilRisque !== currentClient.profilRisque ||
+      formData.tauxBase !== currentClient.tauxBase ||
+      formData.volDomestique !== currentClient.volDomestique ||
+      formData.volRegional !== currentClient.volRegional ||
+      formData.longCourrier !== currentClient.longCourrier ||
+      formData.auComptant !== currentClient.auComptant ||
+      formData.credit15jrs !== currentClient.credit15jrs ||
+      formData.credit30jrs !== currentClient.credit30jrs ||
+      formData.credit60jrs !== currentClient.credit60jrs ||
+      formData.credit90jrs !== currentClient.credit90jrs ||
+      formData.statut !== currentClient.statut
+    );
+  }, [formData, currentClient, isEdit]);
+
+  // Validation pour empêcher d'enregistrer si le libellé est vide
+  const isFormInvalid = !formData.libelle.trim() || !formData.code.trim();
 
   // Chargement des données si édition
   useEffect(() => {
@@ -93,8 +117,12 @@ const ClientFactureFormPage = () => {
   const handleAddBeneficiaire = async (beneficiaireId: string) => {
     if (isEdit) {
       setIsSubmitting(true);
-      await dispatch(addBeneficiaireToClientFacture({ id: id!, beneficiaireId }));
-      await dispatch(fetchClientFactures()); // Rafraîchit les données
+      const result = await dispatch(addBeneficiaireToClientFacture({ id: id!, beneficiaireId }));
+      if (addBeneficiaireToClientFacture.fulfilled.match(result)) {
+        setMessage({ text: 'Bénéficiaire ajouté !', isError: false });
+        setTimeout(() => setMessage({ text: '', isError: false }), 2000);
+      }
+      await dispatch(fetchClientFactures());
       setIsSubmitting(false);
     }
   };
@@ -102,7 +130,11 @@ const ClientFactureFormPage = () => {
   const handleRemoveBeneficiaire = async (beneficiaireId: string) => {
     if (isEdit) {
       setIsSubmitting(true);
-      await dispatch(removeBeneficiaireFromClientFacture({ id: id!, beneficiaireId }));
+      const result = await dispatch(removeBeneficiaireFromClientFacture({ id: id!, beneficiaireId }));
+      if (removeBeneficiaireFromClientFacture.fulfilled.match(result)) {
+        setMessage({ text: 'Bénéficiaire supprimé !', isError: false });
+        setTimeout(() => setMessage({ text: '', isError: false }), 2000);
+      }
       await dispatch(fetchClientFactures());
       setIsSubmitting(false);
     }
@@ -160,8 +192,11 @@ const ClientFactureFormPage = () => {
       </div>
 
       {message.text && (
-        <div className={`mb-6 p-4 rounded-2xl ${message.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
-          {message.text}
+        <div className={`fixed top-20 right-20 z-100 p-8 rounded-lg shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
+          message.isError ? 'bg-red-600 text-white' : 'bg-green-600 text-white'
+        }`}>
+          {message.isError ? <FiTrash2 /> : <FiUserPlus />}
+          <span className="font-bold">{message.text}</span>
         </div>
       )}
 
@@ -305,18 +340,30 @@ const ClientFactureFormPage = () => {
       </div>
 
       {/* Boutons fixes en bas */}
-      <div className=" mt-6 p-6">
+      <div className="mt-6 p-6">
         <div className="max-w-[1600px] mx-auto flex justify-end gap-4">
-          <button onClick={() => navigate(-1)} className="px-8 py-4 border border-gray-300 rounded-2xl font-black text-gray-600 uppercase text-xs tracking-widest">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="px-8 py-4 border border-gray-300 rounded-2xl font-black text-gray-400 uppercase text-xs tracking-widest hover:bg-gray-50 transition-all"
+          >
             Annuler
           </button>
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="px-12 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-3 uppercase text-xs tracking-widest"
+            disabled={isSubmitting || (isEdit && !hasChanges) || isFormInvalid}
+            className={`px-12 py-4 rounded-2xl font-black shadow-lg flex items-center gap-3 uppercase text-xs tracking-widest transition-all duration-300 ${
+              (isEdit && !hasChanges) || isFormInvalid
+                ? 'bg-gray-100 text-gray-300 cursor-not-allowed shadow-none'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 shadow-indigo-200'
+            }`}
           >
-            {isSubmitting && <FiLoader className="animate-spin" />}
-            {isEdit ? 'Enregistrer les modifications' : 'Créer le client'}
+            {isSubmitting ? (
+              <FiLoader className="animate-spin" />
+            ) : isEdit ? (
+              hasChanges ? 'Enregistrer les modifications' : 'Aucun changement'
+            ) : (
+              'Créer le client'
+            )}
           </button>
         </div>
       </div>

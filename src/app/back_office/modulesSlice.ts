@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../service/Axios';
+import axiosInstance from '../../service/Axios';
 
 export interface Module {
   id: string;
@@ -50,7 +50,7 @@ export const fetchModules = createAsyncThunk<
 // Créer un module
 export const createModule = createAsyncThunk<
   { success: boolean; data: Module },
-  { code: string; nom: string; description: string; status?: string },
+  { code: string; nom: string; description: string },
   { state: { auth: { token: string } } }
 >('modules/createModule', async (payload, { getState, rejectWithValue, dispatch }) => {
   try {

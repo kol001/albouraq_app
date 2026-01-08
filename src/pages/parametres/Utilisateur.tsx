@@ -7,9 +7,9 @@ import {
   deactivateUser, 
   deleteUser, 
   updateUser 
-} from '../../app/usersSlice';
+} from '../../app/back_office/usersSlice';
 import type { RootState, AppDispatch } from '../../app/store';
-import type { User } from '../../app/usersSlice';
+import type { User } from '../../app/back_office/usersSlice';
 import AuditModal from '../../components/AuditModal';
 import { 
   FiUserPlus, FiX, FiCheckCircle, FiAlertCircle, 
