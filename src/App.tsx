@@ -1,10 +1,13 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import type { RootState } from './app/store';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "./app/store";
 
-import LoginPage from './pages/LoginPage';
-import ListeParametre from './pages/ListeParametre';
-import ProtectedRoute from './pages/ProtectedRoute';
+import LoginPage from "./pages/LoginPage";
+import ListeParametre from "./pages/ListeParametre";
+import ProtectedRoute from "./pages/ProtectedRoute";
+import DashboardLayout from "./layouts/ListeParametreLayout";
+
+import { ParametresRoutes } from "./routes/parametres.routes";
 
 export function App() {
   const isAuthenticated = useSelector(
@@ -14,7 +17,8 @@ export function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Page publique */}
+
+        {/* LOGIN */}
         <Route
           path="/login"
           element={
@@ -22,20 +26,30 @@ export function App() {
           }
         />
 
-        {/* Page protégée */}
+        {/* DASHBOARD PROTÉGÉ */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <ListeParametre />
+              <DashboardLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<ListeParametre />} />
 
-        {/* Fallback */}
+          {/* ROUTES PARAMÈTRES */}
+          <ParametresRoutes />
+        </Route>
+
+        {/* FALLBACK */}
         <Route
           path="*"
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
+          element={
+            <Navigate
+              to={isAuthenticated ? "/dashboard" : "/login"}
+              replace
+            />
+          }
         />
       </Routes>
     </BrowserRouter>
